@@ -196,6 +196,88 @@ void i2c_master_single_port(server interface i2c_master_if c[n], size_t n,
                             unsigned other_bits_mask);
 
 
+
+/** This interface is used to communication with an I2C master component
+ *  asynchronously.
+ *  It provides facilities for reading and writing to the bus.
+ *
+ */
+typedef interface i2c_master_async_if {
+
+  /** Initialize a write to an I2C bus.
+   *
+   *  \param device_addr the address of the slave device to write to
+   *  \param buf         the buffer containing data to write
+   *  \param n           the number of bytes to write
+   *
+   */
+  [[guarded]]
+  void init_tx(uint8_t device_addr, uint8_t buf[n], size_t n);
+
+  /** Initialize a read to an I2C bus.
+   *
+   *  \param device_addr the address of the slave device to read from
+   *  \param n           the number of bytes to read
+   *
+   */
+  [[guarded]]
+  void init_rx(uint8_t device_addr, size_t n);
+
+  /** Completed operation notification.
+   *
+   *  This notification will fire when a read or write is completed.
+   */
+  [[notification]]
+  slave void completed_operation(void);
+
+  /** Get write result.
+   *
+   *  This function should be called after a write has completed.
+   *
+   *  \returns     whether the write succeeded
+   */
+  [[clears_notification]]
+  i2c_write_res_t get_tx_result(void);
+
+
+  /** Get read result.
+   *
+   *  This function should be called after a read has completed.
+   *
+   *  \param buf         the buffer to fill with data
+   *  \param n           the number of bytes to read, this should be the same
+   *                     as the number of bytes specified in init_rx(),
+   *                     otherwise the behavior is undefined.
+   */
+  [[clears_notification]]
+  void get_rx_data(uint8_t buf[n], size_t n);
+} i2c_master_async_if;
+
+/** I2C master component (asynchronous API).
+ *
+ *  This function implements I2C and allows clients to asynchronously
+ *  perform operations on the bus.
+ *  Note that this component can be run on the same logical core as other
+ *  tasks (i.e. it is [[combinable]]). However, care must be taken that the
+ *  other tasks do not take too long in their select cases otherwise this
+ *  component may miss I2C transactions.
+ *
+ *  \param   i            the interface to connect to the client of the
+ *                        component
+ *  \param  p_scl  The SCL port of the I2C bus
+ *  \param  p_sda  The SDA port of the I2C bus
+ *  \param  kbits_per_second The speed of the I2C bus
+ *  \param  enable_multi_master A flag indicating whether multi-master
+ *                              support should be enabled. This should be one
+ *                              of the values ``I2C_ENABLE_MULTIMASTER`` or
+ *                              ``I2C_DISABLE_MULTIMASTER``.
+ */
+[[combinable]]
+void i2c_master_async(client interface i2c_master_async_if i,
+                      port p_scl, port p_sda,
+                      unsigned kbits_per_second,
+                      i2c_enable_mm_t enable_multi_master);
+
 /** This interface is used to communication with an I2C slave component.
  *  It provides facilities for reading and writing to the bus. The I2C slave
  *  component acts a *client* to this interface. So the application must
@@ -246,6 +328,7 @@ typedef interface i2c_slave_callback_if {
  *                               read or written by the master.
  *
  */
+[[combinable]]
 void i2c_slave(client i2c_slave_callback_if i,
                port p_scl, port p_sda,
                uint8_t device_addr,

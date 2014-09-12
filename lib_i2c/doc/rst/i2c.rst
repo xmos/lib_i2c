@@ -207,6 +207,25 @@ function on the logical core of the application task connected to
 it. If, however, the tasks are on different hardware
 tiles then the |i2c| master component will need a core to run on.
 
+Synchronous vs. Asynchronous operation
+......................................
+
+There are two types of interface for |i2c| master components:
+synchronous and asynchronous.
+
+The synchronous API provides blocking operation. Whenever a client makes a
+read or write call the operation will complete before the client can
+move on - this will occupy the core that the client code is running on
+until the end of the operation. This method is easy to use, has low
+resource use and is very suitable for applications such as setup and
+configuration of attached peripherals.
+
+The asynchronous API offloads operations to another task. Calls are
+provide to initiate reads and writes and notifications are provided
+when the operation completes. This API is trickier to use but can
+provide more efficient operation. It is suitable for applications
+where the |i2c| bus is being used for continuous data transfer.
+
 |newpage|
 
 Creating an I2C master instance
@@ -217,6 +236,10 @@ Creating an I2C master instance
 |newpage|
 
 .. doxygenfunction:: i2c_master_single_port
+
+|newpage|
+
+.. doxygenfunction:: i2c_master_async
 
 |newpage|
 
@@ -231,6 +254,14 @@ I2C master interface
 ....................
 
 .. doxygeninterface:: i2c_master_if
+
+|newpage|
+
+I2C master asynchronous interface
+.................................
+
+.. doxygeninterface:: i2c_master_async_if
+
 
 Slave API
 ---------
@@ -303,3 +334,5 @@ I2C slave interface
 ...................
 
 .. doxygeninterface:: i2c_slave_callback_if
+
+|newpage|
