@@ -44,30 +44,6 @@ typedef interface i2c_master_if {
 } i2c_master_if;
 
 extends client interface i2c_master_if : {
-  /** Read a register on a slave device.
-   *
-   *  This function reads a register from the i2c bus. The register address
-   *  and data can be any number of bytes. The function reads data by
-   *  transmitting the register addr and then reading the data from the slave
-   *  device.
-   *
-   *  \param device_addr the address of the slave device to read from
-   *  \param reg         the array containing the m-byte register
-   *                     address
-   *  \param m           the number of bytes in the register address
-   *  \param data        the array to fill with data
-   *  \param n           the number of bytes to read
-   */
-  inline void read_reg_n_m(client interface i2c_master_if i,
-                           uint8_t device_addr,
-                           uint8_t reg[m],
-                           size_t m,
-                           uint8_t data[n],
-                           size_t n)
-  {
-    i.tx(device_addr, reg, m);
-    i.rx(device_addr, data, n);
-  }
 
   /** Read an 8-bit register on a slave device.
    *
@@ -85,41 +61,15 @@ extends client interface i2c_master_if : {
                        uint8_t device_addr, uint8_t reg) {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1];
-    i.read_reg_n_m(device_addr, a_reg, 1, data, 1);
+    i.tx(device_addr, a_reg, 1);
+    i.rx(device_addr, data, 1);
     return data[0];
-  }
-
-  /** Write a register on a slave device.
-   *
-   *  This function writes a slave device register on the i2c bus.
-   *  The register address
-   *  and data can be any number of bytes. The function writes data by
-   *  transmitting the register addr and then
-   *  transmitting the data to the slave device.
-   *
-   *  \param device_addr the address of the slave device to write to
-   *  \param reg         the array containing the m-byte register
-   *                     address
-   *  \param m           the number of bytes in the register address
-   *  \param data        the array of data to write
-   *  \param n           the number of bytes to write
-   */
-  inline void write_reg_n_m(client interface i2c_master_if i,
-                           uint8_t device_addr,
-                           uint8_t reg[m],
-                           size_t m,
-                           uint8_t data[n],
-                           size_t n)
-  {
-    i.tx(device_addr, reg, m);
-    i.tx(device_addr, data, n);
   }
 
   /** Write an 8-bit register on a slave device.
    *
-   *  This function writes a slave device register on the i2c bus.
-   *  The register address
-   *  and data can be any number of bytes. The function writes data by
+   *  This function writes an 8-bit addressed, 8-bit register from the i2c
+   *  bus. The function reads data by. The function writes data by
    *  transmitting the register addr and then
    *  transmitting the data to the slave device.
    *
@@ -129,10 +79,88 @@ extends client interface i2c_master_if : {
    */
   inline void write_reg(client interface i2c_master_if i,
                         uint8_t device_addr, uint8_t reg, uint8_t data) {
-    uint8_t a_reg[1] = {reg};
-    uint8_t a_data[1] = {data};
-    i.write_reg_n_m(device_addr, a_reg, 1, a_data, 1);
+    uint8_t a_data[2] = {reg, data};
+    i.tx(device_addr, a_data, 2);
   }
+
+  /** Read an 8-bit register on a slave device from a 16 bit register address.
+   *
+   *  This function reads a 16-bit addressed, 8-bit register from the i2c
+   *  bus. The function reads data by
+   *  transmitting the register addr and then reading the data from the slave
+   *  device.
+   *
+   *  \param device_addr the address of the slave device to read from
+   *  \param reg         the address of the register to read
+   *
+   *  \returns           the value of the register
+   */
+  inline uint8_t read_reg8_addr16(client interface i2c_master_if i,
+                                  uint8_t device_addr, uint16_t reg) {
+    uint8_t a_reg[2] = {reg, reg >> 8};
+    uint8_t data[1];
+    i.tx(device_addr, a_reg, 2);
+    i.rx(device_addr, data, 1);
+    return data[0];
+  }
+
+  /** Write an 8-bit register on a slave device from a 16 bit register address.
+   *
+   *  This function writes a 16-bit addressed, 8-bit register from the i2c
+   *  bus. The function writes data by
+   *  transmitting the register addr and then
+   *  transmitting the data to the slave device.
+   *
+   *  \param device_addr the address of the slave device to write to
+   *  \param reg         the address of the register to write
+   *  \param data        the 8-bit value to write
+   */
+  inline void write_reg8_addr16(client interface i2c_master_if i,
+                                uint8_t device_addr, uint16_t reg,
+                                uint8_t data) {
+    uint8_t a_data[3] = {reg, reg >> 8, data};
+    i.tx(device_addr, a_data, 3);
+  }
+
+  /** Read an 16-bit register on a slave device from a 16 bit register address.
+   *
+   *  This function reads a 16-bit addressed, 16-bit register from the i2c
+   *  bus. The function reads data by
+   *  transmitting the register addr and then reading the data from the slave
+   *  device.
+   *
+   *  \param device_addr the address of the slave device to read from
+   *  \param reg         the address of the register to read
+   *
+   *  \returns           the value of the register
+   */
+  inline uint16_t read_reg16(client interface i2c_master_if i,
+                             uint8_t device_addr, uint16_t reg) {
+    uint8_t a_reg[2] = {reg, reg >> 8};
+    uint8_t data[2];
+    i.tx(device_addr, a_reg, 2);
+    i.rx(device_addr, data, 2);
+    return ((uint16_t) data[0] << 8) | data[1];
+  }
+
+  /** Write an 16-bit register on a slave device from a 16 bit register address.
+   *
+   *  This function writes a 16-bit addressed, 16-bit register from the i2c
+   *  bus. The function writes data by
+   *  transmitting the register addr and then
+   *  transmitting the data to the slave device.
+   *
+   *  \param device_addr the address of the slave device to write to
+   *  \param reg         the address of the register to write
+   *  \param data        the 16-bit value to write
+   */
+  inline void write_reg16(client interface i2c_master_if i,
+                          uint8_t device_addr, uint16_t reg,
+                          uint16_t data) {
+    uint8_t a_data[4] = {reg, reg >> 8, data, data >> 8};
+    i.tx(device_addr, a_data, 4);
+  }
+
 
 
 }
