@@ -18,7 +18,6 @@ static inline void wait_quarter(unsigned bit_time) {
 }
 
 static inline void wait_half(unsigned bit_time) {
-    delay_ticks((bit_time + 3)/2);
     wait_quarter(bit_time);
     wait_quarter(bit_time);
 }
@@ -85,11 +84,11 @@ static int tx8(port p_i2c, unsigned data, unsigned bit_time,
     unsigned CtlAdrsData = ((unsigned) bitrev(data)) >> 24;
     for (int i = 8; i != 0; i--) {
       high_pulse_drive(p_i2c, CtlAdrsData & 1,
-                       bit_time, SDA_HIGH, SCL_LOW, S_REST);
+                       bit_time, SDA_HIGH, SCL_HIGH, S_REST);
       CtlAdrsData >>= 1;
     }
     ack = high_pulse_sample(p_i2c, 0,
-                            bit_time, SDA_HIGH, SCL_LOW, S_REST);
+                            bit_time, SDA_HIGH, SCL_HIGH, S_REST);
     return ack != 0;
 }
 
