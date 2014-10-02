@@ -63,19 +63,6 @@ static int tx8(port p_scl, port p_sda, unsigned data, unsigned bit_time) {
   return high_pulse_sample(p_scl, p_sda, bit_time);
 }
 
-static unsigned char rx(int device, port p_scl, port p_sda, unsigned bit_time)
-{
-   unsigned char data = 0;
-   start_bit(p_scl, p_sda, bit_time);
-   tx8(p_scl, p_sda, (device << 1) | 1, bit_time);
-   for (int i = 8; i != 0; i--) {
-     int temp = high_pulse_sample(p_scl, p_sda, bit_time);
-     data = (data << 1) | temp;
-   }
-   (void) high_pulse_sample(p_scl, p_sda, bit_time);
-   stop_bit(p_scl, p_sda, bit_time);
-   return data;
-}
 
 [[distributable]]
 void i2c_master(server interface i2c_master_if c[n], size_t n,
@@ -87,9 +74,24 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
   p_sda :> void;
   while (1) {
     select {
-    case c[int i].rx(uint8_t device, uint8_t buf[n], size_t n):
-      for (int j = 0; j < n; j++)
-        buf[j] = rx(device, p_scl, p_sda, bit_time);
+    case c[int i].rx(uint8_t device, uint8_t buf[m], size_t m):
+      start_bit(p_scl, p_sda, bit_time);
+      tx8(p_scl, p_sda, (device << 1) | 1, bit_time);
+
+      for (int j = 0; j < m; j++){
+          unsigned char data = 0;
+          for (int i = 8; i != 0; i--) {
+            int temp = high_pulse_sample(p_scl, p_sda, bit_time);
+            data = (data << 1) | temp;
+          }
+          buf[j] = data;
+
+          // ACK after every read byte until the final byte then NACK.
+          p_sda <: (j == (m-1));
+          (void) high_pulse(p_scl, bit_time);
+      }
+      stop_bit(p_scl, p_sda, bit_time);
+
       break;
 
     case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n) -> i2c_write_res_t result:
