@@ -247,3 +247,12 @@ I2C slave interface
 .. doxygeninterface:: i2c_slave_callback_if
 
 |newpage|
+
+|appendix|
+
+Known Issues
+------------
+
+There are no known issues with this library.
+
+.. include:: ../../../CHANGELOG.rst
