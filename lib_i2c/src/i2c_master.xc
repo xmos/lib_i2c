@@ -88,8 +88,19 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
           buf[j] = data;
 
           // ACK after every read byte until the final byte then NACK.
-          p_sda <: (j == (m-1));
-          (void) high_pulse(p_scl, bit_time);
+          if (j == m-1)
+            p_sda :> void;
+          else {
+            p_sda <: 0;
+          }
+          // High pulse but make sure SDA is not driving before lowering
+          // scl
+          wait_quarter(bit_time);
+          p_scl :> void;
+          wait_half(bit_time);
+          p_sda :> void;
+          p_scl <: 0;
+          wait_quarter(bit_time);
       }
       stop_bit(p_scl, p_sda, bit_time);
 
