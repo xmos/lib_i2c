@@ -27,7 +27,7 @@ xmostest.build('i2c_master_test')
 
 binary = 'i2c_master_test/bin/i2c_master_test.xe'
 
-test = ('lib_i2c', 'i2c_master_sim_regression', 'basic_test', {'speed':400})
+test = ('lib_i2c', 'i2c_master_sim_tests', 'basic_test', {'speed':400})
 
 xmostest.run_on_simulator(resources['xsim'], binary,
                           simthreads = [ (i2c_master_checker,
