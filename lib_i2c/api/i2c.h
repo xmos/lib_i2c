@@ -219,8 +219,8 @@ typedef enum i2c_enable_mm_t {
 [[distributable]]
 void i2c_master_single_port(server interface i2c_master_if c[n], size_t n,
                             port p_i2c, unsigned kbits_per_second,
-                            unsigned sda_bit_position,
                             unsigned scl_bit_position,
+                            unsigned sda_bit_position,
                             unsigned other_bits_mask);
 
 

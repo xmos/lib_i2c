@@ -23,12 +23,12 @@ static inline void wait_half(unsigned bit_time) {
 }
 
 static void high_pulse_drive(port p_i2c, int sdaValue, unsigned bit_time,
-                             unsigned SDA_HIGH, unsigned SCL_HIGH,
+                             unsigned SCL_HIGH, unsigned SDA_HIGH,
                              unsigned S_REST) {
     if (sdaValue) {
         p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
         wait_quarter(bit_time);
-        p_i2c :> void;
+        p_i2c <: SDA_HIGH | SCL_HIGH | S_REST;
         wait_half(bit_time);
         p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
         wait_quarter(bit_time);
@@ -43,7 +43,7 @@ static void high_pulse_drive(port p_i2c, int sdaValue, unsigned bit_time,
 }
 
 static int high_pulse_sample(port p_i2c, int expectedSDA, unsigned bit_time,
-                             unsigned SDA_HIGH, unsigned SCL_HIGH,
+                             unsigned SCL_HIGH, unsigned SDA_HIGH,
                              unsigned S_REST) {
     p_i2c <: (expectedSDA ? SDA_HIGH : 0) | SCL_LOW | S_REST;
     wait_quarter(bit_time);
@@ -57,7 +57,7 @@ static int high_pulse_sample(port p_i2c, int expectedSDA, unsigned bit_time,
 }
 
 static void start_bit(port p_i2c, unsigned bit_time,
-                      unsigned SDA_HIGH, unsigned SCL_HIGH,
+                      unsigned SCL_HIGH, unsigned SDA_HIGH,
                       unsigned S_REST) {
     wait_quarter(bit_time);
     p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
@@ -67,7 +67,7 @@ static void start_bit(port p_i2c, unsigned bit_time,
 }
 
 static void stop_bit(port p_i2c, unsigned bit_time,
-                     unsigned SDA_HIGH, unsigned SCL_HIGH,
+                     unsigned SCL_HIGH, unsigned SDA_HIGH,
                      unsigned S_REST) {
     p_i2c <: SDA_LOW | SCL_LOW | S_REST;
     wait_quarter(bit_time);
@@ -78,17 +78,17 @@ static void stop_bit(port p_i2c, unsigned bit_time,
 }
 
 static int tx8(port p_i2c, unsigned data, unsigned bit_time,
-               unsigned SDA_HIGH, unsigned SCL_HIGH,
+               unsigned SCL_HIGH, unsigned SDA_HIGH,
                unsigned S_REST) {
     int ack;
     unsigned CtlAdrsData = ((unsigned) bitrev(data)) >> 24;
     for (int i = 8; i != 0; i--) {
       high_pulse_drive(p_i2c, CtlAdrsData & 1,
-                       bit_time, SDA_HIGH, SCL_HIGH, S_REST);
+                       bit_time, SCL_HIGH, SDA_HIGH, S_REST);
       CtlAdrsData >>= 1;
     }
     ack = high_pulse_sample(p_i2c, 0,
-                            bit_time, SDA_HIGH, SCL_HIGH, S_REST);
+                            bit_time, SCL_HIGH, SDA_HIGH, S_REST);
     return ack != 0;
 }
 
@@ -96,8 +96,8 @@ static int tx8(port p_i2c, unsigned data, unsigned bit_time,
 void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
                             port p_i2c,
                             unsigned kbits_per_second,
-                            unsigned sda_bit_position,
                             unsigned scl_bit_position,
+                            unsigned sda_bit_position,
                             unsigned other_bits_mask) {
   unsigned bit_time = (XS1_TIMER_MHZ * 1000) / kbits_per_second;
   unsigned SDA_HIGH = (1 << sda_bit_position);
@@ -110,16 +110,15 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
       break;
     case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n)
                                                     -> i2c_write_res_t result:
-      start_bit(p_i2c, bit_time, SDA_HIGH, SCL_HIGH, other_bits_mask);
+      start_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask);
       int ack;
-      ack = tx8(p_i2c, device, bit_time, SDA_HIGH, SCL_HIGH, other_bits_mask);
+      ack = tx8(p_i2c, device<<1, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask);
       for (int j = 0; j < n; j++) {
         ack |= tx8(p_i2c, buf[j], bit_time,
-                   SDA_HIGH, SCL_HIGH, other_bits_mask);
+                   SCL_HIGH, SDA_HIGH, other_bits_mask);
       }
-
-      stop_bit(p_i2c, bit_time, SDA_HIGH, SCL_HIGH, other_bits_mask);
-      result = (ack == 0) ? I2C_WRITE_ACK_SUCCEEDED : I2C_WRITE_ACK_FAILED;
+      stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask);
+      result = I2C_WRITE_ACK_SUCCEEDED;
       break;
     }
   }
