@@ -62,7 +62,7 @@ static void stop_bit(port i2c_scl, port i2c_sda, unsigned bit_time,
   tmr when timerafter(fall_time + bit_time / 2) :> void;
   release_clock_and_wait(i2c_scl, fall_time, bit_time);
   i2c_sda :> void;
-  delay_ticks(bit_time);
+  delay_ticks(bit_time/4);
 }
 
 static int tx8(port p_scl, port p_sda, unsigned data,
