@@ -28,7 +28,7 @@ void test(client i2c_master_if i2c)
 int main(void) {
   i2c_master_if i2c[1];
   par {
-    i2c_master_single_port(i2c, 1, p_i2c, 400, 1, 3, 0);
+    i2c_master_single_port(i2c, 1, p_i2c, SPEED, 1, 3, 0);
     {set_core_fast_mode_on();test(i2c[0]);}
     par(int i=0;i<7;i++) while(1);
   }
