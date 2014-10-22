@@ -1,0 +1,34 @@
+Start bit received
+Byte received: 0x78
+Sending ack
+Speed = 397 Kbps
+Master write transaction started, device address=0x3c
+Byte received: 0x90
+Sending ack
+Speed = 397 Kbps
+Byte received: 0xfe
+Sending ack
+Speed = 398 Kbps
+Stop bit received
+xCORE got ack
+Start bit received
+Byte received: 0xf6
+Sending ack
+Speed = 397 Kbps
+Master write transaction started, device address=0x7b
+Byte received: 0xff
+Sending ack
+Speed = 397 Kbps
+Byte received: 0x0
+Sending nack
+Speed = 397 Kbps
+Stop bit received
+xCORE got nack
+Start bit received
+Byte received: 0x62
+Sending nack
+Speed = 397 Kbps
+Master write transaction started, device address=0x31
+Stop bit received
+xCORE got nack
+

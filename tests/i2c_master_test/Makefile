@@ -18,7 +18,10 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-XCC_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
+COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
+
+XCC_FLAGS_tx_only = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0
+XCC_FLAGS_rx_tx = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1
 
 # The USED_MODULES variable lists other module used by the application.
 

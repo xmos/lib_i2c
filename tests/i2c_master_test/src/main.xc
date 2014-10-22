@@ -10,16 +10,29 @@ port p_sda = XS1_PORT_1B;
 void test(client i2c_master_if i2c)
 {
   uint8_t data[3];
-  data[0] = 0x90; data[1] = 0xfe;
-  i2c.tx(0x3c, data, 2);
-  i2c.rx(0x22, data, 2);
-  debug_printf("xCORE received: 0x%x, 0x%x\n",data[0], data[1]);
-  i2c.rx(0x22, data, 1);
-  debug_printf("xCORE received: 0x%x\n",data[0]);
-  data[0] = 0xff; data[1] = 0x00; data[2] = 0xaa;
-  i2c.tx(0x7b, data, 3);
-  data[0] = 0xee;
-  i2c.tx(0x31, data, 1);
+  int ack;
+  if (ENABLE_TX) {
+    data[0] = 0x90; data[1] = 0xfe;
+    ack = i2c.tx(0x3c, data, 2);
+    debug_printf("xCORE got %s\n",
+                 ack == I2C_WRITE_ACK_SUCCEEDED ? "ack" : "nack");
+  }
+  if (ENABLE_RX) {
+    i2c.rx(0x22, data, 2);
+    debug_printf("xCORE received: 0x%x, 0x%x\n",data[0], data[1]);
+    i2c.rx(0x22, data, 1);
+    debug_printf("xCORE received: 0x%x\n",data[0]);
+  }
+  if (ENABLE_TX) {
+    data[0] = 0xff; data[1] = 0x00; data[2] = 0xaa;
+    ack = i2c.tx(0x7b, data, 3);
+    debug_printf("xCORE got %s\n",
+                 ack == I2C_WRITE_ACK_SUCCEEDED ? "ack" : "nack");
+    data[0] = 0xee;
+    ack = i2c.tx(0x31, data, 1);
+    debug_printf("xCORE got %s\n",
+                 ack == I2C_WRITE_ACK_SUCCEEDED ? "ack" : "nack");
+  }
   exit(0);
 }
 

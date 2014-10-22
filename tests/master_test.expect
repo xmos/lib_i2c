@@ -10,6 +10,7 @@ Byte received: 0xfe
 Sending ack
 Speed = ... Kbps
 Stop bit received
+xCORE got ack
 Start bit received
 Byte received: 0x45
 Sending ack
@@ -49,6 +50,7 @@ Byte received: 0xaa
 Sending ack
 Speed = ... Kbps
 Stop bit received
+xCORE got ack
 Start bit received
 Byte received: 0x62
 Sending ack
@@ -58,3 +60,4 @@ Byte received: 0xee
 Sending ack
 Speed = ... Kbps
 Stop bit received
+xCORE got ack
