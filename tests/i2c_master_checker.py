@@ -13,6 +13,7 @@ class I2CMasterChecker(xmostest.SimThread):
         self._tx_data = tx_data
         self._ack_sequence = ack_sequence
         self._expected_speed = expected_speed
+        print "Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port)
 
     def get_port_val(self, xsi, port):
         "Sample port, modelling the pull up"
@@ -41,12 +42,14 @@ class I2CMasterChecker(xmostest.SimThread):
            # Wait for clock to go high or for the xCORE to
            # stop driving
            xsi.wait_for_port_pins_change([self._scl_port])
-     
+
            # Drive the clock port high (modelling the pull up)
            xsi.drive_port_pins(self._scl_port, 1)
            if bit_num == 8:
                print("Byte received: 0x%x" % data)
                ack = self.get_next_ack()
+               if xsi.is_port_driving(self._sda_port):
+                   print("WARNING: master driving SDA during ACK phase")
                if ack:
                    print("Sending ack")
                    xsi.drive_port_pins(self._sda_port, 0)
@@ -57,10 +60,13 @@ class I2CMasterChecker(xmostest.SimThread):
                bit = self.get_port_val(xsi, self._sda_port);
            xsi.wait_for_port_pins_change([self._scl_port, self._sda_port])
            sda_value = self.get_port_val(xsi, self._sda_port);
-     
+
            if bit_num == 8 and self.get_port_val(xsi, self._scl_port) != 0:
                print("ERROR: clock pulse incomplete at end of byte")
-     
+
+           if bit_num == 8 and xsi.is_port_driving(self._sda_port):
+               print("WARNING: master driving SDA during ACK phase")
+
            if bit_num == 8:
                break
      
@@ -133,6 +139,10 @@ class I2CMasterChecker(xmostest.SimThread):
                else:
                    data = self.get_next_data_item()
                    bit_num = -1
+           else:
+               if xsi.is_port_driving(self._sda_port):
+                   print("ERROR: master driving SDA during slave data write")
+
            xsi.wait_for_port_pins_change([self._scl_port])
            fall_time = xsi.get_time()
      

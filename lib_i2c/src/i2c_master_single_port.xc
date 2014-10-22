@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <timer.h>
 #include "xassert.h"
+#include <print.h>
 
 #define SDA_LOW     0
 #define SCL_LOW     0
@@ -24,72 +25,86 @@ static inline void wait_half(unsigned bit_time) {
 
 static void high_pulse_drive(port p_i2c, int sdaValue, unsigned bit_time,
                              unsigned SCL_HIGH, unsigned SDA_HIGH,
-                             unsigned S_REST) {
-    if (sdaValue) {
-        p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
-        wait_quarter(bit_time);
-        p_i2c <: SDA_HIGH | SCL_HIGH | S_REST;
-        wait_half(bit_time);
-        p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
-        wait_quarter(bit_time);
-    } else {
-        p_i2c <: SDA_LOW | SCL_LOW | S_REST;
-        wait_quarter(bit_time);
-        p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
-        wait_half(bit_time);
-        p_i2c <: SDA_LOW | SCL_LOW | S_REST;
-        wait_quarter(bit_time);
-    }
+                             unsigned S_REST,
+                             unsigned &fall_time)
+{
+  timer tmr;
+  if (sdaValue) {
+    p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
+    tmr when timerafter(fall_time + bit_time / 2) :> void;
+    p_i2c <: SDA_HIGH | SCL_HIGH | S_REST;
+    fall_time += bit_time;
+    tmr when timerafter(fall_time) :> void;
+    p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
+  } else {
+    p_i2c <: SDA_LOW | SCL_LOW | S_REST;
+    tmr when timerafter(fall_time + bit_time / 2) :> void;
+    p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
+    fall_time += bit_time;
+    tmr when timerafter(fall_time) :> void;
+    p_i2c <: SDA_LOW | SCL_LOW | S_REST;
+  }
 }
 
 static int high_pulse_sample(port p_i2c, int expectedSDA, unsigned bit_time,
                              unsigned SCL_HIGH, unsigned SDA_HIGH,
-                             unsigned S_REST) {
-    p_i2c <: (expectedSDA ? SDA_HIGH : 0) | SCL_LOW | S_REST;
-    wait_quarter(bit_time);
-    p_i2c :> void;
-    wait_quarter(bit_time);
-    expectedSDA = peek(p_i2c) & SDA_HIGH;
-    wait_quarter(bit_time);
-    p_i2c <: expectedSDA | SCL_LOW | S_REST;
-    wait_quarter(bit_time);
-    return expectedSDA;
+                             unsigned S_REST,
+                             unsigned &fall_time)
+{
+  timer tmr;
+  p_i2c <: (expectedSDA ? SDA_HIGH : 0) | SCL_LOW | S_REST;
+  tmr when timerafter(fall_time + bit_time / 2) :> void;
+  p_i2c :> void;
+  tmr when timerafter(fall_time + (bit_time * 3) / 4) :> void;
+  expectedSDA = peek(p_i2c) & SDA_HIGH;
+  fall_time += bit_time + 1;
+  tmr when timerafter(fall_time) :> void;
+  p_i2c <: expectedSDA | SCL_LOW | S_REST;
+  return expectedSDA;
 }
 
-static void start_bit(port p_i2c, unsigned bit_time,
-                      unsigned SCL_HIGH, unsigned SDA_HIGH,
-                      unsigned S_REST) {
-    wait_quarter(bit_time);
-    p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
-    wait_half(bit_time);
-    p_i2c <: SDA_LOW | SCL_LOW | S_REST;
-    wait_quarter(bit_time);
+static unsigned start_bit(port p_i2c, unsigned bit_time,
+                          unsigned SCL_HIGH, unsigned SDA_HIGH,
+                          unsigned S_REST)
+{
+  timer tmr;
+  unsigned fall_time;
+  delay_ticks(bit_time / 4);
+  p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
+  delay_ticks(bit_time / 2);
+  p_i2c <: SDA_LOW | SCL_LOW | S_REST;
+  tmr :> fall_time;
+  return fall_time;
 }
 
 static void stop_bit(port p_i2c, unsigned bit_time,
                      unsigned SCL_HIGH, unsigned SDA_HIGH,
-                     unsigned S_REST) {
-    p_i2c <: SDA_LOW | SCL_LOW | S_REST;
-    wait_quarter(bit_time);
-    p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
-    wait_half(bit_time);
-    p_i2c :> void;
-    wait_quarter(bit_time);
+                     unsigned S_REST, unsigned fall_time)
+{
+  timer tmr;
+  tmr when timerafter(fall_time + bit_time / 4) :> void;
+  p_i2c <: SDA_LOW | SCL_LOW | S_REST;
+  wait_quarter(bit_time);
+  tmr when timerafter(fall_time + bit_time / 2) :> void;
+  p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
+  tmr when timerafter(fall_time + bit_time) :> void;
+  p_i2c :> void;
+  delay_ticks(bit_time/4);
 }
 
-static int tx8(port p_i2c, unsigned data, unsigned bit_time,
-               unsigned SCL_HIGH, unsigned SDA_HIGH,
-               unsigned S_REST) {
-    int ack;
+static void tx8(port p_i2c, unsigned data, unsigned bit_time,
+                unsigned SCL_HIGH, unsigned SDA_HIGH,
+                unsigned S_REST, unsigned &fall_time) {
     unsigned CtlAdrsData = ((unsigned) bitrev(data)) >> 24;
     for (int i = 8; i != 0; i--) {
       high_pulse_drive(p_i2c, CtlAdrsData & 1,
-                       bit_time, SCL_HIGH, SDA_HIGH, S_REST);
+                       bit_time, SCL_HIGH, SDA_HIGH, S_REST,
+                       fall_time);
       CtlAdrsData >>= 1;
     }
-    ack = high_pulse_sample(p_i2c, 0,
-                            bit_time, SCL_HIGH, SDA_HIGH, S_REST);
-    return ack != 0;
+    high_pulse_sample(p_i2c, 0, bit_time, SCL_HIGH, SDA_HIGH, S_REST,
+                      fall_time);
+    return;
 }
 
 [[distributable]]
@@ -110,14 +125,18 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
       break;
     case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n)
                                                     -> i2c_write_res_t result:
-      start_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask);
-      int ack;
-      ack = tx8(p_i2c, device<<1, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask);
+      unsigned fall_time;
+      fall_time = start_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH,
+                            other_bits_mask);
+
+      tx8(p_i2c, device<<1, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
+          fall_time);
       for (int j = 0; j < n; j++) {
-        ack |= tx8(p_i2c, buf[j], bit_time,
-                   SCL_HIGH, SDA_HIGH, other_bits_mask);
+        tx8(p_i2c, buf[j], bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
+            fall_time);
       }
-      stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask);
+      stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
+               fall_time);
       result = I2C_WRITE_ACK_SUCCEEDED;
       break;
     }
