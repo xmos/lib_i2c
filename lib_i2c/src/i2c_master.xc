@@ -89,10 +89,12 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
     select {
     case c[int i].rx(uint8_t device, uint8_t buf[m], size_t m):
       unsigned fall_time;
+      int ack;
       fall_time = start_bit(p_scl, p_sda, bit_time);
-      tx8(p_scl, p_sda, (device << 1) | 1, bit_time, fall_time);
+      ack = tx8(p_scl, p_sda, (device << 1) | 1, bit_time, fall_time);
 
-      for (int j = 0; j < m; j++){
+      if (ack == 0) {
+        for (int j = 0; j < m; j++){
           unsigned char data = 0;
           timer tmr;
           for (int i = 8; i != 0; i--) {
@@ -115,6 +117,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
           p_sda :> void;
           p_scl <: 0;
           fall_time = fall_time + bit_time;
+        }
       }
       stop_bit(p_scl, p_sda, bit_time, fall_time);
 
@@ -124,9 +127,12 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
       int ack = 0;
       unsigned fall_time;
       fall_time = start_bit(p_scl, p_sda, bit_time);
-      tx8(p_scl, p_sda, (device << 1), bit_time, fall_time);
-      for (int j = 0; j < n; j++)
-        ack |= tx8(p_scl, p_sda, buf[j], bit_time, fall_time);
+      ack = tx8(p_scl, p_sda, (device << 1), bit_time, fall_time);
+      for (int j = 0; j < n; j++) {
+        if (ack == 0) {
+          ack |= tx8(p_scl, p_sda, buf[j], bit_time, fall_time);
+        }
+      }
       stop_bit(p_scl, p_sda, bit_time, fall_time);
       result = (ack == 0) ? I2C_WRITE_ACK_SUCCEEDED : I2C_WRITE_ACK_FAILED;
       break;
