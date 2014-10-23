@@ -31,14 +31,14 @@ static void high_pulse_drive(port p_i2c, int sdaValue, unsigned bit_time,
   timer tmr;
   if (sdaValue) {
     p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
-    tmr when timerafter(fall_time + bit_time / 2) :> void;
+    tmr when timerafter(fall_time + bit_time / 2 + bit_time / 32) :> void;
     p_i2c <: SDA_HIGH | SCL_HIGH | S_REST;
     fall_time += bit_time;
     tmr when timerafter(fall_time) :> void;
     p_i2c <: SDA_HIGH | SCL_LOW | S_REST;
   } else {
     p_i2c <: SDA_LOW | SCL_LOW | S_REST;
-    tmr when timerafter(fall_time + bit_time / 2) :> void;
+    tmr when timerafter(fall_time + bit_time / 2 + bit_time / 32) :> void;
     p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
     fall_time += bit_time;
     tmr when timerafter(fall_time) :> void;
@@ -53,7 +53,7 @@ static int high_pulse_sample(port p_i2c, int expectedSDA, unsigned bit_time,
 {
   timer tmr;
   p_i2c <: (expectedSDA ? SDA_HIGH : 0) | SCL_LOW | S_REST;
-  tmr when timerafter(fall_time + bit_time / 2) :> void;
+  tmr when timerafter(fall_time + bit_time / 2 + bit_time / 32) :> void;
   p_i2c :> void;
   tmr when timerafter(fall_time + (bit_time * 3) / 4) :> void;
   expectedSDA = peek(p_i2c) & SDA_HIGH;

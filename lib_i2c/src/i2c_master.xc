@@ -23,7 +23,7 @@ static int high_pulse_sample(port i2c_scl, port ?i2c_sda,
   if (!isnull(i2c_sda)) {
     i2c_sda :> int _;
   }
-  tmr when timerafter(fall_time + bit_time / 2) :> void;
+  tmr when timerafter(fall_time + bit_time / 2 + bit_time / 32) :> void;
   release_clock_and_wait(i2c_scl, fall_time, (bit_time * 3) / 4);
   if (!isnull(i2c_sda)) {
     i2c_sda :> sample_value;
@@ -110,7 +110,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
           }
           // High pulse but make sure SDA is not driving before lowering
           // scl
-          tmr when timerafter(fall_time + bit_time/2) :> void;
+          tmr when timerafter(fall_time + bit_time/2 + bit_time/32) :> void;
           release_clock_and_wait(p_scl, fall_time, bit_time);
           p_sda :> void;
           p_scl <: 0;

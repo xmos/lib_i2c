@@ -31,6 +31,17 @@ class I2CMasterChecker(xmostest.SimThread):
             self._ack_index += 1
             return ack
 
+    def check_low_time(self, time):
+        if (self._expected_speed == 100 and time < 4700) or\
+           (self._expected_speed == 400 and time < 1300):
+            print "ERROR: Clock low time less than minimum in spec"
+
+    def check_high_time(self, time):
+        if (self._expected_speed == 100 and time < 4000) or\
+           (self._expected_speed == 400 and time < 900):
+            print "ERROR: Clock high time less than minimum in spec"
+
+
     def read_byte(self, xsi):
        data = 0
        bit_num = 0
@@ -42,6 +53,11 @@ class I2CMasterChecker(xmostest.SimThread):
            # Wait for clock to go high or for the xCORE to
            # stop driving
            xsi.wait_for_port_pins_change([self._scl_port])
+           rise_time = xsi.get_time()
+
+           if prev_fall_time:
+               low_time = rise_time - prev_fall_time
+               self.check_low_time(low_time)
 
            # Drive the clock port high (modelling the pull up)
            xsi.drive_port_pins(self._scl_port, 1)
@@ -78,9 +94,12 @@ class I2CMasterChecker(xmostest.SimThread):
                print("Repeated start bit received")
                received_start = True
                break
-     
+
            fall_time = xsi.get_time()
-     
+
+           high_time = fall_time - rise_time
+           self.check_high_time(high_time)
+
            if prev_fall_time:
                 bit_times.append(fall_time - prev_fall_time)
      
@@ -97,7 +116,7 @@ class I2CMasterChecker(xmostest.SimThread):
            if (speed_in_kbps < 0.99 * self._expected_speed):
                print "ERROR: speed is <1% slower than expected"
      
-           if (speed_in_kbps > self._expected_speed):
+           if (speed_in_kbps > self._expected_speed * 1.05):
                print "ERROR: speed is faster than expected"
 
        if bit_num == 8:
@@ -143,9 +162,18 @@ class I2CMasterChecker(xmostest.SimThread):
                if xsi.is_port_driving(self._sda_port):
                    print("ERROR: master driving SDA during slave data write")
 
+           rise_time = xsi.get_time()
+
+           if prev_fall_time:
+               low_time = rise_time - prev_fall_time
+               self.check_low_time(low_time)
+
            xsi.wait_for_port_pins_change([self._scl_port])
            fall_time = xsi.get_time()
-     
+
+           high_time = fall_time - rise_time
+           self.check_high_time(high_time)
+
            if prev_fall_time:
                 bit_times.append(fall_time - prev_fall_time)
      
@@ -167,7 +195,7 @@ class I2CMasterChecker(xmostest.SimThread):
            if (speed_in_kbps < 0.99 * self._expected_speed):
                print "ERROR: speed is <1% slower than expected"
      
-           if (speed_in_kbps > self._expected_speed):
+           if (speed_in_kbps > self._expected_speed * 1.05):
                print "ERROR: speed is faster than expected"
      
      
