@@ -120,11 +120,11 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
   p_i2c :> void;    // Drive all high
   while (1) {
     select {
-    case c[int i].rx(uint8_t device, uint8_t buf[n], size_t n):
+    case c[int i].rx(uint8_t device, uint8_t buf[n], size_t n) -> i2c_res_t result:
       fail("error: single port version of i2c does not support read operations");
       break;
     case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n)
-                                                    -> i2c_write_res_t result:
+                                                    -> i2c_res_t result:
       unsigned fall_time;
       fall_time = start_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH,
                             other_bits_mask);
@@ -137,7 +137,7 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
       }
       stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
                fall_time);
-      result = I2C_WRITE_ACK_SUCCEEDED;
+      result = I2C_SUCCEEDED;
       break;
     }
   }

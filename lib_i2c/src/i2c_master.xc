@@ -84,7 +84,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
   p_sda :> void;
   while (1) {
     select {
-    case c[int i].rx(uint8_t device, uint8_t buf[m], size_t m):
+    case c[int i].rx(uint8_t device, uint8_t buf[m], size_t m) -> i2c_res_t result:
       unsigned fall_time;
       int ack;
       fall_time = start_bit(p_scl, p_sda, bit_time);
@@ -110,7 +110,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
           // High pulse but make sure SDA is not driving before lowering
           // scl
           tmr when timerafter(fall_time + bit_time/2 + bit_time/32) :> void;
-          release_clock_and_wait(p_scl, fall_time, bit_time);
+          release_clock_and_wait(p_scl, fall_time, bit_time + 1);
           p_sda :> void;
           p_scl <: 0;
           fall_time = fall_time + bit_time;
@@ -118,9 +118,10 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
       }
       stop_bit(p_scl, p_sda, bit_time, fall_time);
 
+      result = (ack == 0) ? I2C_SUCCEEDED : I2C_FAILED;
       break;
 
-    case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n) -> i2c_write_res_t result:
+    case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n) -> i2c_res_t result:
       int ack = 0;
       unsigned fall_time;
       fall_time = start_bit(p_scl, p_sda, bit_time);
@@ -131,7 +132,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
         }
       }
       stop_bit(p_scl, p_sda, bit_time, fall_time);
-      result = (ack == 0) ? I2C_WRITE_ACK_SUCCEEDED : I2C_WRITE_ACK_FAILED;
+      result = (ack == 0) ? I2C_SUCCEEDED : I2C_FAILED;
       break;
     }
   }

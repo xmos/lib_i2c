@@ -12,9 +12,9 @@
  *   write is successful or not.
  */
 typedef enum {
-  I2C_WRITE_ACK_FAILED,    ///< The write has failed
-  I2C_WRITE_ACK_SUCCEEDED, ///< The write was successful
-} i2c_write_res_t;
+  I2C_FAILED,    ///< The write has failed
+  I2C_SUCCEEDED, ///< The write was successful
+} i2c_res_t;
 
 /** This interface is used to communication with an I2C master component.
  *  It provides facilities for reading and writing to the bus.
@@ -30,7 +30,7 @@ typedef interface i2c_master_if {
    *
    *  \returns     whether the write succeeded
    */
-  i2c_write_res_t tx(uint8_t device_addr, uint8_t buf[n], size_t n);
+  i2c_res_t tx(uint8_t device_addr, uint8_t buf[n], size_t n);
 
   /** Read data from an I2C bus.
    *
@@ -38,7 +38,7 @@ typedef interface i2c_master_if {
    *  \param buf         the buffer to fill with data
    *  \param n           the number of bytes to read
    */
-  void rx(uint8_t device_addr, uint8_t buf[n], size_t n);
+  i2c_res_t rx(uint8_t device_addr, uint8_t buf[n], size_t n);
 
 
 } i2c_master_if;
@@ -58,7 +58,7 @@ extends client interface i2c_master_if : {
    *  \returns           the value of the register
    */
   inline uint8_t read_reg(client interface i2c_master_if i,
-                       uint8_t device_addr, uint8_t reg) {
+                          uint8_t device_addr, uint8_t reg) {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1];
     i.tx(device_addr, a_reg, 1);
@@ -255,7 +255,7 @@ typedef interface i2c_master_async_if {
    *  \returns     whether the write succeeded
    */
   [[clears_notification]]
-  i2c_write_res_t get_tx_result(void);
+  i2c_res_t get_tx_result(void);
 
 
   /** Get read result.

@@ -23,6 +23,7 @@ Master sends NACK.
 Speed = ... Kbps
 Waiting for stop/start bit
 Stop bit received
+xCORE got ack
 xCORE received: 0x99, 0x3A
 Start bit received
 Byte received: 0x45
@@ -34,6 +35,7 @@ Master sends NACK.
 Speed = ... Kbps
 Waiting for stop/start bit
 Stop bit received
+xCORE got ack
 xCORE received: 0xFF
 Start bit received
 Byte received: 0xf6
