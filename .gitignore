@@ -11,3 +11,8 @@
 **/run_*.log
 **/pdf/*
 **/html/*
+*.pyc
+**/.settings*
+Installs/*
+test_results.csv
+*.log
