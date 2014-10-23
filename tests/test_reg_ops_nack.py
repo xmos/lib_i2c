@@ -4,21 +4,27 @@ from i2c_master_checker import I2CMasterChecker
 import os
 
 
-def do_master_test(speed):
+def runtest():
     resources = xmostest.request_resource("xsim")
 
     xmostest.build('i2c_master_test')
 
-    binary = 'i2c_master_test/bin/rx_tx_%(speed)d/i2c_master_test_rx_tx_%(speed)d.xe' % {'speed':speed}
+    binary = 'i2c_master_reg_test/bin/i2c_master_reg_test.xe'
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
-                               tx_data = [0x99, 0x3A, 0xff],
-                               expected_speed = speed)
+                               tx_data = [0x99, 0x3A, 0xff, 0x05],
+                               expected_speed = 400,
+                               ack_sequence = [False,
+                                               True, True, False,
+                                               True, False,
+                                               False,
+                                               True, False,
+                                               True, True, False])
 
-    tester = xmostest.pass_if_matches(open('master_test.expect'),
+    tester = xmostest.pass_if_matches(open('reg_ops_nack.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
-                                     'basic_test', {'speed':speed},
+                                     'reg_ops_nack_test',
                                      regexp=True)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
@@ -27,10 +33,3 @@ def do_master_test(speed):
                               suppress_multidrive_messages = True,
                               tester = tester)
 
-def runtest():
-    do_master_test(400)
-    do_master_test(100)
-    if xmostest.get_testrun_type() != 'smoke':
-        do_master_test(10)
-    else:
-        xmostest.note_skipped_tests()

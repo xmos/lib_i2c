@@ -1,0 +1,63 @@
+Start bit received
+Byte received: 0x88
+Sending nack
+Speed = 398 Kbps
+Master write transaction started, device address=0x44
+Stop bit received
+NACK
+Start bit received
+Byte received: 0x44
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x22
+Byte received: 0x99
+Sending ack
+Speed = 398 Kbps
+Byte received: 0xfe
+Sending nack
+Speed = 398 Kbps
+Stop bit received
+NACK
+Start bit received
+Byte received: 0x66
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x33
+Byte received: 0xcd
+Sending nack
+Speed = 398 Kbps
+Stop bit received
+NACK
+Start bit received
+Byte received: 0x88
+Sending nack
+Speed = 398 Kbps
+Master write transaction started, device address=0x44
+Stop bit received
+NACK
+val=0
+Start bit received
+Byte received: 0x8a
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x45
+Byte received: 0x21
+Sending nack
+Speed = 398 Kbps
+Stop bit received
+NACK
+val=0
+Start bit received
+Byte received: 0x8c
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x46
+Byte received: 0x99
+Sending ack
+Speed = 398 Kbps
+Byte received: 0x33
+Sending nack
+Speed = 398 Kbps
+Stop bit received
+NACK
+val=0

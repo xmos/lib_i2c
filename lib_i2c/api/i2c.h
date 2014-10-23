@@ -58,18 +58,22 @@ extends client interface i2c_master_if : {
    *  \returns           the value of the register
    */
   inline uint8_t read_reg(client interface i2c_master_if i,
-                          uint8_t device_addr, uint8_t reg) {
+                          uint8_t device_addr, uint8_t reg,
+                          i2c_res_t &result) {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1];
-    i.tx(device_addr, a_reg, 1);
-    i.rx(device_addr, data, 1);
+    result = i.tx(device_addr, a_reg, 1);
+    if (result == I2C_FAILED) {
+      return 0;
+    }
+    result = i.rx(device_addr, data, 1);
     return data[0];
   }
 
   /** Write an 8-bit register on a slave device.
    *
    *  This function writes an 8-bit addressed, 8-bit register from the i2c
-   *  bus. The function reads data by. The function writes data by
+   *  bus. The function writes data by
    *  transmitting the register addr and then
    *  transmitting the data to the slave device.
    *
@@ -77,10 +81,11 @@ extends client interface i2c_master_if : {
    *  \param reg         the address of the register to write
    *  \param data        the 8-bit value to write
    */
-  inline void write_reg(client interface i2c_master_if i,
-                        uint8_t device_addr, uint8_t reg, uint8_t data) {
+  inline i2c_res_t write_reg(client interface i2c_master_if i,
+                             uint8_t device_addr, uint8_t reg, uint8_t data)
+  {
     uint8_t a_data[2] = {reg, data};
-    i.tx(device_addr, a_data, 2);
+    return i.tx(device_addr, a_data, 2);
   }
 
   /** Read an 8-bit register on a slave device from a 16 bit register address.
@@ -96,11 +101,14 @@ extends client interface i2c_master_if : {
    *  \returns           the value of the register
    */
   inline uint8_t read_reg8_addr16(client interface i2c_master_if i,
-                                  uint8_t device_addr, uint16_t reg) {
+                                  uint8_t device_addr, uint16_t reg,
+                                  i2c_res_t &result)
+  {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[1];
-    i.tx(device_addr, a_reg, 2);
-    i.rx(device_addr, data, 1);
+    result = i.tx(device_addr, a_reg, 2);
+    if (result == I2C_FAILED) return 0;
+    result = i.rx(device_addr, data, 1);
     return data[0];
   }
 
@@ -115,11 +123,11 @@ extends client interface i2c_master_if : {
    *  \param reg         the address of the register to write
    *  \param data        the 8-bit value to write
    */
-  inline void write_reg8_addr16(client interface i2c_master_if i,
-                                uint8_t device_addr, uint16_t reg,
-                                uint8_t data) {
+  inline i2c_res_t write_reg8_addr16(client interface i2c_master_if i,
+                                     uint8_t device_addr, uint16_t reg,
+                                     uint8_t data) {
     uint8_t a_data[3] = {reg, reg >> 8, data};
-    i.tx(device_addr, a_data, 3);
+    return i.tx(device_addr, a_data, 3);
   }
 
   /** Read an 16-bit register on a slave device from a 16 bit register address.
@@ -135,11 +143,14 @@ extends client interface i2c_master_if : {
    *  \returns           the value of the register
    */
   inline uint16_t read_reg16(client interface i2c_master_if i,
-                             uint8_t device_addr, uint16_t reg) {
+                             uint8_t device_addr, uint16_t reg,
+                             i2c_res_t &result)
+  {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[2];
-    i.tx(device_addr, a_reg, 2);
-    i.rx(device_addr, data, 2);
+    result = i.tx(device_addr, a_reg, 2);
+    if (result == I2C_FAILED) return 0;
+    result = i.rx(device_addr, data, 2);
     return ((uint16_t) data[0] << 8) | data[1];
   }
 
@@ -154,11 +165,11 @@ extends client interface i2c_master_if : {
    *  \param reg         the address of the register to write
    *  \param data        the 16-bit value to write
    */
-  inline void write_reg16(client interface i2c_master_if i,
-                          uint8_t device_addr, uint16_t reg,
-                          uint16_t data) {
+  inline i2c_res_t write_reg16(client interface i2c_master_if i,
+                               uint8_t device_addr, uint16_t reg,
+                               uint16_t data) {
     uint8_t a_data[4] = {reg, reg >> 8, data, data >> 8};
-    i.tx(device_addr, a_data, 4);
+    return i.tx(device_addr, a_data, 4);
   }
 
 
