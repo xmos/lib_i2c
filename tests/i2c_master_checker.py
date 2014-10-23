@@ -35,12 +35,12 @@ class I2CMasterChecker(xmostest.SimThread):
     def check_low_time(self, time):
         if (self._expected_speed == 100 and time < 4700) or\
            (self._expected_speed == 400 and time < 1300):
-            print "ERROR: Clock low time less than minimum in spec"
+            print "ERROR: Clock low time less than minimum in spec: %gns" % time
 
     def check_high_time(self, time):
         if (self._expected_speed == 100 and time < 4000) or\
            (self._expected_speed == 400 and time < 900):
-            print "ERROR: Clock high time less than minimum in spec"
+            print "ERROR: Clock high time less than minimum in spec: %gns" % time
 
 
     def read_byte(self, xsi):

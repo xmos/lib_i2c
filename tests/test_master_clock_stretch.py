@@ -19,7 +19,7 @@ def runtest():
 
     tester = xmostest.pass_if_matches(open('master_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
-                                      'clock_stretch', {'speed':400},
+                                      'clock_stretch',
                                      regexp=True)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
