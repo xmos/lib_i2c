@@ -138,32 +138,3 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
   }
 }
 
-
-extends client interface i2c_master_if : {
-  extern inline void read_reg_n_m(client interface i2c_master_if i,
-                           uint8_t device_addr,
-                           uint8_t reg[m],
-                           size_t m,
-                           uint8_t data[n],
-                           size_t n);
-
-  extern inline uint8_t read_reg_8_8(client interface i2c_master_if i,
-                                     uint8_t device_addr, uint8_t reg);
-
-  extern inline uint8_t read_reg(client interface i2c_master_if i,
-                                 uint8_t device_addr, uint8_t reg);
-
-  extern inline void write_reg_n_m(client interface i2c_master_if i,
-                                   uint8_t device_addr,
-                                   uint8_t reg[m],
-                                   size_t m,
-                                   uint8_t data[n],
-                                   size_t n);
-
-  extern inline void write_reg_8_8(client interface i2c_master_if i,
-                                   uint8_t device_addr, uint8_t reg,
-                                   uint8_t data);
-
-  extern inline void write_reg(client interface i2c_master_if i,
-                               uint8_t device_addr, uint8_t reg, uint8_t data);
-}
