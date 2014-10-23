@@ -12,8 +12,8 @@
  *   write is successful or not.
  */
 typedef enum {
+  I2C_WRITE_ACK_FAILED,    ///< The write has failed
   I2C_WRITE_ACK_SUCCEEDED, ///< The write was successful
-  I2C_WRITE_ACK_FAILED     ///< The write has failed
 } i2c_write_res_t;
 
 /** This interface is used to communication with an I2C master component.
