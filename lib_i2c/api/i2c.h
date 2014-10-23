@@ -166,11 +166,6 @@ extends client interface i2c_master_if : {
 }
 
 
-typedef enum i2c_enable_mm_t {
-  I2C_ENABLE_MULTIMASTER, ///< Enable multimaster mode
-  I2C_DISABLE_MULTIMASTER ///< Disable multimaster mode
-} i2c_enable_mm_t;
-
 /** Implements I2C on the i2c_master_if interface using two ports.
  *
  *  \param  c      An array of server interface connections for clients to
@@ -179,16 +174,11 @@ typedef enum i2c_enable_mm_t {
  *  \param  p_scl  The SCL port of the I2C bus
  *  \param  p_sda  The SDA port of the I2C bus
  *  \param  kbits_per_second The speed of the I2C bus
- *  \param  enable_multi_master A flag indicating whether multi-master
- *                              support should be enabled. This should be one
- *                              of the values ``I2C_ENABLE_MULTIMASTER`` or
- *                              ``I2C_DISABLE_MULTIMASTER``.
  **/
 [[distributable]] void i2c_master(server interface i2c_master_if c[n],
                                   size_t n,
                                   port p_scl, port p_sda,
-                                  unsigned kbits_per_second,
-                                  i2c_enable_mm_t enable_multi_master);
+                                  unsigned kbits_per_second);
 
 /** Implements I2C on a single multi-bit port.
  *
@@ -295,16 +285,11 @@ typedef interface i2c_master_async_if {
  *  \param  p_scl  The SCL port of the I2C bus
  *  \param  p_sda  The SDA port of the I2C bus
  *  \param  kbits_per_second The speed of the I2C bus
- *  \param  enable_multi_master A flag indicating whether multi-master
- *                              support should be enabled. This should be one
- *                              of the values ``I2C_ENABLE_MULTIMASTER`` or
- *                              ``I2C_DISABLE_MULTIMASTER``.
  */
 [[combinable]]
 void i2c_master_async(client interface i2c_master_async_if i,
                       port p_scl, port p_sda,
-                      unsigned kbits_per_second,
-                      i2c_enable_mm_t enable_multi_master);
+                      unsigned kbits_per_second);
 
 /** This interface is used to communication with an I2C slave component.
  *  It provides facilities for reading and writing to the bus. The I2C slave

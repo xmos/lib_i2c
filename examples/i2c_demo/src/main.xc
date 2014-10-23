@@ -17,7 +17,7 @@ void demo(client interface i2c_master_if i2c)
 int main(void) {
   i2c_master_if i2c[1];
   par {
-    i2c_master(i2c, 1, p_scl, p_sda, 100, I2C_ENABLE_MULTIMASTER);
+    i2c_master(i2c, 1, p_scl, p_sda, 100);
     demo(i2c[0]);
   }
   return 0;

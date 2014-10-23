@@ -39,7 +39,7 @@ void test(client i2c_master_if i2c)
 int main(void) {
   i2c_master_if i2c[1];
   par {
-    i2c_master(i2c, 1, p_scl, p_sda, SPEED, I2C_ENABLE_MULTIMASTER);
+    i2c_master(i2c, 1, p_scl, p_sda, SPEED);
     {set_core_fast_mode_on();test(i2c[0]);}
     par(int i=0;i<7;i++) while(1);
   }

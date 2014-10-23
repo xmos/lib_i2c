@@ -77,8 +77,7 @@ static int tx8(port p_scl, port p_sda, unsigned data,
 
 [[distributable]]
 void i2c_master(server interface i2c_master_if c[n], size_t n,
-                port p_scl, port p_sda, unsigned kbits_per_second,
-                i2c_enable_mm_t enable_multimaster)
+                port p_scl, port p_sda, unsigned kbits_per_second)
 {
   unsigned bit_time = (XS1_TIMER_MHZ * 1000) / kbits_per_second;
   p_scl :> void;
