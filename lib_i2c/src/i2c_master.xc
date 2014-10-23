@@ -9,8 +9,6 @@ static void release_clock_and_wait(port i2c_scl,
 {
   timer tmr;
   unsigned time;
-  tmr :> time;
-  i2c_scl :> void;
   i2c_scl when pinseq(1) :> void;
   tmr when timerafter(fall_time + delay) :> time;
   // Adjust timing due to clock stretching
