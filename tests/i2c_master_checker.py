@@ -7,12 +7,13 @@ class I2CMasterChecker(xmostest.SimThread):
     """
 
     def __init__(self, scl_port, sda_port, expected_speed,
-                 tx_data = [], ack_sequence = []):
+                 tx_data = [], ack_sequence = [], clock_stretch = 0):
         self._scl_port = scl_port
         self._sda_port = sda_port
         self._tx_data = tx_data
         self._ack_sequence = ack_sequence
         self._expected_speed = expected_speed
+        self._clock_stretch = clock_stretch
         print "Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port)
 
     def get_port_val(self, xsi, port):
@@ -52,7 +53,17 @@ class I2CMasterChecker(xmostest.SimThread):
        while True:
            # Wait for clock to go high or for the xCORE to
            # stop driving
-           xsi.wait_for_port_pins_change([self._scl_port])
+           if self._clock_stretch:
+               if self.get_port_val(xsi, self._scl_port) == 1:
+                   xsi.wait_for_port_pins_change([self._scl_port])
+               xsi.drive_port_pins(self._scl_port, 0)
+               time = xsi.get_time()
+               xsi.wait_until(time + self._clock_stretch)
+               if self.get_port_val(xsi, self._scl_port) == 0:
+                   xsi.wait_for_port_pins_change([self._scl_port])
+           else:
+               xsi.wait_for_port_pins_change([self._scl_port])
+
            rise_time = xsi.get_time()
 
            if prev_fall_time:
@@ -74,6 +85,7 @@ class I2CMasterChecker(xmostest.SimThread):
                    xsi.drive_port_pins(self._sda_port, 1)
            else:
                bit = self.get_port_val(xsi, self._sda_port);
+
            xsi.wait_for_port_pins_change([self._scl_port, self._sda_port])
            sda_value = self.get_port_val(xsi, self._sda_port);
 
@@ -146,8 +158,15 @@ class I2CMasterChecker(xmostest.SimThread):
        while True:
            # Wait for clock to go high or for the xCORE to
            # stop driving
-           xsi.wait_for_port_pins_change([self._scl_port])
-     
+           if self._clock_stretch:
+               xsi.drive_port_pins(self._scl_port, 0)
+               time = xsi.get_time()
+               xsi.wait_until(time + self._clock_stretch)
+               if self.get_port_val(xsi, self._scl_port) == 0:
+                   xsi.wait_for_port_pins_change([self._scl_port])
+           else:
+               xsi.wait_for_port_pins_change([self._scl_port])
+
            # Drive the clock port high (modelling the pull up)
            xsi.drive_port_pins(self._scl_port, 1)
            if bit_num == 8:
@@ -236,6 +255,7 @@ class I2CMasterChecker(xmostest.SimThread):
                     print("Start bit received")
      
             xsi.wait_for_port_pins_change([self._scl_port, self._sda_port])
+
             if self.get_port_val(xsi, self._scl_port) != 0:
                 print("ERROR: SDA changed before clock driven low")
      
