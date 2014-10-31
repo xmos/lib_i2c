@@ -1,11 +1,6 @@
-SPI Components Change Log
-=========================
+I2C library change log
+======================
 
-2.1.0
+3.0.0
 -----
-  * Updated documents for xSOFTip requirements
-  * Added metainfo and XPD items
-
-2.0.0
------
-  * Previous version on xmos.com
+  * Consolidated version, major rework from previous I2C components

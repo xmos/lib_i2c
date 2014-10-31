@@ -79,7 +79,8 @@ static unsigned char rx(int device, port p_scl, port p_sda, unsigned bit_time)
 
 [[distributable]]
 void i2c_master(server interface i2c_master_if c[n], size_t n,
-                port p_scl, port p_sda, unsigned kbits_per_second)
+                port p_scl, port p_sda, unsigned kbits_per_second,
+                i2c_enable_mm_t enable_multimaster)
 {
   unsigned bit_time = (XS1_TIMER_MHZ * 1000) / kbits_per_second;
   p_scl :> void;
