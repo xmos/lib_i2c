@@ -120,11 +120,13 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
   p_i2c :> void;    // Drive all high
   while (1) {
     select {
-    case c[int i].rx(uint8_t device, uint8_t buf[n], size_t n) -> i2c_res_t result:
+    case c[int i].rx(uint8_t device, uint8_t buf[n], size_t n,
+                     int send_stop_bit) -> i2c_res_t result:
       fail("error: single port version of i2c does not support read operations");
       break;
-    case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n)
-                                                    -> i2c_res_t result:
+    case c[int i].tx(uint8_t device, uint8_t buf[n], size_t n,
+                     size_t &num_bytes_sent,
+                     int send_stop_bit)  -> i2c_res_t result:
       unsigned fall_time;
       fall_time = start_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH,
                             other_bits_mask);
@@ -135,9 +137,17 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
         tx8(p_i2c, buf[j], bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
             fall_time);
       }
-      stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
-               fall_time);
+      if (send_stop_bit)
+        stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
+                 fall_time);
+      num_bytes_sent = n;
       result = I2C_SUCCEEDED;
+      break;
+    case c[int i].send_stop_bit(void):
+      timer tmr;
+      unsigned fall_time;
+      tmr :> fall_time;
+      stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask, fall_time);
       break;
     }
   }

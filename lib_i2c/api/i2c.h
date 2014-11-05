@@ -24,22 +24,56 @@ typedef interface i2c_master_if {
 
   /** Write data to an I2C bus.
    *
-   *  \param device_addr the address of the slave device to write to
-   *  \param buf         the buffer containing data to write
-   *  \param n           the number of bytes to write
+   *  \param device_addr t   the address of the slave device to write to.
+   *  \param buf             the buffer containing data to write.
+   *  \param n               the number of bytes to write.
+   *  \param num_bytes_sent  the function will set this value to the
+   *                         number of bytes actually sent. On success, this
+   *                         will be equal to \n but it will be less if the
+   *                         slave sends an early NACK on the bus and the
+   *                         transaction fails.
+   *  \param send_stop_bit   If this is set to non-zero then a stop bit
+   *                         will be output on the bus after the transaction.
+   *                         This is usually required for normal operation. If
+   *                         this parameter is non-zero then no stop bit will
+   *                         be omitted. In this case, no other task can use
+   *                         the component until either a new read or write
+   *                         call is made (a repeated start) or the
+   *                         send_stop_bit() function is called.
    *
    *  \returns     whether the write succeeded
    */
-  i2c_res_t tx(uint8_t device_addr, uint8_t buf[n], size_t n);
+  [[guarded]]
+  i2c_res_t tx(uint8_t device_addr, uint8_t buf[n], size_t n,
+               size_t &num_bytes_sent, int send_stop_bit);
 
   /** Read data from an I2C bus.
    *
-   *  \param device_addr the address of the slave device to read from
-   *  \param buf         the buffer to fill with data
-   *  \param n           the number of bytes to read
-   */
-  i2c_res_t rx(uint8_t device_addr, uint8_t buf[n], size_t n);
+   *  \param device_addr     the address of the slave device to read from
+   *  \param buf             the buffer to fill with data
+   *  \param n               the number of bytes to read
+   *  \param send_stop_bit   If this is set to non-zero then a stop bit
+   *                         will be output on the bus after the transaction.
+   *                         This is usually required for normal operation. If
+   *                         this parameter is non-zero then no stop bit will
+   *                         be omitted. In this case, no other task can use
+   *                         the component until either a new read or write
+   *                         call is made (a repeated start) or the
+   *                         send_stop_bit() function is called.
 
+   */
+  [[guarded]]
+  i2c_res_t rx(uint8_t device_addr, uint8_t buf[n], size_t n,
+               int send_stop_bit);
+
+
+  /** Send a stop bit.
+   *
+   *  This function will cause a stop bit to be sent on the bus. It should
+   *  be used to complete/abort a transaction if the ``send_stop_bit`` argument
+   *  was not set when calling the rx() or tx() functions.
+   */
+  void send_stop_bit(void);
 
 } i2c_master_if;
 
@@ -62,11 +96,12 @@ extends client interface i2c_master_if : {
                           i2c_res_t &result) {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1];
-    result = i.tx(device_addr, a_reg, 1);
+    size_t n;
+    result = i.tx(device_addr, a_reg, 1, n, 1);
     if (result == I2C_FAILED) {
       return 0;
     }
-    result = i.rx(device_addr, data, 1);
+    result = i.rx(device_addr, data, 1, 1);
     return data[0];
   }
 
@@ -85,7 +120,8 @@ extends client interface i2c_master_if : {
                              uint8_t device_addr, uint8_t reg, uint8_t data)
   {
     uint8_t a_data[2] = {reg, data};
-    return i.tx(device_addr, a_data, 2);
+    size_t n;
+    return i.tx(device_addr, a_data, 2, n, 1);
   }
 
   /** Read an 8-bit register on a slave device from a 16 bit register address.
@@ -106,9 +142,10 @@ extends client interface i2c_master_if : {
   {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[1];
-    result = i.tx(device_addr, a_reg, 2);
+    size_t n;
+    result = i.tx(device_addr, a_reg, 2, n, 1);
     if (result == I2C_FAILED) return 0;
-    result = i.rx(device_addr, data, 1);
+    result = i.rx(device_addr, data, 1, 1);
     return data[0];
   }
 
@@ -127,7 +164,8 @@ extends client interface i2c_master_if : {
                                      uint8_t device_addr, uint16_t reg,
                                      uint8_t data) {
     uint8_t a_data[3] = {reg, reg >> 8, data};
-    return i.tx(device_addr, a_data, 3);
+    size_t n;
+    return i.tx(device_addr, a_data, 3, n, 1);
   }
 
   /** Read an 16-bit register on a slave device from a 16 bit register address.
@@ -148,9 +186,10 @@ extends client interface i2c_master_if : {
   {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[2];
-    result = i.tx(device_addr, a_reg, 2);
+    size_t n;
+    result = i.tx(device_addr, a_reg, 2, n, 1);
     if (result == I2C_FAILED) return 0;
-    result = i.rx(device_addr, data, 2);
+    result = i.rx(device_addr, data, 2, 1);
     return ((uint16_t) data[0] << 8) | data[1];
   }
 
@@ -169,7 +208,8 @@ extends client interface i2c_master_if : {
                                uint8_t device_addr, uint16_t reg,
                                uint16_t data) {
     uint8_t a_data[4] = {reg, reg >> 8, data, data >> 8};
-    return i.tx(device_addr, a_data, 4);
+    size_t n;
+    return i.tx(device_addr, a_data, 4, n, 1);
   }
 
 
@@ -241,7 +281,8 @@ typedef interface i2c_master_async_if {
    *
    */
   [[guarded]]
-  void init_tx(uint8_t device_addr, uint8_t buf[n], size_t n);
+  void tx(uint8_t device_addr, uint8_t buf[n], size_t n,
+          int send_stop_bit);
 
   /** Initialize a read to an I2C bus.
    *
@@ -250,14 +291,14 @@ typedef interface i2c_master_async_if {
    *
    */
   [[guarded]]
-  void init_rx(uint8_t device_addr, size_t n);
+  void rx(uint8_t device_addr, size_t n);
 
   /** Completed operation notification.
    *
    *  This notification will fire when a read or write is completed.
    */
   [[notification]]
-  slave void completed_operation(void);
+  slave void operation_complete(void);
 
   /** Get write result.
    *
@@ -266,7 +307,7 @@ typedef interface i2c_master_async_if {
    *  \returns     whether the write succeeded
    */
   [[clears_notification]]
-  i2c_res_t get_tx_result(void);
+  i2c_res_t get_tx_result(size_t &num_bytes_sent);
 
 
   /** Get read result.
@@ -279,7 +320,10 @@ typedef interface i2c_master_async_if {
    *                     otherwise the behavior is undefined.
    */
   [[clears_notification]]
-  void get_rx_data(uint8_t buf[n], size_t n);
+  void get_rx_data(uint8_t buf[n], size_t n, i2c_res_t &result);
+
+
+  void send_stop_bit(void);
 } i2c_master_async_if;
 
 /** I2C master component (asynchronous API).
@@ -298,9 +342,16 @@ typedef interface i2c_master_async_if {
  *  \param  kbits_per_second The speed of the I2C bus
  */
 [[combinable]]
-void i2c_master_async(client interface i2c_master_async_if i,
+void i2c_master_async(client interface i2c_master_async_if i[n],
+                      size_t n,
                       port p_scl, port p_sda,
                       unsigned kbits_per_second);
+
+
+typedef enum i2c_slave_ack_t {
+  I2C_SLAVE_ACK,
+  I2C_SLAVE_NACK,
+} i2c_slave_ack_t;
 
 /** This interface is used to communication with an I2C slave component.
  *  It provides facilities for reading and writing to the bus. The I2C slave
@@ -323,7 +374,7 @@ typedef interface i2c_slave_callback_if {
    *                exact number of bytes sent back is governed by the bus
    *                master and will depend on the protocol used on the bus.
    */
-  void master_requests_read(uint8_t data[n], size_t n);
+  i2c_slave_ack_t master_requests_read(uint8_t data[n], size_t n);
 
   /** Master has performed a write.
    *
@@ -334,7 +385,7 @@ typedef interface i2c_slave_callback_if {
    *  \param data   the buffer filled with data by the master
    *  \param n      the number of bytes transmitted.
    */
-  void master_perfomed_write(uint8_t data[n], size_t n);
+  i2c_slave_ack_t master_perfomed_write(uint8_t data[n], size_t n);
 } i2c_slave_callback_if;
 
 

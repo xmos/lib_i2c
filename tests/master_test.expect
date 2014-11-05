@@ -1,26 +1,26 @@
 Start bit received
 Byte received: 0x78
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x3c
 Byte received: 0x90
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Byte received: 0xfe
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Stop bit received
-xCORE got ack
+xCORE got ack. Transmitted 2 bytes.
 Start bit received
 Byte received: 0x45
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master read transaction started, device address=0x22
 Byte sent
 Master sends ACK.
 Byte sent
 Master sends NACK.
-Speed = ... Kbps
+Speed = \d+ Kbps
 Waiting for stop/start bit
 Stop bit received
 xCORE got ack
@@ -28,11 +28,11 @@ xCORE received: 0x99, 0x3A
 Start bit received
 Byte received: 0x45
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master read transaction started, device address=0x22
 Byte sent
 Master sends NACK.
-Speed = ... Kbps
+Speed = \d+ Kbps
 Waiting for stop/start bit
 Stop bit received
 xCORE got ack
@@ -40,26 +40,26 @@ xCORE received: 0xFF
 Start bit received
 Byte received: 0xf6
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x7b
 Byte received: 0xff
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Byte received: 0x0
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Byte received: 0xaa
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Stop bit received
-xCORE got ack
+xCORE got ack. Transmitted 3 bytes.
 Start bit received
 Byte received: 0x62
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x31
 Byte received: 0xee
 Sending ack
-Speed = ... Kbps
+Speed = \d+ Kbps
 Stop bit received
-xCORE got ack
+xCORE got ack. Transmitted 1 bytes.

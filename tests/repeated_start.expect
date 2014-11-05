@@ -1,0 +1,17 @@
+Start bit received
+Byte received: 0x66
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x33
+Byte received: 0x99
+Sending ack
+Speed = 398 Kbps
+Repeated start bit received
+Byte received: 0x66
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x33
+Byte received: 0x99
+Sending ack
+Speed = 398 Kbps
+Stop bit received
