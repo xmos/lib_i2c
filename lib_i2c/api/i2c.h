@@ -286,12 +286,21 @@ typedef interface i2c_master_async_if {
 
   /** Initialize a read to an I2C bus.
    *
-   *  \param device_addr the address of the slave device to read from
-   *  \param n           the number of bytes to read
+   *  \param device_addr     the address of the slave device to read from.
+   *  \param n               the number of bytes to read.
+   *  \param send_stop_bit   If this is set to non-zero then a stop bit
+   *                         will be output on the bus after the transaction.
+   *                         This is usually required for normal operation. If
+   *                         this parameter is non-zero then no stop bit will
+   *                         be omitted. In this case, no other task can use
+   *                         the component until either a new read or write
+   *                         call is made (a repeated start) or the
+   *                         send_stop_bit() function is called.
+
    *
    */
   [[guarded]]
-  void rx(uint8_t device_addr, size_t n);
+  void rx(uint8_t device_addr, size_t n, int send_stop_bit);
 
   /** Completed operation notification.
    *
@@ -304,6 +313,12 @@ typedef interface i2c_master_async_if {
    *
    *  This function should be called after a write has completed.
    *
+   *  \param num_bytes_sent  the function will set this value to the
+   *                         number of bytes actually sent. On success, this
+   *                         will be equal to \n but it will be less if the
+   *                         slave sends an early NACK on the bus and the
+   *                         transaction fails.
+
    *  \returns     whether the write succeeded
    */
   [[clears_notification]]
@@ -314,15 +329,22 @@ typedef interface i2c_master_async_if {
    *
    *  This function should be called after a read has completed.
    *
-   *  \param buf         the buffer to fill with data
+   *  \param buf         the buffer to fill with data.
    *  \param n           the number of bytes to read, this should be the same
    *                     as the number of bytes specified in init_rx(),
    *                     otherwise the behavior is undefined.
+   *  \returns           Either ``I2C_SUCCEEDED`` or ``I2C_FAILED`` to indicate
+   *                     whether the operation was a success.
    */
   [[clears_notification]]
-  void get_rx_data(uint8_t buf[n], size_t n, i2c_res_t &result);
+  i2c_res_t get_rx_data(uint8_t buf[n], size_t n);
 
-
+  /** Send a stop bit.
+   *
+   *  This function will cause a stop bit to be sent on the bus. It should
+   *  be used to complete/abort a transaction if the ``send_stop_bit`` argument
+   *  was not set when calling the rx() or tx() functions.
+   */
   void send_stop_bit(void);
 } i2c_master_async_if;
 
@@ -374,7 +396,7 @@ typedef interface i2c_slave_callback_if {
    *                exact number of bytes sent back is governed by the bus
    *                master and will depend on the protocol used on the bus.
    */
-  i2c_slave_ack_t master_requests_read(uint8_t data[n], size_t n);
+  i2c_slave_ack_t master_requests_read(uint8_t data);
 
   /** Master has performed a write.
    *

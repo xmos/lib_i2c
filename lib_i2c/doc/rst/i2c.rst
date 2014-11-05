@@ -62,19 +62,25 @@ pull-up resistors be present.
 
    External connections in slave configuration
 
-Master API
-----------
+Usage
+-----
 
-All |i2c| master functions can be accessed via the ``i2c.h`` header::
+I2C master synchronous operation
+................................
 
-  #include <i2c.h>
+There are two types of interface for |i2c| master components:
+synchronous and asynchronous.
 
-You will also have to add ``lib_i2c`` to the
-``USED_MODULES`` field of your application Makefile.
+The synchronous API provides blocking operation. Whenever a client makes a
+read or write call the operation will complete before the client can
+move on - this will occupy the core that the client code is running on
+until the end of the operation. This method is easy to use, has low
+resource use and is very suitable for applications such as setup and
+configuration of attached peripherals.
 
 |i2c| master components are instantiated as parallel tasks that run in a
 ``par`` statement. The application can connect via an interface
-connection.
+connection using the ``i2c_master_if`` interface type:
 
 .. figure:: images/i2c_master_task_diag.*
 
@@ -89,7 +95,7 @@ and connect to it::
   int main(void) {
     i2c_master_if i2c[1];
     par {
-      i2c_master(i2c, 1, p_scl, p_sda, 100, I2C_ENABLE_MULTIMASTER);
+      i2c_master(i2c, 1, p_scl, p_sda, 100);
       my_application(i2c[0]);
     }
     return 0;
@@ -102,88 +108,103 @@ The application can use the client end of the interface connection to
 perform |i2c| bus operations e.g.::
 
   void my_application(client i2c_master_if i2c) {
-    i2c.write_reg(0x90, 0x07, 0x12);
-    i2c.write_reg(0x90, 0x08, 0x78);
-    unsigned char data = i2c.read_reg(0x90, 0x07);
-    printf("Read data %x from addr 0x90,0x07 (should be 0x12)\n", data);
+    uint8_t data[2];
+    i2c.rx(0x90, data, 2, 1);
+    printf("Read data %d, %d from the bus.\n", data[0], data[1]);
   }
 
+Here the operations such as ``i2c.rx`` will
+block until the operation is completed on the bus.
 More information on interfaces and tasks can be be found in
 the :ref:`XMOS Programming Guide<programming_guide>`. By default the
-|i2c| master mode component does not use any logical cores of its
+|i2c| synchronous master mode component does not use any logical cores of its
 own. It is a *distributed* task which means it will perform its
 function on the logical core of the application task connected to
-it. If, however, the tasks are on different hardware
-tiles then the |i2c| master component will need a core to run on.
+it (provided the application task is on the same tile).
 
-|newpage|
+I2C master asynchronous operation
+.................................
 
-Synchronous vs. Asynchronous operation
-......................................
-
-There are two types of interface for |i2c| master components:
-synchronous and asynchronous.
-
-The synchronous API provides blocking operation. Whenever a client makes a
-read or write call the operation will complete before the client can
-move on - this will occupy the core that the client code is running on
-until the end of the operation. This method is easy to use, has low
-resource use and is very suitable for applications such as setup and
-configuration of attached peripherals.
+The synchronous API will block your application until the bus
+operation is complete. In cases where the application cannot afford to
+wait for this long the asynchronous API can be used.
 
 The asynchronous API offloads operations to another task. Calls are
 provide to initiate reads and writes and notifications are provided
-when the operation completes. This API is trickier to use but can
-provide more efficient operation. It is suitable for applications
-where the |i2c| bus is being used for continuous data transfer.
+when the operation completes. This API requires more management in the
+application but can provide much more efficient operation.
+It is particularly suitable for applications where the |i2c| bus is
+being used for continuous data transfer.
 
-|newpage|
+Setting up an asynchronous |i2c| master component is done in the same
+manner as the synchronous component::
 
-Creating an I2C master instance
-...............................
+  port p_scl = XS1_PORT_4C;
+  port p_sda = XS1_PORT_1G;
+   
+  int main(void) {
+    i2c_master_async_if i2c[1];
+    par {
+      i2c_master_async(i2c, 1, p_scl, p_sda, 100);
+      my_application(i2c[0]);
+    }
+    return 0;
+  }
 
-.. doxygenfunction:: i2c_master
+The application can then use the asynchronous API to offload bus
+operations to the component. For example, the following code
+repeatedly calculates 100 bytes to send over the bus::
 
-|newpage|
+  void my_application(client i2c_master_async_if i2c, uin8_t device_addr) {
+    uint8_t buffer[100];
 
-.. doxygenfunction:: i2c_master_single_port
+    // create and send initial data
+    fill_buffer_with_data(buffer);
+    i2c.tx(device_addr, buffer, 100, 1);
+    while (1) {
+      select {
+        case i2c.operation_completed():
+          i2c_res_t result;
+          unsigned num_bytes_sent;
+          result = get_tx_result(num_bytes_sent);
+          if (result != I2C_SUCCEEDED)
+             handle_bus_error();
 
-|newpage|
+          // Offload the next 100 bytes data to be sent
+          i2c.tx(device_addr, buffer, 100, 1);
 
-.. doxygenfunction:: i2c_master_async
+          // Calculate the next set of data to go
+          fill_buffer_with_data(buffer);
+          break;
+      }
+    }
+  }
 
-|newpage|
+Here the calculation of ``fill_buffer_with_data`` will overlap with
+the sending of data by the other task.
 
-I2C master supporting typedefs
-..............................
+Repeated start bits
+...................
 
-.. doxygenenum:: i2c_write_res_t
+The library supports repeated start bits. The ``rx`` and ``tx``
+functions allow the application to specify whether to send a stop bit
+at the end of the transaction. If this is set to ``0`` then no stop
+bit is sent and the next transaction will begin with a repeated start
+bit e.g.::
 
-|newpage|
+   // Do a tx operation with no stop bit
+   i2c.tx(device_addr, data, 2, num_bytes_sent, 0);
 
-I2C master interface
-....................
-
-.. doxygeninterface:: i2c_master_if
-
-|newpage|
-
-I2C master asynchronous interface
-.................................
-
-.. doxygeninterface:: i2c_master_async_if
+   // This operation will begin with a repeated start bit.
+   i2c.rx(device_addr, data, 1, 1);
 
 
-Slave API
----------
+Note that if no stop bit is sent then no other task using the
+component can use send or receive data. They will block until a stop
+bit is sent.
 
-All |i2c| slave functions can be accessed via the ``i2c.h`` header::
-
-  #include <i2c.h>
-
-You will also have to add ``lib_i2c`` to the
-``USED_MODULES`` field of your application Makefile.
-
+I2C slave library usage
+.......................
 
 |i2c| slave components are instantiated as parallel tasks that run in a
 ``par`` statement. The application can connect via an interface
@@ -231,6 +252,61 @@ function above needs to respond to the calls e.g.::
 
 
 More information on interfaces and tasks can be be found in the :ref:`XMOS Programming Guide<programming_guide>`.
+
+
+Master API
+----------
+
+All |i2c| master functions can be accessed via the ``i2c.h`` header::
+
+  #include <i2c.h>
+
+You will also have to add ``lib_i2c`` to the
+``USED_MODULES`` field of your application Makefile.
+
+Creating an I2C master instance
+...............................
+
+.. doxygenfunction:: i2c_master
+
+|newpage|
+
+.. doxygenfunction:: i2c_master_single_port
+
+|newpage|
+
+.. doxygenfunction:: i2c_master_async
+
+|newpage|
+
+I2C master supporting typedefs
+..............................
+
+.. doxygenenum:: i2c_res_t
+
+|newpage|
+
+I2C master interface
+....................
+
+.. doxygeninterface:: i2c_master_if
+
+|newpage|
+
+I2C master asynchronous interface
+.................................
+
+.. doxygeninterface:: i2c_master_async_if
+
+Slave API
+---------
+
+All |i2c| slave functions can be accessed via the ``i2c.h`` header::
+
+  #include <i2c.h>
+
+You will also have to add ``lib_i2c`` to the
+``USED_MODULES`` field of your application Makefile.
 
 |newpage|
 

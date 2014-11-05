@@ -25,15 +25,10 @@ Features
 ........
 
  * |i2c| master and |i2c| slave modes.
- * Supports speed of 100 Kb/s or 400 Kb/s.
- * Multiple master/clock stretching support.
-
-Components
-...........
-
- * |i2c| master
- * |i2c| master using a single multi-bit xCORE port (reading not supported)
- * |i2c| slave
+ * Supports speed up to 400 Kb/s.
+ * Clock stretching suppoirt.
+ * Multi-master/arbitration support.
+ * Synchronous and asynchronous APIs for efficient usage of processing cores.
 
 Resource Usage
 ..............
@@ -42,7 +37,7 @@ Resource Usage
    :header-rows: 1
    :class: wide vertical-borders horizontal-borders
 
-   * - Component
+   * - Configuration
      - Pins
      - Ports
      - Clock Blocks
@@ -53,12 +48,6 @@ Resource Usage
      - 2 (1-bit)
      - 0
      - ~1.2K
-     - 0
-   * - Master (multi-master disabled)
-     - 2
-     - 2 (1-bit)
-     - 0
-     - ~0.9K
      - 0
    * - Master (single port)
      - 2
