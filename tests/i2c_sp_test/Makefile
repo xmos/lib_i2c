@@ -22,6 +22,7 @@ COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
 XCC_FLAGS_400 = $(COMMON_FLAGS) -DSPEED=400
 XCC_FLAGS_100 = $(COMMON_FLAGS) -DSPEED=100
+XCC_FLAGS_10 = $(COMMON_FLAGS) -DSPEED=10
 
 # The USED_MODULES variable lists other module used by the application.
 
