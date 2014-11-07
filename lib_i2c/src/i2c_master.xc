@@ -3,6 +3,11 @@
 #include <xclib.h>
 #include <timer.h>
 
+/** Releases the SCL line, reads it back and waits until it goes high (in
+ *  case the slave is clock stretching).
+ *  Since the line going high may be delayed, the fall_time value may
+ *  need to be adjusted
+ */
 static void release_clock_and_wait(port i2c_scl,
                                    unsigned &fall_time,
                                    unsigned delay)
@@ -15,6 +20,10 @@ static void release_clock_and_wait(port i2c_scl,
   fall_time = time - delay;
 }
 
+/** 'Pulse' the clock line high and in the middle of the high period
+ *  sample the data line (if required). Timing is done via the fall_time
+ *  reference and bit_time period supplied.
+ */
 static int high_pulse_sample(port i2c_scl, port ?i2c_sda,
                              unsigned bit_time,
                              unsigned &fall_time) {
@@ -34,12 +43,18 @@ static int high_pulse_sample(port i2c_scl, port ?i2c_sda,
   return sample_value;
 }
 
+/** 'Pulse' the clock line high. Timing is done via the fall_time
+ *  reference and bit_time period supplied.
+ */
 static void high_pulse(port i2c_scl, unsigned bit_time,
                        unsigned &fall_time)
 {
   high_pulse_sample(i2c_scl, null, bit_time, fall_time);
 }
 
+/** Output a start bit. The function returns the 'fall time' i.e. the
+ *  reference clock time when the SCL line transitions to low.
+ */
 static unsigned start_bit(port i2c_scl, port i2c_sda,
                           unsigned bit_time) {
   timer tmr;
@@ -53,6 +68,8 @@ static unsigned start_bit(port i2c_scl, port i2c_sda,
   return fall_time;
 }
 
+/** Output a stop bit.
+ */
 static void stop_bit(port i2c_scl, port i2c_sda, unsigned bit_time,
                      unsigned fall_time) {
   timer tmr;
@@ -64,6 +81,9 @@ static void stop_bit(port i2c_scl, port i2c_sda, unsigned bit_time,
   delay_ticks(bit_time/4);
 }
 
+/** Transmit 8 bits of data, then read the ack back from the slave and return
+ *  that value.
+ */
 static int tx8(port p_scl, port p_sda, unsigned data,
                unsigned bit_time,
                unsigned &fall_time) {
@@ -89,7 +109,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
 
     case (size_t i =0; i < n; i++)
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
-      c[i].rx(uint8_t device, uint8_t buf[m], size_t m,
+      c[i].read(uint8_t device, uint8_t buf[m], size_t m,
               int send_stop_bit) -> i2c_res_t result:
       unsigned fall_time;
       int ack;
@@ -135,7 +155,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
 
     case (size_t i = 0; i < n; i++)
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
-        c[i].tx(uint8_t device, uint8_t buf[n], size_t n,
+        c[i].write(uint8_t device, uint8_t buf[n], size_t n,
                 size_t &num_bytes_sent,
                 int send_stop_bit) -> i2c_res_t result:
       int ack = 0;

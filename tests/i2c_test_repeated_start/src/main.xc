@@ -10,8 +10,8 @@ port p_sda = XS1_PORT_1B;
 void task1(client i2c_master_if i2c) {
   uint8_t data[1] = {0x99};
   size_t numbytes;
-  i2c.tx(0x33, data, 1, numbytes, 0);
-  i2c.tx(0x33, data, 1, numbytes, 1);
+  i2c.write(0x33, data, 1, numbytes, 0);
+  i2c.write(0x33, data, 1, numbytes, 1);
 }
 
 

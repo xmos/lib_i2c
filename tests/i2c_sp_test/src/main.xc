@@ -12,15 +12,15 @@ void test(client i2c_master_if i2c)
   int ack;
   size_t n;
   data[0] = 0x90; data[1] = 0xfe;
-  ack = i2c.tx(0x3c, data, 2, n, 1);
+  ack = i2c.write(0x3c, data, 2, n, 1);
   debug_printf("xCORE got %s\n",
                ack == I2C_SUCCEEDED ? "ack" : "nack");
   data[0] = 0xff; data[1] = 0x00; data[2] = 0xaa;
-  ack = i2c.tx(0x7b, data, 3, n, 1);
+  ack = i2c.write(0x7b, data, 3, n, 1);
   debug_printf("xCORE got %s\n",
                ack == I2C_SUCCEEDED ? "ack" : "nack");
   data[0] = 0xee;
-  ack = i2c.tx(0x31, data, 1, n, 1);
+  ack = i2c.write(0x31, data, 1, n, 1);
   debug_printf("xCORE got %s\n",
                ack == I2C_SUCCEEDED ? "ack" : "nack");
   exit(0);

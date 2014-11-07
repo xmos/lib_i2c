@@ -44,7 +44,7 @@ typedef interface i2c_master_if {
    *  \returns     whether the write succeeded
    */
   [[guarded]]
-  i2c_res_t tx(uint8_t device_addr, uint8_t buf[n], size_t n,
+  i2c_res_t write(uint8_t device_addr, uint8_t buf[n], size_t n,
                size_t &num_bytes_sent, int send_stop_bit);
 
   /** Read data from an I2C bus.
@@ -63,7 +63,7 @@ typedef interface i2c_master_if {
 
    */
   [[guarded]]
-  i2c_res_t rx(uint8_t device_addr, uint8_t buf[n], size_t n,
+  i2c_res_t read(uint8_t device_addr, uint8_t buf[n], size_t n,
                int send_stop_bit);
 
 
@@ -71,7 +71,7 @@ typedef interface i2c_master_if {
    *
    *  This function will cause a stop bit to be sent on the bus. It should
    *  be used to complete/abort a transaction if the ``send_stop_bit`` argument
-   *  was not set when calling the rx() or tx() functions.
+   *  was not set when calling the read() or write() functions.
    */
   void send_stop_bit(void);
 
@@ -97,11 +97,11 @@ extends client interface i2c_master_if : {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1];
     size_t n;
-    result = i.tx(device_addr, a_reg, 1, n, 1);
+    result = i.write(device_addr, a_reg, 1, n, 1);
     if (result == I2C_FAILED) {
       return 0;
     }
-    result = i.rx(device_addr, data, 1, 1);
+    result = i.read(device_addr, data, 1, 1);
     return data[0];
   }
 
@@ -121,7 +121,7 @@ extends client interface i2c_master_if : {
   {
     uint8_t a_data[2] = {reg, data};
     size_t n;
-    return i.tx(device_addr, a_data, 2, n, 1);
+    return i.write(device_addr, a_data, 2, n, 1);
   }
 
   /** Read an 8-bit register on a slave device from a 16 bit register address.
@@ -143,9 +143,9 @@ extends client interface i2c_master_if : {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[1];
     size_t n;
-    result = i.tx(device_addr, a_reg, 2, n, 1);
+    result = i.write(device_addr, a_reg, 2, n, 1);
     if (result == I2C_FAILED) return 0;
-    result = i.rx(device_addr, data, 1, 1);
+    result = i.read(device_addr, data, 1, 1);
     return data[0];
   }
 
@@ -165,7 +165,7 @@ extends client interface i2c_master_if : {
                                      uint8_t data) {
     uint8_t a_data[3] = {reg, reg >> 8, data};
     size_t n;
-    return i.tx(device_addr, a_data, 3, n, 1);
+    return i.write(device_addr, a_data, 3, n, 1);
   }
 
   /** Read an 16-bit register on a slave device from a 16 bit register address.
@@ -187,9 +187,9 @@ extends client interface i2c_master_if : {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[2];
     size_t n;
-    result = i.tx(device_addr, a_reg, 2, n, 1);
+    result = i.write(device_addr, a_reg, 2, n, 1);
     if (result == I2C_FAILED) return 0;
-    result = i.rx(device_addr, data, 2, 1);
+    result = i.read(device_addr, data, 2, 1);
     return ((uint16_t) data[0] << 8) | data[1];
   }
 
@@ -209,7 +209,7 @@ extends client interface i2c_master_if : {
                                uint16_t data) {
     uint8_t a_data[4] = {reg, reg >> 8, data, data >> 8};
     size_t n;
-    return i.tx(device_addr, a_data, 4, n, 1);
+    return i.write(device_addr, a_data, 4, n, 1);
   }
 
 
@@ -278,10 +278,19 @@ typedef interface i2c_master_async_if {
    *  \param device_addr the address of the slave device to write to
    *  \param buf         the buffer containing data to write
    *  \param n           the number of bytes to write
+   *  \param send_stop_bit   If this is set to non-zero then a stop bit
+   *                         will be output on the bus after the transaction.
+   *                         This is usually required for normal operation. If
+   *                         this parameter is non-zero then no stop bit will
+   *                         be omitted. In this case, no other task can use
+   *                         the component until either a new read or write
+   *                         call is made (a repeated start) or the
+   *                         send_stop_bit() function is called.
+   *
    *
    */
   [[guarded]]
-  void tx(uint8_t device_addr, uint8_t buf[n], size_t n,
+  void write(uint8_t device_addr, uint8_t buf[n], size_t n,
           int send_stop_bit);
 
   /** Initialize a read to an I2C bus.
@@ -296,7 +305,6 @@ typedef interface i2c_master_async_if {
    *                         the component until either a new read or write
    *                         call is made (a repeated start) or the
    *                         send_stop_bit() function is called.
-
    *
    */
   [[guarded]]
@@ -343,7 +351,7 @@ typedef interface i2c_master_async_if {
    *
    *  This function will cause a stop bit to be sent on the bus. It should
    *  be used to complete/abort a transaction if the ``send_stop_bit`` argument
-   *  was not set when calling the rx() or tx() functions.
+   *  was not set when calling the rx() or write() functions.
    */
   void send_stop_bit(void);
 } i2c_master_async_if;

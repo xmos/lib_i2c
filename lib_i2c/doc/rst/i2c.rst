@@ -109,7 +109,7 @@ perform |i2c| bus operations e.g.::
 
   void my_application(client i2c_master_if i2c) {
     uint8_t data[2];
-    i2c.rx(0x90, data, 2, 1);
+    i2c.read(0x90, data, 2, 1);
     printf("Read data %d, %d from the bus.\n", data[0], data[1]);
   }
 
@@ -160,7 +160,7 @@ repeatedly calculates 100 bytes to send over the bus::
 
     // create and send initial data
     fill_buffer_with_data(buffer);
-    i2c.tx(device_addr, buffer, 100, 1);
+    i2c.write(device_addr, buffer, 100, 1);
     while (1) {
       select {
         case i2c.operation_completed():
@@ -171,7 +171,7 @@ repeatedly calculates 100 bytes to send over the bus::
              handle_bus_error();
 
           // Offload the next 100 bytes data to be sent
-          i2c.tx(device_addr, buffer, 100, 1);
+          i2c.write(device_addr, buffer, 100, 1);
 
           // Calculate the next set of data to go
           fill_buffer_with_data(buffer);
@@ -193,11 +193,10 @@ bit is sent and the next transaction will begin with a repeated start
 bit e.g.::
 
    // Do a tx operation with no stop bit
-   i2c.tx(device_addr, data, 2, num_bytes_sent, 0);
+   i2c.write(device_addr, data, 2, num_bytes_sent, 0);
 
    // This operation will begin with a repeated start bit.
-   i2c.rx(device_addr, data, 1, 1);
-
+   i2c.read(device_addr, data, 1, 1);
 
 Note that if no stop bit is sent then no other task using the
 component can use send or receive data. They will block until a stop
