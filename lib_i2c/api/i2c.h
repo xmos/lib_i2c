@@ -385,29 +385,45 @@ typedef enum i2c_slave_ack_t {
 typedef interface i2c_slave_callback_if {
   /** Master has requested a read.
    *
-   *  This function will be called by the component
-   *  if the bus master requests a
-   *  read from this slave device. The component will clock stretch
-   *  until the buffer is filled by the application and then transmit
-   *  the buffer back to the master.
+   *  This callback function will be called by the component
+   *  if the bus master requests a read from this slave device.
+   *  At this point the slave can choose to accept the request (and
+   *  drive an ACK signal back to the master) or not (and drive a NACK
+   *  signal).
    *
-   *  \param data   the buffer to fill with data for the master
-   *  \param n      the *maximum* number of bytes that can be set. The
-   *                exact number of bytes sent back is governed by the bus
-   *                master and will depend on the protocol used on the bus.
+   *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
+   *            ``I2C_SLAVE_NACK``.
    */
-  i2c_slave_ack_t master_requests_read(uint8_t data);
+  i2c_slave_ack_t master_requests_read(void);
 
-  /** Master has performed a write.
+  /** Master has requested a write.
    *
-   *  This function will be called by the component if the bus master
-   *  performes a write to this slave device. The component will clock
-   *  stretch until the buffer is processed (and then return the ack).
+   *  This callback function will be called by the component
+   *  if the bus master requests a write from this slave device.
+   *  At this point the slave can choose to accept the request (and
+   *  drive an ACK signal back to the master) or not (and drive a NACK
+   *  signal).
    *
-   *  \param data   the buffer filled with data by the master
-   *  \param n      the number of bytes transmitted.
+   *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
+   *            ``I2C_SLAVE_NACK``.
    */
-  i2c_slave_ack_t master_perfomed_write(uint8_t data[n], size_t n);
+  i2c_slave_ack_t master_requests_write(void);
+
+  /** Master requires data.
+   *
+   *  This callback function will be called when the I2C master requires data
+   *  from the slave.
+   *
+   *  \return   the data to pass to the master.
+   */
+  uint8_t master_requires_data();
+
+  /** Master has sent some data.
+   *
+   *  This callback function will be called when the I2C master has transferred
+   *  a byte of data to the slave.
+   */
+  i2c_slave_ack_t master_sent_data(uint8_t data);
 } i2c_slave_callback_if;
 
 
@@ -428,9 +444,6 @@ typedef interface i2c_slave_callback_if {
 [[combinable]]
 void i2c_slave(client i2c_slave_callback_if i,
                port p_scl, port p_sda,
-               uint8_t device_addr,
-               static const size_t max_transaction_size);
-
-
+               uint8_t device_addr);
 
 #endif
