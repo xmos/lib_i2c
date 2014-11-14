@@ -2,47 +2,47 @@ Start bit received
 Byte received: 0x78
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x3c
 Byte received: 0x90
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Byte received: 0xfe
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Stop bit received
 xCORE got ack
 Start bit received
 Byte received: 0xf6
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x7b
 Byte received: 0xff
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Byte received: 0x0
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Byte received: 0xaa
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Stop bit received
 xCORE got ack
 Start bit received
 Byte received: 0x62
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x31
 Byte received: 0xee
 Sending ack
 WARNING: master driving SDA during ACK phase
-Speed = ... Kbps
+Speed = \d+ Kbps
 Stop bit received
 xCORE got ack
