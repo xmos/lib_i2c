@@ -26,37 +26,37 @@ class I2CSlaveChecker(xmostest.SimThread):
     def start_bit(self, xsi):
         print "Sending start bit"
         xsi.drive_port_pins(self._scl_port, 1)
-        xsi.wait_until(xsi.get_time() + self._bit_time / 4)
+        self.wait_until(xsi.get_time() + self._bit_time / 4)
         xsi.drive_port_pins(self._sda_port, 0);
-        xsi.wait_until(xsi.get_time() + self._bit_time / 2)
+        self.wait_until(xsi.get_time() + self._bit_time / 2)
         xsi.drive_port_pins(self._scl_port, 0);
         self._fall_time = xsi.get_time()
 
 
 
     def high_pulse(self, xsi):
-        xsi.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
+        self.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
         xsi.drive_port_pins(self._scl_port, 1)
         if xsi.is_port_driving(self._scl_port):
-            xsi.wait_for_port_pins_change([self._scl_port])
+            self.wait_for_port_pins_change([self._scl_port])
         new_fall_time = self._fall_time + self._bit_time
         if xsi.get_time() > new_fall_time:
             new_fall_time = xsi.get_time() + self._bit_time / 4
-        xsi.wait_until(new_fall_time)
+        self.wait_until(new_fall_time)
         xsi.drive_port_pins(self._scl_port, 0)
         self._fall_time = new_fall_time
 
     def high_pulse_sample(self, xsi):
-        xsi.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
+        self.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
         if xsi.is_port_driving(self._scl_port):
-            xsi.wait_for_port_pins_change([self._scl_port])
+            self.wait_for_port_pins_change([self._scl_port])
         xsi.drive_port_pins(self._scl_port, 1)
-        xsi.wait_until(xsi.get_time() + self._bit_time / 4)
+        self.wait_until(xsi.get_time() + self._bit_time / 4)
         data = self.get_port_val(xsi, self._sda_port)
         new_fall_time = self._fall_time + self._bit_time
         if xsi.get_time() > new_fall_time:
             new_fall_time = xsi.get_time() + self._bit_time / 4
-        xsi.wait_until(new_fall_time)
+        self.wait_until(new_fall_time)
         xsi.drive_port_pins(self._scl_port, 0)
         self._fall_time = new_fall_time
         return data
@@ -64,7 +64,7 @@ class I2CSlaveChecker(xmostest.SimThread):
     def write(self, xsi, byte):
         print "Sending data 0x%x" % byte
         for i in range(8):
-            xsi.wait_until(self._fall_time + self._bit_time / 8);
+            self.wait_until(self._fall_time + self._bit_time / 8);
             bit = (byte >> 7) & 1
             xsi.drive_port_pins(self._sda_port, bit)
             byte <<= 1;
@@ -77,11 +77,11 @@ class I2CSlaveChecker(xmostest.SimThread):
 
     def stop_bit(self, xsi):
         print "Sending stop bit"
-        xsi.wait_until(self._fall_time + self._bit_time / 4)
+        self.wait_until(self._fall_time + self._bit_time / 4)
         xsi.drive_port_pins(self._sda_port, 0)
-        xsi.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
+        self.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
         xsi.drive_port_pins(self._scl_port, 1)
-        xsi.wait_until(self._fall_time + (self._bit_time * 3 / 4))
+        self.wait_until(self._fall_time + (self._bit_time * 3 / 4))
         xsi.drive_port_pins(self._sda_port, 1)
 
 
@@ -91,7 +91,7 @@ class I2CSlaveChecker(xmostest.SimThread):
             bit = self.high_pulse_sample(xsi)
             byte = (byte << 1) | bit
         print "Received byte 0x%x" % byte
-        xsi.wait_until(self._fall_time + self._bit_time / 8);
+        self.wait_until(self._fall_time + self._bit_time / 8);
         if ack == 0:
             print "Master sending ACK"
         else:
@@ -100,10 +100,11 @@ class I2CSlaveChecker(xmostest.SimThread):
         self.high_pulse(xsi)
 
 
-    def run(self, xsi):
+    def run(self):
+        xsi = self.xsi
         xsi.drive_port_pins(self._scl_port, 1)
         xsi.drive_port_pins(self._sda_port, 1)
-        xsi.wait_until(xsi.get_time() + 30000)
+        self.wait_until(xsi.get_time() + 30000)
         for (typ, addr, d) in self._tsequence:
             if typ == "w":
                 self.start_bit(xsi)
