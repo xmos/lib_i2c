@@ -22,7 +22,7 @@ def runtest():
                                                True, False,
                                                True, True, False])
 
-    tester = xmostest.pass_if_matches(open('reg_ops_nack.expect'),
+    tester = xmostest.ComparisonTester(open('reg_ops_nack.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                      'reg_ops_nack_test',
                                      regexp=True)

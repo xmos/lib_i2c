@@ -17,7 +17,7 @@ def runtest():
                                              True, True, False,
                                              False, True])
 
-    tester = xmostest.pass_if_matches(open('ack_test.expect'),
+    tester = xmostest.ComparisonTester(open('ack_test.expect'),
                                       'lib_i2c', 'i2c_master_sim_tests',
                                       'ack_test', {'speed':400},
                                       regexp=True)

@@ -21,10 +21,13 @@ def do_slave_test(speed):
                                ("w", 0x3c, [0x22, 0xff])],
                                speed = speed)
 
-    tester = xmostest.pass_if_matches(open('basic_slave_test.expect'),
+    tester = xmostest.ComparisonTester(open('basic_slave_test.expect'),
                                      'lib_i2c', 'i2c_slave_sim_tests',
                                      'basic_test', {'speed':speed},
                                      regexp=True)
+
+    if speed == 10:
+        tester.set_min_testlevel('nightly')
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
@@ -35,7 +38,4 @@ def do_slave_test(speed):
 def runtest():
     do_slave_test(400)
     do_slave_test(100)
-    if xmostest.get_testrun_type() != 'smoke':
-        do_slave_test(10)
-    else:
-        xmostest.note_skipped_tests()
+    do_slave_test(10)

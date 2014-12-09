@@ -17,7 +17,7 @@ def runtest():
                                expected_speed = 175,
                                clock_stretch = 5000)
 
-    tester = xmostest.pass_if_matches(open('master_test.expect'),
+    tester = xmostest.ComparisonTester(open('master_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                       'clock_stretch',
                                      regexp=True)

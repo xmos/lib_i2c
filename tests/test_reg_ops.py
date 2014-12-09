@@ -16,7 +16,7 @@ def runtest():
                                tx_data = [0x99, 0x3A, 0xff, 0x05],
                                expected_speed = 400)
 
-    tester = xmostest.pass_if_matches(open('reg_test.expect'),
+    tester = xmostest.ComparisonTester(open('reg_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                      'reg_ops_test',
                                      regexp=True)

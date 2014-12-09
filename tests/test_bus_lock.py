@@ -15,7 +15,7 @@ def runtest():
                                "tile[0]:XS1_PORT_1B",
                                expected_speed = 400)
 
-    tester = xmostest.pass_if_matches(open('lock_test.expect'),
+    tester = xmostest.ComparisonTester(open('lock_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                       'bus_locks',
                                      regexp=True)

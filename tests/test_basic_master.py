@@ -16,10 +16,13 @@ def do_master_test(speed):
                                tx_data = [0x99, 0x3A, 0xff],
                                expected_speed = speed)
 
-    tester = xmostest.pass_if_matches(open('master_test.expect'),
+    tester = xmostest.ComparisonTester(open('master_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                      'basic_test', {'speed':speed},
                                      regexp=True)
+
+    if speed == 10:
+        tester.set_min_testlevel('nightly')
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
@@ -28,9 +31,5 @@ def do_master_test(speed):
                               tester = tester)
 
 def runtest():
-    do_master_test(400)
-    do_master_test(100)
-    if xmostest.get_testrun_type() != 'smoke':
-        do_master_test(10)
-    else:
-        xmostest.note_skipped_tests()
+    for speed in [400, 100, 10]:
+        do_master_test(speed)
