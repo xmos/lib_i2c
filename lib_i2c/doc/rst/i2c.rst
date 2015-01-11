@@ -22,8 +22,9 @@ resource use and is very suitable for applications such as setup and
 configuration of attached peripherals.
 
 |i2c| master components are instantiated as parallel tasks that run in a
-``par`` statement. The application can connect via an interface
-connection using the ``i2c_master_if`` interface type:
+``par`` statement. For synchronous oepration, the application
+can connect via an interface connection using the ``i2c_master_if``
+interface type:
 
 .. figure:: images/i2c_master_task_diag.*
 
@@ -56,7 +57,7 @@ perform |i2c| bus operations e.g.::
     printf("Read data %d, %d from the bus.\n", data[0], data[1]);
   }
 
-Here the operations such as ``i2c.rx`` will
+Here the operations such as ``i2c.read`` will
 block until the operation is completed on the bus.
 More information on interfaces and tasks can be be found in
 the :ref:`XMOS Programming Guide<programming_guide>`. By default the
@@ -106,7 +107,7 @@ repeatedly calculates 100 bytes to send over the bus::
     i2c.write(device_addr, buffer, 100, 1);
     while (1) {
       select {
-        case i2c.operation_completed():
+        case i2c.operation_complete():
           i2c_res_t result;
           unsigned num_bytes_sent;
           result = get_tx_result(num_bytes_sent);

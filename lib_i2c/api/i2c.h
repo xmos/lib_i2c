@@ -372,6 +372,27 @@ typedef interface i2c_master_async_if {
  *
  *  This function implements I2C and allows clients to asynchronously
  *  perform operations on the bus.
+ *
+ *  \param   i            the interface to connect to the client of the
+ *                        component
+ *  \param  p_scl  The SCL port of the I2C bus
+ *  \param  p_sda  The SDA port of the I2C bus
+ *  \param  kbits_per_second The speed of the I2C bus
+ *
+ *  \component
+ *  \paraminfo     kbits_per_second in [1..400], resources:noeffect
+ *  \paraminfo     max_transaction_size resources:linear+orthoganol
+ */
+void i2c_master_async(server interface i2c_master_async_if i[n],
+                      size_t n,
+                      port p_scl, port p_sda,
+                      unsigned kbits_per_second,
+                      static const size_t max_transaction_size);
+
+/** I2C master component (asynchronous API, combinable).
+ *
+ *  This function implements I2C and allows clients to asynchronously
+ *  perform operations on the bus.
  *  Note that this component can be run on the same logical core as other
  *  tasks (i.e. it is [[combinable]]). However, care must be taken that the
  *  other tasks do not take too long in their select cases otherwise this
@@ -384,10 +405,12 @@ typedef interface i2c_master_async_if {
  *  \param  kbits_per_second The speed of the I2C bus
  */
 [[combinable]]
-void i2c_master_async(client interface i2c_master_async_if i[n],
-                      size_t n,
-                      port p_scl, port p_sda,
-                      unsigned kbits_per_second);
+void i2c_master_async_comb(server interface i2c_master_async_if i[n],
+                           size_t n,
+                           port p_scl, port p_sda,
+                           unsigned kbits_per_second,
+                           static const size_t max_transaction_size);
+
 
 
 typedef enum i2c_slave_ack_t {
