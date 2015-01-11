@@ -224,14 +224,14 @@ extends client interface i2c_master_if : {
 
 /** Implements I2C on the i2c_master_if interface using two ports.
  *
- *  \param  c      An array of server interface connections for clients to
+ *  \param  i      An array of server interface connections for clients to
  *                 connect to
  *  \param  n      The number of clients connected
  *  \param  p_scl  The SCL port of the I2C bus
  *  \param  p_sda  The SDA port of the I2C bus
  *  \param  kbits_per_second The speed of the I2C bus
  **/
-[[distributable]] void i2c_master(server interface i2c_master_if c[n],
+[[distributable]] void i2c_master(server interface i2c_master_if i[n],
                                   size_t n,
                                   port p_scl, port p_sda,
                                   unsigned kbits_per_second);
@@ -296,7 +296,7 @@ typedef interface i2c_master_async_if {
    */
   [[guarded]]
   void write(uint8_t device_addr, uint8_t buf[n], size_t n,
-          int send_stop_bit);
+             int send_stop_bit);
 
   /** Initialize a read to an I2C bus.
    *
@@ -313,7 +313,7 @@ typedef interface i2c_master_async_if {
    *
    */
   [[guarded]]
-  void rx(uint8_t device_addr, size_t n, int send_stop_bit);
+  void read(uint8_t device_addr, size_t n, int send_stop_bit);
 
   /** Completed operation notification.
    *
@@ -335,7 +335,7 @@ typedef interface i2c_master_async_if {
    *  \returns     whether the write succeeded
    */
   [[clears_notification]]
-  i2c_res_t get_tx_result(size_t &num_bytes_sent);
+  i2c_res_t get_write_result(size_t &num_bytes_sent);
 
 
   /** Get read result.
@@ -350,7 +350,7 @@ typedef interface i2c_master_async_if {
    *                     whether the operation was a success.
    */
   [[clears_notification]]
-  i2c_res_t get_rx_data(uint8_t buf[n], size_t n);
+  i2c_res_t get_read_data(uint8_t buf[n], size_t n);
 
   /** Send a stop bit.
    *
