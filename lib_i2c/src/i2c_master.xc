@@ -166,7 +166,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
       for (; j < n; j++) {
         if (ack != 0)
           break;
-        ack |= tx8(p_scl, p_sda, buf[j], bit_time, fall_time);
+        ack = tx8(p_scl, p_sda, buf[j], bit_time, fall_time);
       }
       if (send_stop_bit) {
         stop_bit(p_scl, p_sda, bit_time, fall_time);
@@ -175,7 +175,10 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
         locked_client = i;
       }
       num_bytes_sent = j;
-      result = (ack == 0) ? I2C_SUCCEEDED : I2C_FAILED;
+      if (num_bytes_sent == n && ack == 1)
+        result = I2C_SUCCEEDED;
+      else
+        result = I2C_FAILED;
       break;
 
     case c[int i].send_stop_bit(void):

@@ -56,7 +56,7 @@ Byte received: 0x99
 Sending ack
 Speed = 398 Kbps
 Byte received: 0x33
-Sending nack
+Sending ack
 Speed = 398 Kbps
 Stop bit received
 NACK

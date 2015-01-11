@@ -14,7 +14,16 @@ def runtest():
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
                                tx_data = [0x99, 0x3A, 0xff, 0x05],
-                               expected_speed = 400)
+                               expected_speed = 400,
+                               ack_sequence=[True, True, False,
+                                             True, True, True, False,
+                                             True, True, True, True, False,
+                                             True, False,
+                                             True,
+                                             True, True, False,
+                                             True,
+                                             True, True, False,
+                                             True])
 
     tester = xmostest.ComparisonTester(open('reg_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',

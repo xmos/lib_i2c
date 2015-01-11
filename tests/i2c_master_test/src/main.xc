@@ -15,28 +15,28 @@ void test(client i2c_master_if i2c)
   if (ENABLE_TX) {
     data[0] = 0x90; data[1] = 0xfe;
     ack = i2c.write(0x3c, data, 2, num_sent, 1);
-    debug_printf("xCORE got %s. Transmitted %d bytes.\n",
-                 ack == I2C_SUCCEEDED ? "ack" : "nack", num_sent);
+    debug_printf("xCORE: %s. Transmitted %d bytes.\n",
+                 ack == I2C_SUCCEEDED ? "success" : "failure", num_sent);
   }
   if (ENABLE_RX) {
     ack = i2c.read(0x22, data, 2, 1);
-    debug_printf("xCORE got %s\n",
-                 ack == I2C_SUCCEEDED ? "ack" : "nack");
+    debug_printf("xCORE: %s\n",
+                 ack == I2C_SUCCEEDED ? "success" : "failure");
     debug_printf("xCORE received: 0x%x, 0x%x\n",data[0], data[1]);
     ack = i2c.read(0x22, data, 1, 1);
-    debug_printf("xCORE got %s\n",
-                 ack == I2C_SUCCEEDED ? "ack" : "nack");
+    debug_printf("xCORE: %s\n",
+                 ack == I2C_SUCCEEDED ? "success" : "failure");
     debug_printf("xCORE received: 0x%x\n",data[0]);
   }
   if (ENABLE_TX) {
     data[0] = 0xff; data[1] = 0x00; data[2] = 0xaa;
     ack = i2c.write(0x7b, data, 3, num_sent, 1);
-    debug_printf("xCORE got %s. Transmitted %d bytes.\n",
-                 ack == I2C_SUCCEEDED ? "ack" : "nack", num_sent);
+    debug_printf("xCORE: %s. Transmitted %d bytes.\n",
+                 ack == I2C_SUCCEEDED ? "success" : "failure", num_sent);
     data[0] = 0xee;
     ack = i2c.write(0x31, data, 1, num_sent, 1);
-    debug_printf("xCORE got %s. Transmitted %d bytes.\n",
-                 ack == I2C_SUCCEEDED ? "ack" : "nack", num_sent);
+    debug_printf("xCORE: %s. Transmitted %d bytes.\n",
+                 ack == I2C_SUCCEEDED ? "success" : "failure", num_sent);
   }
   exit(0);
 }

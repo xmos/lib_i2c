@@ -15,7 +15,12 @@ def runtest():
                                "tile[0]:XS1_PORT_1B",
                                tx_data = [0x99, 0x3A, 0xff],
                                expected_speed = 175,
-                               clock_stretch = 5000)
+                               clock_stretch = 5000,
+                               ack_sequence=[True, True, False,
+                                             True,
+                                             True,
+                                             True, True, True, False,
+                                             True, False])
 
     tester = xmostest.ComparisonTester(open('master_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',

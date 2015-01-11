@@ -14,7 +14,12 @@ def do_master_test(speed):
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
                                tx_data = [0x99, 0x3A, 0xff],
-                               expected_speed = speed)
+                               expected_speed = speed,
+                               ack_sequence=[True, True, False,
+                                             True,
+                                             True,
+                                             True, True, True, False,
+                                             True, False])
 
     tester = xmostest.ComparisonTester(open('master_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',

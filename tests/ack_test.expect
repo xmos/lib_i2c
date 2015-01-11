@@ -10,7 +10,7 @@ Byte received: 0xfe
 Sending ack
 Speed = \d+ Kbps
 Stop bit received
-xCORE got ack. Transmitted 2 bytes.
+xCORE: failure. Transmitted 2 bytes.
 Start bit received
 Byte received: 0xf6
 Sending ack
@@ -23,11 +23,11 @@ Byte received: 0x0
 Sending nack
 Speed = \d+ Kbps
 Stop bit received
-xCORE got nack. Transmitted 2 bytes.
+xCORE: failure. Transmitted 2 bytes.
 Start bit received
 Byte received: 0x62
 Sending nack
 Speed = \d+ Kbps
 Master write transaction started, device address=0x31
 Stop bit received
-xCORE got nack. Transmitted 0 bytes.
+xCORE: failure. Transmitted 0 bytes.
