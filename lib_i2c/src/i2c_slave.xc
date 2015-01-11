@@ -24,6 +24,8 @@ void i2c_slave(client i2c_slave_callback_if i,
   int stop_bit_check = 0;
   while (1) {
     select {
+    case i.shutdown():
+      return;
     case state != WAITING_FOR_STARTBIT => p_scl when pinseq(scl_val) :> void:
       switch (state) {
       case READING_ADDR:

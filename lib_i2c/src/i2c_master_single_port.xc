@@ -149,6 +149,8 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
       tmr :> fall_time;
       stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask, fall_time);
       break;
+    case c[int i].shutdown():
+      return;
     }
   }
 }

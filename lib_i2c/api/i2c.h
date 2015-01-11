@@ -75,6 +75,11 @@ typedef interface i2c_master_if {
    */
   void send_stop_bit(void);
 
+  /** Shutdown the I2C component.
+   *
+   *  This function will cause the I2C task to shutdown and return.
+   */
+  void shutdown();
 } i2c_master_if;
 
 extends client interface i2c_master_if : {
@@ -354,6 +359,13 @@ typedef interface i2c_master_async_if {
    *  was not set when calling the rx() or write() functions.
    */
   void send_stop_bit(void);
+
+
+  /** Shutdown the I2C component.
+   *
+   *  This function will cause the I2C task to shutdown and return.
+   */
+  void shutdown();
 } i2c_master_async_if;
 
 /** I2C master component (asynchronous API).
@@ -432,6 +444,12 @@ typedef interface i2c_slave_callback_if {
    *  a byte of data to the slave.
    */
   i2c_slave_ack_t master_sent_data(uint8_t data);
+
+  /** Shutdown the I2C component.
+   *
+   *  This function will cause the I2C slave task to shutdown and return.
+   */
+  [[notification]] slave void shutdown();
 } i2c_slave_callback_if;
 
 

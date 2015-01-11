@@ -185,6 +185,8 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
       stop_bit(p_scl, p_sda, bit_time, fall_time);
       locked_client = -1;
       break;
+    case c[int i].shutdown(void):
+      return;
     }
 
   }
