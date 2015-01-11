@@ -3,6 +3,7 @@
 #include "debug_print.h"
 #include "i2c.h"
 #include <stdlib.h>
+#include <timer.h>
 
 port p_scl = XS1_PORT_1A;
 port p_sda = XS1_PORT_1B;
@@ -63,11 +64,41 @@ void test(client i2c_master_async_if i2c)
   exit(0);
 }
 
+/** This combinable task will randomly interrupt the i2c master combinable
+ *  task and add delays. This should slow down the speed but should still
+ *  produce valid i2c transactions.
+ */
+[[combinable]]
+void interference()
+{
+  timer tmr;
+  unsigned timeout;
+  tmr :> timeout;
+  while (1) {
+    select {
+    case tmr when timerafter(timeout) :> void:
+      int delay = rand() >> 20;
+      delay_ticks(delay);
+      tmr :> timeout;
+      timeout += rand() >> 20;
+      break;
+    }
+  }
+}
+
 int main(void) {
   i2c_master_async_if i2c[1];
   par {
     #ifdef COMB
-    i2c_master_async_comb(i2c, 1, p_scl, p_sda, SPEED, 10);
+      #ifdef INTERFERE
+      [[combine]]
+      par {
+        i2c_master_async_comb(i2c, 1, p_scl, p_sda, SPEED, 10);
+        interference();
+      }
+      #else
+      i2c_master_async_comb(i2c, 1, p_scl, p_sda, SPEED, 10);
+      #endif
     #else
     i2c_master_async(i2c, 1, p_scl, p_sda, SPEED, 10);
     #endif

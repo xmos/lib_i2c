@@ -152,6 +152,16 @@ static void inline adjust_for_slip(int now,
   }
 }
 
+static int inline adjust_fall(int event_time, int now, int fall_time)
+{
+  const int SLIP_THRESHOLD = 100;
+  if (now - event_time > SLIP_THRESHOLD) {
+    fall_time = fall_time + (now - event_time);
+  }
+  return fall_time;
+}
+  
+
 [[combinable]]
 void i2c_master_async_comb(server interface i2c_master_async_if i[n],
                            size_t n,
@@ -227,6 +237,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         // Fallthrough to WRITE_0 state
       case WRITE_0:
         p_scl <: 0;
+        fall_time = adjust_fall(event_time, now, fall_time);
         p_sda <: data >> 7;
         data <<= 1;
         bitnum++;
@@ -248,6 +259,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
       case WRITE_ACK_0:
         p_scl <: 0;
         p_sda :> void;
+        fall_time = adjust_fall(event_time, now, fall_time);
         event_time = fall_time + bit_time / 2 + bit_time / 32;
         adjust_for_slip(now, event_time, fall_time);
         state = WRITE_ACK_1;
@@ -305,6 +317,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
       case READ_0:
         p_scl <: 0;
         p_sda :> void;
+        fall_time = adjust_fall(event_time, now, fall_time);
         bitnum++;
         state = READ_1;
         event_time = fall_time + bit_time / 2 + bit_time / 32;
@@ -337,6 +350,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
           p_sda :> void;
         else
           p_sda <: 0;
+        fall_time = adjust_fall(event_time, now, fall_time);
         state = READ_ACK_1;
         event_time = fall_time + bit_time / 2 + bit_time / 32;
         adjust_for_slip(now, event_time, fall_time);
@@ -355,6 +369,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         break;
       case STOP_BIT_0:
         p_scl <: 0;
+        fall_time = adjust_fall(event_time, now, fall_time);
         event_time = fall_time + bit_time / 4;
         adjust_for_slip(now, event_time, fall_time);
         state = STOP_BIT_1;

@@ -125,10 +125,12 @@ class I2CMasterChecker(xmostest.SimThread):
            avg_bit_time = sum(bit_times) / len(bit_times)
            speed_in_kbps = pow(10, 6) / avg_bit_time
            print "Speed = %d Kbps" % int(speed_in_kbps + .5)
-           if (speed_in_kbps < 0.99 * self._expected_speed):
+           if self._expected_speed != None and \
+              (speed_in_kbps < 0.99 * self._expected_speed):
                print "ERROR: speed is <1% slower than expected"
-     
-           if (speed_in_kbps > self._expected_speed * 1.05):
+
+           if self._expected_speed != None and \
+              (speed_in_kbps > self._expected_speed * 1.05):
                print "ERROR: speed is faster than expected"
 
        if bit_num == 8:
@@ -211,10 +213,12 @@ class I2CMasterChecker(xmostest.SimThread):
            avg_bit_time = sum(bit_times) / len(bit_times)
            speed_in_kbps = pow(10, 6) / avg_bit_time
            print "Speed = %d Kbps" % int(speed_in_kbps + .5)
-           if (speed_in_kbps < 0.99 * self._expected_speed):
+           if self._expected_speed != None and \
+              (speed_in_kbps < 0.99 * self._expected_speed):
                print "ERROR: speed is <1% slower than expected"
-     
-           if (speed_in_kbps > self._expected_speed * 1.05):
+
+           if self._expected_speed != None and \
+              (speed_in_kbps > self._expected_speed * 1.05):
                print "ERROR: speed is faster than expected"
      
      
