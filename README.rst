@@ -3,10 +3,6 @@ I2C Library
 
 .. |i2c| replace:: I |-| :sup:`2` |-| C
 
-.. rheader::
-
-   I2C |version|
-
 I2C Libary
 ----------
 
@@ -30,46 +26,46 @@ Features
  * Multi-master/arbitration support.
  * Synchronous and asynchronous APIs for efficient usage of processing cores.
 
-Resource Usage
-..............
+Typical Resource Usage
+......................
 
-.. list-table::
-   :header-rows: 1
-   :class: wide vertical-borders horizontal-borders
+.. resusage::
 
-   * - Configuration
-     - Pins
-     - Ports
-     - Clock Blocks
-     - Ram
-     - Logical cores
-   * - Master
-     - 2
-     - 2 (1-bit)
-     - 0
-     - ~1.2K
-     - 0
-   * - Master (single port)
-     - 2
-     - 1 (multi-bit)
-     - 0
-     - ~1.1K
-     - 0
-   * - Slave
-     - 2
-     - 2 (1-bit)
-     - 0
-     - ~1.5K
-     - 1
+  * - configuration: Master
+    - globals: port p_scl = XS1_PORT_1A; port p_sda = XS1_PORT_1B;
+    - locals: interface i2c_master_if i[1];
+    - fn: i2c_master(i, 1, p_scl, p_sda, 100);
+    - pins: 2
+    - ports: 2 (1-bit)
+  * - configuration: Master (single port)
+    - globals: port p = XS1_PORT_4A;
+    - locals: interface i2c_master_if i[1];
+    - fn: i2c_master_single_port(i, 1, p, 100, 0, 0, 0);
+    - pins: 2
+    - ports: 1 (multi-bit)
+  * - configuration: Master (asynchronous)
+    - globals: port p_scl = XS1_PORT_1A; port p_sda = XS1_PORT_1B;
+    - locals: interface i2c_master_async_if i[1];
+    - fn: i2c_master_async(i, 1, p_scl, p_sda, 100, 20);
+    - pins: 2
+    - ports: 2 (1-bit)
+  * - configuration: Master (asynchronous, combinable)
+    - globals: port p_scl = XS1_PORT_1A; port p_sda = XS1_PORT_1B;
+    - locals: interface i2c_master_async_if i[1];
+    - fn: i2c_master_async_comb(i, 1, p_scl, p_sda, 100, 20);
+    - pins: 2
+    - ports: 2 (1-bit)
+  * - configuration: Slave
+    - globals: port p_scl = XS1_PORT_1A; port p_sda = XS1_PORT_1B;
+    - locals: interface i2c_slave_callback_if i;
+    - fn: i2c_slave(i, p_scl, p_sda, 0);
+    - pins: 2
+    - ports: 2 (1-bit)
 
 Software version and dependencies
 .................................
 
-This document pertains to version |version| of the I2C library. It is
-intended to be used with version 13.x of the xTIMEcomposer studio tools.
-
-The library does not have any dependencies (i.e. it does not rely on any
-other libraries).
+.. libdeps::
 
 Related application notes
 .........................
