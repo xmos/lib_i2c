@@ -25,7 +25,7 @@ Kbps.
 
     xmostest.register_group("lib_i2c",
                             "i2c_slave_sim_tests",
-                            "I2C Slave simulator tests",
+                            "I2C slave simulator tests",
     """
 Tests are performed by running the I2C library connected to a
 simulator model (written as a python plugin to xsim). The simulator
