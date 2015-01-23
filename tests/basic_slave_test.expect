@@ -11,7 +11,7 @@ xCORE got data: 0x44
 Master received ACK
 Sending data 0x3
 xCORE got data: 0x3
-Master received ACK
+Master received NACK
 Sending stop bit
 Sending start bit
 Starting read transaction to device id 0x3c
@@ -35,7 +35,7 @@ xCORE got start of write transaction
 Master received ACK
 Sending data 0x99
 xCORE got data: 0x99
-Master received ACK
+Master received NACK
 Sending stop bit
 Sending start bit
 Starting write transaction to device id 0x44
