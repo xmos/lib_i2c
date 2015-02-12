@@ -18,12 +18,9 @@ def runtest():
                                ack_sequence=[True, True, False,
                                              True, True, True, False,
                                              True, True, True, True, False,
-                                             True, False,
-                                             True,
-                                             True, True, False,
-                                             True,
-                                             True, True, False,
-                                             True])
+                                             True, True,
+                                             True, True, True,
+                                             True, True, True, True])
 
     tester = xmostest.ComparisonTester(open('reg_test.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',

@@ -52,10 +52,9 @@ Sending ack
 Speed = 398 Kbps
 Master write transaction started, device address=0x44
 Byte received: 0x33
-Sending nack
+Sending ack
 Speed = 398 Kbps
-Stop bit received
-Start bit received
+Repeated start bit received
 Byte received: 0x89
 Sending ack
 Speed = 398 Kbps
@@ -76,10 +75,9 @@ Byte received: 0x21
 Sending ack
 Speed = 398 Kbps
 Byte received: 0xa3
-Sending nack
+Sending ack
 Speed = 398 Kbps
-Stop bit received
-Start bit received
+Repeated start bit received
 Byte received: 0x8b
 Sending ack
 Speed = 398 Kbps
@@ -100,10 +98,9 @@ Byte received: 0x99
 Sending ack
 Speed = 398 Kbps
 Byte received: 0x33
-Sending nack
+Sending ack
 Speed = 398 Kbps
-Stop bit received
-Start bit received
+Repeated start bit received
 Byte received: 0x8d
 Sending ack
 Speed = 398 Kbps

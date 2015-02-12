@@ -175,7 +175,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
         locked_client = i;
       }
       num_bytes_sent = j;
-      if (num_bytes_sent == n && ack == 1)
+      if (num_bytes_sent == n && ack == send_stop_bit)
         result = I2C_SUCCEEDED;
       else
         result = I2C_FAILED;

@@ -58,6 +58,11 @@ Speed = 398 Kbps
 Byte received: 0x33
 Sending ack
 Speed = 398 Kbps
-Stop bit received
+Repeated start bit received
+Byte received: 0x8d
+Sending nack
+Speed = 398 Kbps
+Master read transaction started, device address=0x46
+ERROR: master driving SDA during slave data write
 NACK
-val=0
+val=3300

@@ -102,8 +102,9 @@ extends client interface i2c_master_if : {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1];
     size_t n;
-    result = i.write(device_addr, a_reg, 1, n, 1);
+    result = i.write(device_addr, a_reg, 1, n, 0);
     if (result == I2C_FAILED) {
+      i.send_stop_bit();
       return 0;
     }
     result = i.read(device_addr, data, 1, 1);
@@ -148,8 +149,11 @@ extends client interface i2c_master_if : {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[1];
     size_t n;
-    result = i.write(device_addr, a_reg, 2, n, 1);
-    if (result == I2C_FAILED) return 0;
+    result = i.write(device_addr, a_reg, 2, n, 0);
+    if (result == I2C_FAILED) {
+      i.send_stop_bit();
+      return 0;
+    }
     result = i.read(device_addr, data, 1, 1);
     return data[0];
   }
@@ -192,8 +196,11 @@ extends client interface i2c_master_if : {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[2];
     size_t n;
-    result = i.write(device_addr, a_reg, 2, n, 1);
-    if (result == I2C_FAILED) return 0;
+    result = i.write(device_addr, a_reg, 2, n, 0);
+    if (result == I2C_FAILED) {
+      i.send_stop_bit();
+      return 0;
+    }
     result = i.read(device_addr, data, 2, 1);
     return ((uint16_t) data[0] << 8) | data[1];
   }
