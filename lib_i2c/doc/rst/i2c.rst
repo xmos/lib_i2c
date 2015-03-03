@@ -175,6 +175,7 @@ should be taken into account:
 
   * In this configuration the xCORE can only perform write
     transactions to the I2C bus.
+  * Clock stretching is not supported in this configuration.
   * The other bits of the multi-bit port cannot be used for any other
     function.
 
