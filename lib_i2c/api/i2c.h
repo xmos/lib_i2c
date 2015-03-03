@@ -433,10 +433,22 @@ typedef enum i2c_slave_ack_t {
  *
  */
 typedef interface i2c_slave_callback_if {
-  /** Master has requested a read.
+
+  /** Start of a read request.
    *
    *  This callback function will be called by the component
    *  if the bus master requests a read from this slave device.
+   *  A follow-up call to ack_read_request() will request the
+   *  slave to ack the request or not.
+   */
+  [[guarded]]
+  void start_read_request(void);
+
+  /** Master has requested a read.
+   *
+   *  This callback function will be called by the component
+   *  if the bus master requests a read from this slave device after
+   *  the start_read_request() call.
    *  At this point the slave can choose to accept the request (and
    *  drive an ACK signal back to the master) or not (and drive a NACK
    *  signal).
@@ -444,12 +456,24 @@ typedef interface i2c_slave_callback_if {
    *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
    *            ``I2C_SLAVE_NACK``.
    */
-  i2c_slave_ack_t master_requests_read(void);
+  [[guarded]]
+  i2c_slave_ack_t ack_read_request(void);
+
+  /** Start of a write request.
+   *
+   *  This callback function will be called by the component
+   *  if the bus master requests a write from this slave device.
+   *  A follow-up call to ack_write_request() will request the
+   *  slave to ack the request or not.
+   */
+  [[guarded]]
+  void start_write_request(void);
 
   /** Master has requested a write.
    *
    *  This callback function will be called by the component
-   *  if the bus master requests a write from this slave device.
+   *  if the bus master requests a write from this slave device after
+   *  the start_write_request() call.
    *  At this point the slave can choose to accept the request (and
    *  drive an ACK signal back to the master) or not (and drive a NACK
    *  signal).
@@ -457,7 +481,16 @@ typedef interface i2c_slave_callback_if {
    *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
    *            ``I2C_SLAVE_NACK``.
    */
-  i2c_slave_ack_t master_requests_write(void);
+  [[guarded]]
+  i2c_slave_ack_t ack_write_request(void);
+
+
+  /** Start of a data read.
+   *
+   *  This callback function will be called at the start of a byte read.
+   */
+  [[guarded]]
+  void start_master_read(void);
 
   /** Master requires data.
    *
@@ -466,14 +499,31 @@ typedef interface i2c_slave_callback_if {
    *
    *  \return   the data to pass to the master.
    */
+  [[guarded]]
   uint8_t master_requires_data();
+
+  /** Start of a data write.
+   *
+   *  This callback function will be called at the start of writing a byte.
+   */
+  [[guarded]]
+  void start_master_write(void);
 
   /** Master has sent some data.
    *
    *  This callback function will be called when the I2C master has transferred
    *  a byte of data to the slave.
    */
+  [[guarded]]
   i2c_slave_ack_t master_sent_data(uint8_t data);
+
+
+  /** Stop bit.
+   *
+   *  This callback function will be called by the component when a stop bit
+   *  is sent by the master.
+   */
+  void stop_bit(void);
 
   /** Shutdown the I2C component.
    *

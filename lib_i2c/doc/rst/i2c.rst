@@ -50,10 +50,151 @@ The following application notes use this library:
   * AN00057 - How to use the I2C slave component
 
 
-Hardware characteristics
-------------------------
+External signal description
+---------------------------
 
-TODO
+All signals are designed to comply with the timings in the |i2c|
+specification found here:
+
+http://www.nxp.com/documents/user_manual/UM10204.pdf
+
+Note that the following optional parts of the |i2c| specification are *not*
+supported:
+
+  * Multi-master arbitration
+  * 10-bit slave addressing
+  * General call addressing
+  * Software reset
+  * START byte
+  * Device ID
+  * Fast-mode Plus, High-speed mode, Ultra Fast-mode
+
+|i2c| consists of two signals: a clock line (SCL) and a data line
+(SDA). Both these signals are *open-drain* and require external
+resistors to pull the line up if no device is driving the signal
+down. The correct value for the resistors can be found in the |i2c|
+specification.
+
+.. figure:: images/i2c_open_drain.pdf
+   :width: 60%
+
+   I2C open-drain layout
+
+Transactions on the line occur between a *master* and a *slave*. The
+master always drives the clock (though the slave can delay the
+transaction at any point by holding the clock line down). The master
+initiates a transaction with a start bit (consisting of driving the
+data line from high to low whilst the clock line is high). It will
+then clock out a seven-bit device address followed by a read/write
+bit. The master will then drive one more clock signal during which the
+slave can either ACK (drive the line low), accepting the transaction
+or NACK (leave the line high). This sequence is shown in :ref:`i2c_transaction_start`.
+
+.. _i2c_transaction_start:
+
+.. wavedrom:: I2C transaction start
+
+   { "signal" : [
+     { "name": "SDA", "wave": "10.=..=..=..=..=..=..0", "data": ["a6", "a5", "...", "a0","r/w","ACK"] },
+     { "name": "SCL", "wave": "1.0.u0.u0.u0.u0.u0.u0." }
+   ]}
+
+If the read/write bit of the transaction start is 1 then the master
+will execute a sequence of reads. Each read consists of the master
+driving the clock whilst the slave drives the data for 8-bits (most
+siginificant bit first). At the end of each byte, the master drives
+another clock pulse and will either drive either an ACK (0) or
+NACK (1) signal on the data line. When the master drives a NACK
+signal, the sequence of reads is complete. A read byte sequence is
+show in :ref:`i2c_read_byte`
+
+.. _i2c_read_byte:
+
+.. wavedrom:: I2C read byte
+
+   { "signal" : [
+     { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
+     { "name": "SCL", "wave": "0..u0.u0.u0.u0.u0.u0." }
+   ]}
+
+|newpage|
+
+If the read/write bit of the transaction start is 1 then the master
+will execute a sequence of writess. Each read consists of the master
+driving the clock whilst and also driving he data for 8-bits (most
+siginificant bit first). At the end of each byte, the slave drives
+another clock pulse and will either drive either an ACK (0)
+(signalling that is can accept more data) or a NACK (1) (signalling
+that is cannot accept more data) on the data line. After the ACK/NACK
+signal, the master can complete the transaction with a stop bit or
+repeated start. A write byte sequence is show in :ref:`i2c_write_byte`
+
+.. _i2c_write_byte:
+
+.. wavedrom:: I2C write byte
+
+   { "signal" : [
+     { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
+     { "name": "SCL", "wave": "0..u0.u0.u0.u0.u0.u0." }
+   ]}
+
+After a transaction is complete, the master may start a new
+transaction with the same device (a *repeated start*) or will send a
+stop bit consisting of driving the data line from low to high whilst
+the clock line is high (see :ref:`i2c_stop_bit`).
+
+.. _i2c_stop_bit:
+
+.. wavedrom:: I2C stop bit
+
+  { "signal" : [
+    { "name": "SDA", "wave": "0..u" },
+    { "name": "SCL", "wave": "0.u." }
+  ]}
+
+|newpage|
+
+Connecting to the xCORE device
+..............................
+
+When the xCORE is the |i2c| master, the normal configuration is to
+connect the clock and data lines to different 1-bit ports as shown in
+:ref:`i2c_master_1_bit`.
+
+.. _i2c_master_1_bit:
+
+.. figure:: images/i2c_master_1_bit.pdf
+  :width: 40%
+
+  I2C master (1-bit ports)
+
+It is possible to connect both lines to different bits of a multi-bit
+port as shown in :ref:`i2c_master_n_bit`. This is useful if other
+constraints limit the use of once bit ports. However the following
+should be taken into account:
+
+  * In this configuration the xCORE can only perform write
+    transactions to the I2C bus.
+  * The other bits of the multi-bit port cannot be used for any other
+    function.
+
+.. _i2c_master_n_bit:
+
+.. figure:: images/i2c_master_n_bit.pdf
+  :width: 40%
+
+  I2C master (single n-bit port)
+
+When the xCORE is acting as |i2c| slave the two lines *must* be
+connected to two 1-bit ports (as shown in
+:ref:`_i2c_slave_connection`).
+
+.. _i2c_slave_connection:
+
+.. figure:: images/i2c_slave.pdf
+  :width: 40%
+
+  I2C slave connection
 
 Usage
 -----
@@ -231,20 +372,30 @@ function above needs to respond to the calls e.g.::
   {
     while (1) {
       select {
+      case i2c.start_read_request():
+        break;
       case i2c.master_requests_read() -> i2c_slave_ack_t response:
         response = I2C_SLAVE_ACK;
         break;
+      case i2c.start_write_request():
+        break;
       case i2c.master_requests_write() -> i2c_slave_ack_t response:
         response = I2C_SLAVE_ACK;
+        break;
+      case i2c.start_master_write():
         break;
       case i2c.master_sent_data(uint8_t data) -> i2c_slave_ack_t response:
          // handle write to device here, set response to NACK for the
          // last byte of data in the transaction.
          ...
          break;
+      case i2c.start_master_read():
+        break;
       case i2c.master_requires_data() -> uint8_t data:
          // handle read from device here
          ...
+         break;
+      case i2c.stop_bit():
          break;
       }
     }
@@ -330,5 +481,6 @@ Known Issues
 ------------
 
 There are no known issues with this library.
+
 
 .. include:: ../../../CHANGELOG.rst

@@ -23,6 +23,5 @@ Features
  * |i2c| master and |i2c| slave modes.
  * Supports speed up to 400 Kb/s.
  * Clock stretching suppoirt.
- * Multi-master/arbitration support.
  * Synchronous and asynchronous APIs for efficient usage of processing cores.
 

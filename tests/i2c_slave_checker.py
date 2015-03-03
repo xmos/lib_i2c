@@ -83,6 +83,7 @@ class I2CSlaveChecker(xmostest.SimThread):
         xsi.drive_port_pins(self._scl_port, 1)
         self.wait_until(self._fall_time + (self._bit_time * 3 / 4))
         xsi.drive_port_pins(self._sda_port, 1)
+        self.wait_until(xsi.get_time() + self._bit_time * 2)
 
 
     def read(self, xsi, ack):

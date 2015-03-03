@@ -14,6 +14,7 @@ xCORE got data: 0x3
 Master received NACK
 Sending stop bit
 Sending start bit
+xCORE got stop bit
 Starting read transaction to device id 0x3c
 Sending data 0x78
 xCORE got start of read transaction
@@ -29,6 +30,7 @@ Received byte 0x99
 Master sending NACK
 Sending stop bit
 Sending start bit
+xCORE got stop bit
 Starting write transaction to device id 0x3c
 Sending data 0x79
 xCORE got start of write transaction
@@ -38,6 +40,7 @@ xCORE got data: 0x99
 Master received NACK
 Sending stop bit
 Sending start bit
+xCORE got stop bit
 Starting write transaction to device id 0x44
 Sending data 0x89
 Master received NACK
@@ -54,6 +57,7 @@ Received byte 0x20
 Master sending NACK
 Sending stop bit
 Sending start bit
+xCORE got stop bit
 Starting write transaction to device id 0x3c
 Sending data 0x79
 xCORE got start of write transaction

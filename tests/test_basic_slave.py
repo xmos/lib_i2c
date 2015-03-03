@@ -3,7 +3,7 @@ from i2c_slave_checker import I2CSlaveChecker
 import os
 
 
-def do_slave_test(speed):
+def do_slave_test(speed, level):
     resources = xmostest.request_resource("xsim")
 
     xmostest.build('i2c_slave_test')
@@ -26,8 +26,7 @@ def do_slave_test(speed):
                                      'basic_test', {'speed':speed},
                                      regexp=True)
 
-    if speed == 10:
-        tester.set_min_testlevel('nightly')
+    tester.set_min_testlevel(level)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
@@ -36,6 +35,6 @@ def do_slave_test(speed):
                               tester = tester)
 
 def runtest():
-    do_slave_test(400)
-    do_slave_test(100)
-    do_slave_test(10)
+    do_slave_test(400, 'smoke')
+    do_slave_test(100, 'nightly')
+    do_slave_test(10, 'nightly')

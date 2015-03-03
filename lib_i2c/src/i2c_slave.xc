@@ -3,7 +3,7 @@
 #include "debug_print.h"
 
 enum i2c_slave_state {
-  WAITING_FOR_STARTBIT,
+  WAITING_FOR_START_OR_STOP,
   READING_ADDR,
   ACK_ADDR,
   MASTER_WRITE,
@@ -15,18 +15,20 @@ void i2c_slave(client i2c_slave_callback_if i,
                port p_scl, port p_sda,
                uint8_t device_addr)
 {
-  enum i2c_slave_state state = WAITING_FOR_STARTBIT;
-  int sda_val = 1;
+  enum i2c_slave_state state = WAITING_FOR_START_OR_STOP;
+  int sda_val = 0;
   int scl_val;
   int bitnum = 0;
   int data;
   int rw = 0;
   int stop_bit_check = 0;
+  int ignore_stop_bit = 1;
+  p_sda when pinseq(1) :> void;
   while (1) {
     select {
     case i.shutdown():
       return;
-    case state != WAITING_FOR_STARTBIT => p_scl when pinseq(scl_val) :> void:
+    case state != WAITING_FOR_START_OR_STOP => p_scl when pinseq(scl_val) :> void:
       switch (state) {
       case READING_ADDR:
         // If clock has gone low, wait for it to go high before doing anything
@@ -45,9 +47,9 @@ void i2c_slave(client i2c_slave_callback_if i,
         // We have gathered the whole device address sent by the master.
         if (data != device_addr) {
           // No match, just wait for the next start bit.
-          state = WAITING_FOR_STARTBIT;
+          state = WAITING_FOR_START_OR_STOP;
           sda_val = 0;
-          break;
+          break;;
         }
         state = ACK_ADDR;
         scl_val = 0;
@@ -59,13 +61,16 @@ void i2c_slave(client i2c_slave_callback_if i,
         // Callback to the application to determine whether to ACK
         // or NACK the address.
         if (rw) {
-          ack = i.master_requests_write();
+          i.start_write_request();
+          ack = i.ack_write_request();
         } else {
-          ack = i.master_requests_read();
+          i.start_read_request();
+          ack = i.ack_read_request();
         }
+        ignore_stop_bit = 0;
         if (ack == I2C_SLAVE_NACK) {
           p_sda :> void;
-          state = WAITING_FOR_STARTBIT;
+          state = WAITING_FOR_START_OR_STOP;
           sda_val = 0;
         } else if (rw) {
           p_sda <: 0;
@@ -87,7 +92,7 @@ void i2c_slave(client i2c_slave_callback_if i,
           p_sda :> bit;
           if (bit) {
             // Master has NACKed so the transaction is finished
-            state = WAITING_FOR_STARTBIT;
+            state = WAITING_FOR_START_OR_STOP;
             sda_val = 0;
           } else {
             bitnum = 0;
@@ -99,6 +104,7 @@ void i2c_slave(client i2c_slave_callback_if i,
           if (bitnum < 8) {
             if (bitnum == 0) {
               p_scl <: 0;
+              i.start_master_read();
               data = i.master_requires_data();
               p_scl :> void;
             }
@@ -117,31 +123,33 @@ void i2c_slave(client i2c_slave_callback_if i,
           int bit;
           if (bitnum == 0) {
             scl_val = 0;
+          } else if (bitnum == 9) {
+            state = WAITING_FOR_START_OR_STOP;
+            p_sda :> sda_val;
+            sda_val = 1-sda_val;
           } else {
             p_sda :> bit;
             data = (data << 1) | bit;
+            if (bit == 0) {
+              sda_val = 1;
+              stop_bit_check = 1;
+            }
           }
           scl_val = 0;
           bitnum++;
-          if (bit == 0) {
-            sda_val = 1;
-            stop_bit_check = 1;
-          }
         } else if (bitnum == 9) {
           p_scl <: 0;
           stop_bit_check = 0;
+          i.start_master_write();
           int ack = i.master_sent_data(data);
           if (ack == I2C_SLAVE_NACK) {
             p_sda :> void;
-            state = WAITING_FOR_STARTBIT;
-            sda_val = 0;
-          }
-          else {
+          } else {
             p_sda <: 0;
             data = 0;
             bitnum = 0;
-            scl_val = 1;
           }
+          scl_val = 1;
           p_scl :> void;
         } else {
           stop_bit_check = 0;
@@ -151,17 +159,23 @@ void i2c_slave(client i2c_slave_callback_if i,
         break;
       }
       break;
-    case stop_bit_check || (state == WAITING_FOR_STARTBIT) => 
+    case (state == WAITING_FOR_START_OR_STOP) || stop_bit_check =>
             p_sda when pinseq(sda_val) :> void:
-      if (stop_bit_check) {
-        stop_bit_check = 0;
-        state = WAITING_FOR_STARTBIT;
-        sda_val = 0;
-        break;
-      }
+      //      debug_printf("%d\n", sda_val);
       if (sda_val == 1) {
-        // SDA is now high, wait for it to go low
-        sda_val = 0;
+        // SDA has transitioned from low to high, if SCL is high
+        // then it is a stop bit.
+        int val;
+        p_scl :> val;
+        if (val) {
+          if (!ignore_stop_bit)
+            i.stop_bit();
+          state = WAITING_FOR_START_OR_STOP;
+          ignore_stop_bit = 1;
+          sda_val = 0;
+        } else {
+          sda_val = 0;
+        }
       } else {
         // SDA has transitioned from high to low, if SCL is high
         // then it is a start bit.
@@ -172,6 +186,7 @@ void i2c_slave(client i2c_slave_callback_if i,
           bitnum = 0;
           data = 0;
           scl_val = 0;
+          stop_bit_check = 0;
         } else {
           sda_val = 1;
         }
