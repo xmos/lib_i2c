@@ -46,9 +46,8 @@ Related application notes
 
 The following application notes use this library:
 
-  * AN00052 - How to use the I2C master component
-  * AN00057 - How to use the I2C slave component
-
+  * AN00156 - How to use the I2C master library
+  * AN00157 - How to use the I2C slave library
 
 External signal description
 ---------------------------
