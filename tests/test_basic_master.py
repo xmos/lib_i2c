@@ -7,8 +7,6 @@ import os
 def do_master_test(speed):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('i2c_master_test')
-
     binary = 'i2c_master_test/bin/rx_tx_%(speed)d/i2c_master_test_rx_tx_%(speed)d.xe' % {'speed':speed}
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",

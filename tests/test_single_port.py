@@ -6,8 +6,6 @@ import os
 def do_sp_test(speed):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('i2c_sp_test')
-
     binary = 'i2c_sp_test/bin/%(speed)d/i2c_sp_test_%(speed)d.xe' % {'speed':speed}
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_8A.1",

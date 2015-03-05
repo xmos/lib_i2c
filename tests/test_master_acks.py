@@ -5,8 +5,6 @@ from i2c_master_checker import I2CMasterChecker
 def runtest():
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('i2c_master_test')
-
     binary = 'i2c_master_test/bin/tx_only/i2c_master_test_tx_only.xe'
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",

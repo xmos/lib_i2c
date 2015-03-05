@@ -7,8 +7,6 @@ import os
 def runtest():
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('i2c_test_repeated_start')
-
     binary = 'i2c_test_repeated_start/bin/i2c_test_repeated_start.xe'
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",

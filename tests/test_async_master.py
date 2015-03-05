@@ -7,8 +7,6 @@ import os
 def do_master_test(speed, comb):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('i2c_master_async_test')
-
     if comb:
         build_config = "comb_%d" % speed
         config = {'speed':speed,'impl':'comb'}

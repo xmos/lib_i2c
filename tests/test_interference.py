@@ -6,11 +6,8 @@ import os
 def runtest():
     resources = xmostest.request_resource("xsim")
 
-
     speed = 100
     build_config = "interfere"
-
-    xmostest.build('i2c_master_async_test', build_config = build_config)
 
     binary = 'i2c_master_async_test/bin/%(config)s/i2c_master_async_test_%(config)s.xe' % {'config':build_config}
 

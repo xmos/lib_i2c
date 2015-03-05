@@ -6,8 +6,6 @@ import os
 def do_slave_test(speed, level):
     resources = xmostest.request_resource("xsim")
 
-    xmostest.build('i2c_slave_test')
-
     binary = 'i2c_slave_test/bin/i2c_slave_test.xe'
 
     checker = I2CSlaveChecker("tile[0]:XS1_PORT_1A",
