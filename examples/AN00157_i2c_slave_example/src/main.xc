@@ -1,3 +1,4 @@
+// Copyright (c) 2015, XMOS Ltd, All rights reserved
 #include <i2c.h>
 #include <debug_print.h>
 #include <xs1.h>
