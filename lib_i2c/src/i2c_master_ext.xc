@@ -1,3 +1,4 @@
+// Copyright (c) 2015, XMOS Ltd, All rights reserved
 #include <i2c.h>
 
 /* This file provides external definitions for the inline functions declared in
