@@ -24,7 +24,6 @@ class I2CSlaveChecker(xmostest.SimThread):
             return xsi.sample_port_pins(port);
 
     def start_bit(self, xsi):
-        print "Sending start bit"
         xsi.drive_port_pins(self._scl_port, 1)
         self.wait_until(xsi.get_time() + self._bit_time / 4)
         xsi.drive_port_pins(self._sda_port, 0);
