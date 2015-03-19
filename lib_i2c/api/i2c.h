@@ -5,12 +5,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/** This type is used in I2C write functions to report back on whether the
- *   write is successful or not.
+/** This type is used in I2C functions to report back on whether the
+ *  slave performed and ACK or NACK on the last piece of data sent
+ *  to it.
  */
 typedef enum {
-  I2C_FAILED,    ///< The write has failed
-  I2C_SUCCEEDED, ///< The write was successful
+  I2C_NACK,    ///< The slave has ack-ed the last byte.
+  I2C_ACK,     ///< The slave has nack-ed the last byte.
 } i2c_res_t;
 
 /** This interface is used to communication with an I2C master component.
@@ -79,6 +80,16 @@ typedef interface i2c_master_if {
   void shutdown();
 } i2c_master_if;
 
+/** This type is used the supplementary I2C register read/write functions to
+ *  report back on whether the operation was a success or not.
+ */
+typedef enum {
+  I2C_REGOP_SUCCESS,     ///< The operation was successful
+  I2C_REGOP_DEVICE_NACK, ///< The operation was NACK-ed when sending the device address, so either the device is missing or busy.
+  I2C_REGOP_INCOMPLETE   ///< The operation was NACK-ed halfway through by the slave.
+} i2c_regop_res_t;
+
+
 extends client interface i2c_master_if : {
 
   /** Read an 8-bit register on a slave device.
@@ -95,16 +106,23 @@ extends client interface i2c_master_if : {
    */
   inline uint8_t read_reg(client interface i2c_master_if i,
                           uint8_t device_addr, uint8_t reg,
-                          i2c_res_t &result) {
+                          i2c_regop_res_t &result) {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1];
     size_t n;
-    result = i.write(device_addr, a_reg, 1, n, 0);
-    if (result == I2C_FAILED) {
+    i2c_res_t res;
+    res = i.write(device_addr, a_reg, 1, n, 0);
+    if (n != 1) {
+      result = I2C_REGOP_DEVICE_NACK;
       i.send_stop_bit();
       return 0;
     }
-    result = i.read(device_addr, data, 1, 1);
+    res = i.read(device_addr, data, 1, 1);
+    if (res == I2C_NACK) {
+      result = I2C_REGOP_DEVICE_NACK;
+    } else {
+      result = I2C_REGOP_SUCCESS;
+    }
     return data[0];
   }
 
@@ -119,12 +137,17 @@ extends client interface i2c_master_if : {
    *  \param reg         the address of the register to write
    *  \param data        the 8-bit value to write
    */
-  inline i2c_res_t write_reg(client interface i2c_master_if i,
+  inline i2c_regop_res_t write_reg(client interface i2c_master_if i,
                              uint8_t device_addr, uint8_t reg, uint8_t data)
   {
     uint8_t a_data[2] = {reg, data};
     size_t n;
-    return i.write(device_addr, a_data, 2, n, 1);
+    i.write(device_addr, a_data, 2, n, 1);
+    if (n == 0)
+      return I2C_REGOP_DEVICE_NACK;
+    if (n < 2)
+      return I2C_REGOP_INCOMPLETE;
+    return I2C_REGOP_SUCCESS;
   }
 
   /** Read an 8-bit register on a slave device from a 16 bit register address.
@@ -141,17 +164,24 @@ extends client interface i2c_master_if : {
    */
   inline uint8_t read_reg8_addr16(client interface i2c_master_if i,
                                   uint8_t device_addr, uint16_t reg,
-                                  i2c_res_t &result)
+                                  i2c_regop_res_t &result)
   {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[1];
     size_t n;
-    result = i.write(device_addr, a_reg, 2, n, 0);
-    if (result == I2C_FAILED) {
+    i2c_res_t res;
+    i.write(device_addr, a_reg, 2, n, 0);
+    if (n != 2) {
+      result = I2C_REGOP_DEVICE_NACK;
       i.send_stop_bit();
       return 0;
     }
-    result = i.read(device_addr, data, 1, 1);
+    res = i.read(device_addr, data, 1, 1);
+    if (res == I2C_NACK) {
+      result = I2C_REGOP_DEVICE_NACK;
+    } else {
+      result = I2C_REGOP_SUCCESS;
+    }
     return data[0];
   }
 
@@ -166,12 +196,17 @@ extends client interface i2c_master_if : {
    *  \param reg         the address of the register to write
    *  \param data        the 8-bit value to write
    */
-  inline i2c_res_t write_reg8_addr16(client interface i2c_master_if i,
-                                     uint8_t device_addr, uint16_t reg,
-                                     uint8_t data) {
+  inline i2c_regop_res_t write_reg8_addr16(client interface i2c_master_if i,
+                                           uint8_t device_addr, uint16_t reg,
+                                           uint8_t data) {
     uint8_t a_data[3] = {reg, reg >> 8, data};
     size_t n;
-    return i.write(device_addr, a_data, 3, n, 1);
+    i.write(device_addr, a_data, 3, n, 1);
+    if (n == 0)
+      return I2C_REGOP_DEVICE_NACK;
+    if (n < 3)
+      return I2C_REGOP_INCOMPLETE;
+    return I2C_REGOP_SUCCESS;
   }
 
   /** Read an 16-bit register on a slave device from a 16 bit register address.
@@ -188,17 +223,24 @@ extends client interface i2c_master_if : {
    */
   inline uint16_t read_reg16(client interface i2c_master_if i,
                              uint8_t device_addr, uint16_t reg,
-                             i2c_res_t &result)
+                             i2c_regop_res_t &result)
   {
     uint8_t a_reg[2] = {reg, reg >> 8};
     uint8_t data[2];
     size_t n;
-    result = i.write(device_addr, a_reg, 2, n, 0);
-    if (result == I2C_FAILED) {
+    i2c_res_t res;
+    i.write(device_addr, a_reg, 2, n, 0);
+    if (n != 2) {
+      result = I2C_REGOP_DEVICE_NACK;
       i.send_stop_bit();
       return 0;
     }
-    result = i.read(device_addr, data, 2, 1);
+    res = i.read(device_addr, data, 2, 1);
+    if (res == I2C_NACK) {
+      result = I2C_REGOP_DEVICE_NACK;
+    } else {
+      result = I2C_REGOP_SUCCESS;
+    }
     return ((uint16_t) data[0] << 8) | data[1];
   }
 
@@ -213,14 +255,78 @@ extends client interface i2c_master_if : {
    *  \param reg         the address of the register to write
    *  \param data        the 16-bit value to write
    */
-  inline i2c_res_t write_reg16(client interface i2c_master_if i,
+  inline i2c_regop_res_t write_reg16(client interface i2c_master_if i,
                                uint8_t device_addr, uint16_t reg,
                                uint16_t data) {
     uint8_t a_data[4] = {reg, reg >> 8, data, data >> 8};
     size_t n;
-    return i.write(device_addr, a_data, 4, n, 1);
+    i.write(device_addr, a_data, 4, n, 1);
+    if (n == 0)
+      return I2C_REGOP_DEVICE_NACK;
+    if (n < 4)
+      return I2C_REGOP_INCOMPLETE;
+    return I2C_REGOP_SUCCESS;
   }
 
+
+  /** Read an 16-bit register on a slave device from a 8-bit register address.
+   *
+   *  This function reads a 8-bit addressed, 16-bit register from the i2c
+   *  bus. The function reads data by
+   *  transmitting the register addr and then reading the data from the slave
+   *  device.
+   *
+   *  \param device_addr the address of the slave device to read from
+   *  \param reg         the address of the register to read
+   *
+   *  \returns           the value of the register
+   */
+  inline uint16_t read_reg16_addr8(client interface i2c_master_if i,
+                                   uint8_t device_addr, uint8_t reg,
+                                   i2c_regop_res_t &result)
+  {
+    uint8_t a_reg[1] = {reg};
+    uint8_t data[2];
+    size_t n;
+    i2c_res_t res;
+    i.write(device_addr, a_reg, 1, n, 0);
+    if (n != 1) {
+      result = I2C_REGOP_DEVICE_NACK;
+      i.send_stop_bit();
+      return 0;
+    }
+    res = i.read(device_addr, data, 2, 1);
+    if (res == I2C_NACK) {
+      result = I2C_REGOP_DEVICE_NACK;
+    } else {
+      result = I2C_REGOP_SUCCESS;
+    }
+    return ((uint16_t) data[0] << 8) | data[1];
+  }
+
+  /** Write an 16-bit register on a slave device from a 8-bit register address.
+   *
+   *  This function writes a 8-bit addressed, 16-bit register from the i2c
+   *  bus. The function writes data by
+   *  transmitting the register addr and then
+   *  transmitting the data to the slave device.
+   *
+   *  \param device_addr the address of the slave device to write to
+   *  \param reg         the address of the register to write
+   *  \param data        the 8-bit value to write
+   */
+  inline i2c_regop_res_t write_reg16_addr8(client interface i2c_master_if i,
+                                           uint8_t device_addr, uint8_t reg,
+                                           uint16_t data) {
+    uint8_t a_data[3] = {reg, data, data >> 8};
+    size_t n;
+    i.write(device_addr, a_data, 3, n, 1);
+    if (n == 0)
+      return I2C_REGOP_DEVICE_NACK;
+    if (n < 3)
+      return I2C_REGOP_INCOMPLETE;
+    return I2C_REGOP_SUCCESS;
+  }
 
 
 }

@@ -22,7 +22,7 @@ void test(client i2c_master_async_if i2c)
     break;
   }
   debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-               ack == I2C_SUCCEEDED ? "success" : "failure", num_sent);
+               ack == I2C_ACK ? "ack" : "nack", num_sent);
   i2c.read(0x22, 2, 1);
   select {
   case i2c.operation_complete():
@@ -30,7 +30,7 @@ void test(client i2c_master_async_if i2c)
     break;
   }
   debug_printf("xCORE: %s\n",
-               ack == I2C_SUCCEEDED ? "success" : "failure");
+               ack == I2C_ACK ? "ack" : "nack");
   debug_printf("xCORE received: 0x%x, 0x%x\n",data[0], data[1]);
 
   i2c.read(0x22, 1, 1);
@@ -40,7 +40,7 @@ void test(client i2c_master_async_if i2c)
     break;
   }
   debug_printf("xCORE: %s\n",
-               ack == I2C_SUCCEEDED ? "success" : "failure");
+               ack == I2C_ACK ? "ack" : "nack");
   debug_printf("xCORE received: 0x%x\n",data[0]);
 
 
@@ -52,7 +52,7 @@ void test(client i2c_master_async_if i2c)
     break;
   }
   debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-               ack == I2C_SUCCEEDED ? "success" : "failure", num_sent);
+               ack == I2C_ACK ? "ack" : "nack", num_sent);
   data[0] = 0xee;
   i2c.write(0x31, data, 1, 1);
   select {
@@ -61,7 +61,7 @@ void test(client i2c_master_async_if i2c)
     break;
   }
   debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-               ack == I2C_SUCCEEDED ? "success" : "failure", num_sent);
+               ack == I2C_ACK ? "ack" : "nack", num_sent);
   exit(0);
 }
 

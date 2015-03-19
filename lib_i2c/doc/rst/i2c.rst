@@ -137,8 +137,7 @@ should be taken into account:
   I2C master (single n-bit port)
 
 When the xCORE is acting as |i2c| slave the two lines *must* be
-connected to two 1-bit ports (as shown in
-:ref:`_i2c_slave_connection`).
+connected to two 1-bit ports (as shown in :ref:`i2c_slave_connection`).
 
 .. _i2c_slave_connection:
 
@@ -253,8 +252,8 @@ repeatedly calculates 100 bytes to send over the bus::
           i2c_res_t result;
           unsigned num_bytes_sent;
           result = get_tx_result(num_bytes_sent);
-          if (result != I2C_SUCCEEDED)
-             handle_bus_error();
+          if (num_bytes_send != 100)
+             handle_bus_error(result);
 
           // Offload the next 100 bytes data to be sent
           i2c.write(device_addr, buffer, 100, 1);
@@ -385,6 +384,8 @@ I2C master supporting typedefs
 ..............................
 
 .. doxygenenum:: i2c_res_t
+
+.. doxygenenum:: i2c_regop_res_t
 
 |newpage|
 

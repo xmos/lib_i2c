@@ -10,7 +10,7 @@ Byte received: 0xfe
 Sending nack
 Speed = \d+ Kbps
 Stop bit received
-xCORE: success. Transmitted 2 bytes.
+xCORE: nack. Transmitted 2 bytes.
 Start bit received
 Byte received: 0x45
 Sending ack
@@ -23,7 +23,7 @@ Master sends NACK.
 Speed = \d+ Kbps
 Waiting for stop/start bit
 Stop bit received
-xCORE: success
+xCORE: ack
 xCORE received: 0x99, 0x3A
 Start bit received
 Byte received: 0x45
@@ -35,7 +35,7 @@ Master sends NACK.
 Speed = \d+ Kbps
 Waiting for stop/start bit
 Stop bit received
-xCORE: success
+xCORE: ack
 xCORE received: 0xFF
 Start bit received
 Byte received: 0xf6
@@ -52,7 +52,7 @@ Byte received: 0xaa
 Sending nack
 Speed = \d+ Kbps
 Stop bit received
-xCORE: success. Transmitted 3 bytes.
+xCORE: nack. Transmitted 3 bytes.
 Start bit received
 Byte received: 0x62
 Sending ack
@@ -62,4 +62,4 @@ Byte received: 0xee
 Sending nack
 Speed = \d+ Kbps
 Stop bit received
-xCORE: success. Transmitted 1 bytes.
+xCORE: nack. Transmitted 1 bytes.

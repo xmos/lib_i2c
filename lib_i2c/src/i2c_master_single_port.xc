@@ -138,7 +138,7 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
         stop_bit(p_i2c, bit_time, SCL_HIGH, SDA_HIGH, other_bits_mask,
                  fall_time);
       num_bytes_sent = n;
-      result = I2C_SUCCEEDED;
+      result = I2C_ACK;
       break;
     case c[int i].send_stop_bit(void):
       timer tmr;

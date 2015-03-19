@@ -10,22 +10,22 @@ port p_sda = XS1_PORT_1B;
 
 void test(client i2c_master_if i2c)
 {
-  i2c_res_t result;
+  i2c_regop_res_t result;
   result = i2c.write_reg(0x44, 0x07, 0x12);
-  debug_printf(result == I2C_SUCCEEDED ? "ACK\n" : "NACK\n");
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   result = i2c.write_reg8_addr16(0x22, 0xfe99, 0x12);
-  debug_printf(result == I2C_SUCCEEDED ? "ACK\n" : "NACK\n");
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   result = i2c.write_reg16(0x33, 0xabcd, 0x12a3);
-  debug_printf(result == I2C_SUCCEEDED ? "ACK\n" : "NACK\n");
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   unsigned val;
   val = i2c.read_reg(0x44, 0x33, result);
-  debug_printf(result == I2C_SUCCEEDED ? "ACK\n" : "NACK\n");
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   debug_printf("val=%x\n", val);
   val = i2c.read_reg8_addr16(0x45, 0xa321, result);
-  debug_printf(result == I2C_SUCCEEDED ? "ACK\n" : "NACK\n");
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   debug_printf("val=%x\n", val);
   val = i2c.read_reg16(0x46, 0x3399, result);
-  debug_printf(result == I2C_SUCCEEDED ? "ACK\n" : "NACK\n");
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   debug_printf("val=%x\n", val);
   exit(0);
 }

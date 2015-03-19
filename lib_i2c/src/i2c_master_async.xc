@@ -281,7 +281,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
           if (all_data_sent) {
             // The master and slave disagree since the slave should nack
             // the last byte.
-            res = I2C_FAILED;
+            res = I2C_ACK;
             state = STOP_BIT_0;
           } else {
             // get next byte of data.
@@ -295,11 +295,11 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
           int all_data_sent = (bytes_sent == num_bytes);
           if (all_data_sent) {
             // The master and slave agree that this is the end of the operation.
-            res = I2C_SUCCEEDED;
+            res = I2C_NACK;
             state = STOP_BIT_0;
           } else {
             // The slave has aborted the operation.
-            res = I2C_FAILED;
+            res = I2C_NACK;
             state = STOP_BIT_0;
           }
         } else if (ack == ACKED  && optype == READ) {
@@ -308,10 +308,10 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
           bitnum = 0;
           bytes_sent++;
           state = READ_0;
-          res = I2C_SUCCEEDED;
+          res = I2C_ACK;
         } else if (ack == NACKED && optype == READ) {
           // The slave has nacked the addr (or the slave isn't there). Abort.
-          res = I2C_FAILED;
+          res = I2C_NACK;
           state = STOP_BIT_0;
         }
         break;
