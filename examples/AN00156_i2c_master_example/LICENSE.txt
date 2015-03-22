@@ -275,5 +275,5 @@ Parties
       non-exclusive jurisdiction of the English courts.
 
 Schedule
-XMOS I2C Library sofware
+XMOS application note AN00156 software
 No license fee.
