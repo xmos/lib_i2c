@@ -123,11 +123,15 @@ port as shown in :ref:`i2c_master_n_bit`. This is useful if other
 constraints limit the use of once bit ports. However the following
 should be taken into account:
 
-  * In this configuration the xCORE can only perform write
-    transactions to the I2C bus.
-  * Clock stretching is not supported in this configuration.
+  * On L-series and U-series devices in this configuration,
+    the xCORE can only perform write transactions to the I2C bus.
+  * On L-series and U-series clock stretching
+    is not supported in this configuration.
   * The other bits of the multi-bit port cannot be used for any other
     function.
+
+The restrictions on reading and clock stretching do not apply to
+xCORE-200 devices.
 
 .. _i2c_master_n_bit:
 

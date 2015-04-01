@@ -99,6 +99,9 @@ extends client interface i2c_master_if : {
    *  transmitting the register addr and then reading the data from the slave
    *  device.
    *
+   *  Note that no stop bit is transmitted between the write and the read.
+   *  The operation is performed as one transaction using a repeated start.
+   *
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read
    *
@@ -108,7 +111,7 @@ extends client interface i2c_master_if : {
                           uint8_t device_addr, uint8_t reg,
                           i2c_regop_res_t &result) {
     uint8_t a_reg[1] = {reg};
-    uint8_t data[1];
+    uint8_t data[1] = {0};
     size_t n;
     i2c_res_t res;
     res = i.write(device_addr, a_reg, 1, n, 0);
@@ -156,6 +159,9 @@ extends client interface i2c_master_if : {
    *  bus. The function reads data by
    *  transmitting the register addr and then reading the data from the slave
    *  device.
+   *
+   *  Note that no stop bit is transmitted between the write and the read.
+   *  The operation is performed as one transaction using a repeated start.
    *
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read
@@ -216,6 +222,9 @@ extends client interface i2c_master_if : {
    *  transmitting the register addr and then reading the data from the slave
    *  device.
    *
+   *  Note that no stop bit is transmitted between the write and the read.
+   *  The operation is performed as one transaction using a repeated start.
+   *
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read
    *
@@ -275,6 +284,9 @@ extends client interface i2c_master_if : {
    *  bus. The function reads data by
    *  transmitting the register addr and then reading the data from the slave
    *  device.
+   *
+   *  Note that no stop bit is transmitted between the write and the read.
+   *  The operation is performed as one transaction using a repeated start.
    *
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read
@@ -349,13 +361,11 @@ extends client interface i2c_master_if : {
 /** Implements I2C on a single multi-bit port.
  *
  *  This function implements an I2C master bus using a single port. However,
- *  There are some restrictions on its use:
- *
- *  - Reading from the bus is not supported.
- *  - Multi master support is not available.
- *
- *  The user needs to be aware that these restrictions are appropriate for the
- *  application.
+ *  If this function is used with an L-series or U-series xCORE device then
+ *  reading from the bus and clock stretching are not supported.
+ *  The user needs to be aware that these restriction are appropriate for the
+ *  application. On xCORE-200 devices, reading and clock stretching are
+ *  supported.
  *
  *  \param  c      An array of server interface connections for clients to
  *                 connect to
