@@ -125,6 +125,7 @@ static unsigned start_bit(port p_i2c, unsigned bit_time,
 {
   timer tmr;
   unsigned fall_time;
+  p_i2c <: SDA_HIGH | SCL_HIGH | S_REST;
   delay_ticks(bit_time / 4);
   p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
   delay_ticks(bit_time / 2);
@@ -143,8 +144,13 @@ static void stop_bit(port p_i2c, unsigned bit_time,
   delay_ticks(bit_time / 4);
   tmr when timerafter(fall_time + bit_time / 2) :> void;
   p_i2c <: SDA_LOW | SCL_HIGH | S_REST;
-  tmr when timerafter(fall_time + bit_time) :> void;
-  p_i2c :> void;
+  #ifdef __XS2A__
+    wait_for_clock_high(p_i2c, SCL_HIGH, fall_time, bit_time);
+    p_i2c <: SCL_HIGH | SDA_HIGH | S_REST;
+  #else
+    tmr when timerafter(fall_time + bit_time) :> void;
+    p_i2c :> void;
+  #endif
   delay_ticks(bit_time/4);
 }
 
