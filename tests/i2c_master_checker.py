@@ -252,7 +252,7 @@ class I2CMasterChecker(xmostest.SimThread):
         check_for_start_bit = True
         while True:
             if check_for_start_bit:
-                self.wait_for_port_pins_change([self._scl_port, self._sda_port])
+                self.wait(lambda x: self.get_port_val(xsi, self._scl_port) != 1 or self.get_port_val(xsi, self._sda_port) != 1)
                 scl_value = self.get_port_val(xsi, self._scl_port);
                 if self.get_port_val(xsi, self._scl_port) != 1:
                     print("ERROR: SCL driven low before transaction started")
