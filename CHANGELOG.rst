@@ -1,6 +1,10 @@
 I2C library change log
 ======================
 
+3.1.1
+-----
+  * Minor user guide updates
+
 3.1.0
 -----
 

@@ -190,8 +190,24 @@ and connect to it::
     return 0;
   }
 
+For the single multi-bit port version of |i2c| the
+top level instantiation would look like::
+
+  port p_i2c = XS1_PORT_4C;
+
+  int main(void) {
+    i2c_master_if i2c[1];
+    par {
+      i2c_master_single_port(i2c, 1, p_i2c, 100, 1, 3, 0);
+      my_application(i2c[0]);
+    }
+    return 0;
+  }
+
 Note that the connection is an array of interfaces, so several tasks
 can connect to the same component instance.
+
+|newpage|
 
 The application can use the client end of the interface connection to
 perform |i2c| bus operations e.g.::
@@ -239,6 +255,8 @@ manner as the synchronous component::
     }
     return 0;
   }
+
+|newpage|
 
 The application can then use the asynchronous API to offload bus
 operations to the component. For example, the following code
@@ -291,6 +309,8 @@ Note that if no stop bit is sent then no other task using the
 component can use send or receive data. They will block until a stop
 bit is sent.
 
+|newpage|
+
 I2C slave library usage
 .......................
 
@@ -316,6 +336,8 @@ and connect to it::
     }
     return 0;
   }
+
+|newpage|
 
 The slave component acts as the client of the interface
 connection. This means it can "callback" to the application to respond

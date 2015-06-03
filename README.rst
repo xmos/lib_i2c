@@ -3,8 +3,8 @@ I2C Library
 
 .. |i2c| replace:: I |-| :sup:`2` |-| C
 
-I2C Libary
-----------
+Summary
+-------
 
 A software defined, industry-standard, |i2c| library
 that allows you to control an |i2c| bus via xCORE ports.
@@ -72,5 +72,4 @@ Related application notes
 
 The following application notes use this library:
 
-  * AN00156 - How to use the I2C master library
-  * AN00157 - How to use the I2C slave library
+  * AN00181 - xCORE-200 explorer accelerometer demo
