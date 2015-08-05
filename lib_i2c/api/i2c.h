@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __XC__
+
 /** This type is used in I2C functions to report back on whether the
  *  slave performed and ACK or NACK on the last piece of data sent
  *  to it.
@@ -664,5 +666,7 @@ typedef interface i2c_slave_callback_if {
 void i2c_slave(client i2c_slave_callback_if i,
                port p_scl, port p_sda,
                uint8_t device_addr);
+
+#endif // __XC__
 
 #endif
