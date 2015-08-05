@@ -10,8 +10,8 @@
  *  to it.
  */
 typedef enum {
-  I2C_NACK,    ///< The slave has ack-ed the last byte.
-  I2C_ACK,     ///< The slave has nack-ed the last byte.
+  I2C_NACK,    ///< The slave has nack-ed the last byte.
+  I2C_ACK,     ///< The slave has ack-ed the last byte.
 } i2c_res_t;
 
 /** This interface is used to communication with an I2C master component.
