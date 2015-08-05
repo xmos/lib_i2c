@@ -397,7 +397,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         state = IDLE;
         break;
       case IDLE:
-        fail();
+        fail("");
         break;
       }
       break;
