@@ -1,5 +1,5 @@
 Starting write transaction to device id 0x3c
-Sending data 0x79
+Sending data 0x78
 xCORE got start of write transaction
 Master received ACK
 Sending data 0x33
@@ -14,7 +14,7 @@ Master received NACK
 Sending stop bit
 xCORE got stop bit
 Starting read transaction to device id 0x3c
-Sending data 0x78
+Sending data 0x79
 xCORE got start of read transaction
 Master received ACK
 xCORE sending: 0xFF
@@ -29,7 +29,7 @@ Master sending NACK
 Sending stop bit
 xCORE got stop bit
 Starting write transaction to device id 0x3c
-Sending data 0x79
+Sending data 0x78
 xCORE got start of write transaction
 Master received ACK
 Sending data 0x99
@@ -38,13 +38,13 @@ Master received NACK
 Sending stop bit
 xCORE got stop bit
 Starting write transaction to device id 0x44
-Sending data 0x89
+Sending data 0x88
 Master received NACK
 Sending data 0x33
 Master received NACK
 Sending stop bit
 Starting read transaction to device id 0x3c
-Sending data 0x78
+Sending data 0x79
 xCORE got start of read transaction
 Master received ACK
 xCORE sending: 0x20
@@ -53,7 +53,7 @@ Master sending NACK
 Sending stop bit
 xCORE got stop bit
 Starting write transaction to device id 0x3c
-Sending data 0x79
+Sending data 0x78
 xCORE got start of write transaction
 Master received ACK
 Sending data 0x22

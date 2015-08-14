@@ -62,11 +62,11 @@ void i2c_slave(client i2c_slave_callback_if i,
         // Callback to the application to determine whether to ACK
         // or NACK the address.
         if (rw) {
-          i.start_write_request();
-          ack = i.ack_write_request();
-        } else {
           i.start_read_request();
           ack = i.ack_read_request();
+        } else {
+          i.start_write_request();
+          ack = i.ack_write_request();
         }
         ignore_stop_bit = 0;
         if (ack == I2C_SLAVE_NACK) {
@@ -75,13 +75,13 @@ void i2c_slave(client i2c_slave_callback_if i,
           sda_val = 0;
         } else if (rw) {
           p_sda <: 0;
-          state = MASTER_WRITE;
-          data = 0;
+          state = MASTER_READ;
           scl_val = 1;
           bitnum = 0;
         } else {
           p_sda <: 0;
-          state = MASTER_READ;
+          state = MASTER_WRITE;
+          data = 0;
           scl_val = 1;
           bitnum = 0;
         }

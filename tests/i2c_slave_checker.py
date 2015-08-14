@@ -109,14 +109,14 @@ class I2CSlaveChecker(xmostest.SimThread):
             if typ == "w":
                 self.start_bit(xsi)
                 print "Starting write transaction to device id 0x%x" % addr
-                self.write(xsi, (addr << 1) | 1)
+                self.write(xsi, (addr << 1) | 0)
                 for x in d:
                     self.write(xsi, x);
                 self.stop_bit(xsi)
             elif typ == "r":
                 self.start_bit(xsi)
                 print "Starting read transaction to device id 0x%x" % addr
-                self.write(xsi, (addr << 1) | 0)
+                self.write(xsi, (addr << 1) | 1)
                 for x in range(d-1):
                     self.read(xsi, 0);
                 self.read(xsi, 1)

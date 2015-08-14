@@ -1,6 +1,10 @@
 I2C library change log
 ======================
 
+3.1.2
+-----
+  * Fix incorrect reading of r/w bit in slave component
+
 3.1.1
 -----
   * Minor user guide updates
