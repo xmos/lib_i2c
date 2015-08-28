@@ -1,5 +1,5 @@
-How to use the I2C master library
-=================================
+How to use the I2C slave library
+================================
 
 .. version:: 1.0.0
 
