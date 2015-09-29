@@ -13,6 +13,7 @@ void task1(client i2c_master_if i2c) {
   size_t numbytes;
   i2c.write(0x33, data, 1, numbytes, 0);
   i2c.write(0x33, data, 1, numbytes, 1);
+  exit(0);
 }
 
 
