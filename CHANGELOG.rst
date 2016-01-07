@@ -1,6 +1,11 @@
 I2C library change log
 ======================
 
+3.1.3
+-----
+
+  * Update to source code license and copyright
+
 3.1.2
 -----
 
