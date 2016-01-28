@@ -3,12 +3,12 @@
 External signal description
 ---------------------------
 
-All signals are designed to comply with the timings in the |i2c|
+All signals are designed to comply with the timings in the |I2C|
 specification found here:
 
 http://www.nxp.com/documents/user_manual/UM10204.pdf
 
-Note that the following optional parts of the |i2c| specification are *not*
+Note that the following optional parts of the |I2C| specification are *not*
 supported:
 
   * Multi-master arbitration
@@ -19,16 +19,16 @@ supported:
   * Device ID
   * Fast-mode Plus, High-speed mode, Ultra Fast-mode
 
-|i2c| consists of two signals: a clock line (SCL) and a data line
+|I2C| consists of two signals: a clock line (SCL) and a data line
 (SDA). Both these signals are *open-drain* and require external
 resistors to pull the line up if no device is driving the signal
-down. The correct value for the resistors can be found in the |i2c|
+down. The correct value for the resistors can be found in the |I2C|
 specification.
 
 .. figure:: images/i2c_open_drain.pdf
    :width: 60%
 
-   I2C open-drain layout
+   |I2C| open-drain layout
 
 Transactions on the line occur between a *master* and a *slave*. The
 master always drives the clock (though the slave can delay the
@@ -42,7 +42,7 @@ or NACK (leave the line high). This sequence is shown in :ref:`i2c_transaction_s
 
 .. _i2c_transaction_start:
 
-.. wavedrom:: I2C transaction start
+.. wavedrom:: |I2C| transaction start
 
    { "signal" : [
      { "name": "SDA", "wave": "10.=..=..=..=..=..=..0", "data": ["a6", "a5", "...", "a0","r/w","ACK"] },
@@ -60,7 +60,7 @@ show in :ref:`i2c_read_byte`
 
 .. _i2c_read_byte:
 
-.. wavedrom:: I2C read byte
+.. wavedrom:: |I2C| read byte
 
    { "signal" : [
      { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
@@ -81,7 +81,7 @@ repeated start. A write byte sequence is show in :ref:`i2c_write_byte`
 
 .. _i2c_write_byte:
 
-.. wavedrom:: I2C write byte
+.. wavedrom:: |I2C| write byte
 
    { "signal" : [
      { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
@@ -95,7 +95,7 @@ the clock line is high (see :ref:`i2c_stop_bit`).
 
 .. _i2c_stop_bit:
 
-.. wavedrom:: I2C stop bit
+.. wavedrom:: |I2C| stop bit
 
   { "signal" : [
     { "name": "SDA", "wave": "0..u" },
@@ -107,7 +107,7 @@ the clock line is high (see :ref:`i2c_stop_bit`).
 Connecting to the xCORE device
 ..............................
 
-When the xCORE is the |i2c| master, the normal configuration is to
+When the xCORE is the |I2C| master, the normal configuration is to
 connect the clock and data lines to different 1-bit ports as shown in
 :ref:`i2c_master_1_bit`.
 
@@ -116,7 +116,7 @@ connect the clock and data lines to different 1-bit ports as shown in
 .. figure:: images/i2c_master_1_bit.pdf
   :width: 40%
 
-  I2C master (1-bit ports)
+  |I2C| master (1-bit ports)
 
 It is possible to connect both lines to different bits of a multi-bit
 port as shown in :ref:`i2c_master_n_bit`. This is useful if other
@@ -124,7 +124,7 @@ constraints limit the use of once bit ports. However the following
 should be taken into account:
 
   * On L-series and U-series devices in this configuration,
-    the xCORE can only perform write transactions to the I2C bus.
+    the xCORE can only perform write transactions to the |I2C| bus.
   * On L-series and U-series clock stretching
     is not supported in this configuration.
   * The other bits of the multi-bit port cannot be used for any other
@@ -138,9 +138,9 @@ xCORE-200 devices.
 .. figure:: images/i2c_master_n_bit.pdf
   :width: 40%
 
-  I2C master (single n-bit port)
+  |I2C| master (single n-bit port)
 
-When the xCORE is acting as |i2c| slave the two lines *must* be
+When the xCORE is acting as |I2C| slave the two lines *must* be
 connected to two 1-bit ports (as shown in :ref:`i2c_slave_connection`).
 
 .. _i2c_slave_connection:
@@ -148,15 +148,15 @@ connected to two 1-bit ports (as shown in :ref:`i2c_slave_connection`).
 .. figure:: images/i2c_slave.pdf
   :width: 40%
 
-  I2C slave connection
+  |I2C| slave connection
 
 Usage
 -----
 
-I2C master synchronous operation
-................................
+|I2C| master synchronous operation
+..................................
 
-There are two types of interface for |i2c| master components:
+There are two types of interface for |I2C| master components:
 synchronous and asynchronous.
 
 The synchronous API provides blocking operation. Whenever a client makes a
@@ -166,16 +166,16 @@ until the end of the operation. This method is easy to use, has low
 resource use and is very suitable for applications such as setup and
 configuration of attached peripherals.
 
-|i2c| master components are instantiated as parallel tasks that run in a
+|I2C| master components are instantiated as parallel tasks that run in a
 ``par`` statement. For synchronous oepration, the application
 can connect via an interface connection using the ``i2c_master_if``
 interface type:
 
 .. figure:: images/i2c_master_task_diag.*
 
-   I2C master task diagram
+   |I2C| master task diagram
 
-For example, the following code instantiates an |i2c| master component
+For example, the following code instantiates an |I2C| master component
 and connect to it::
 
   port p_scl = XS1_PORT_4C;
@@ -190,7 +190,7 @@ and connect to it::
     return 0;
   }
 
-For the single multi-bit port version of |i2c| the
+For the single multi-bit port version of |I2C| the
 top level instantiation would look like::
 
   port p_i2c = XS1_PORT_4C;
@@ -210,7 +210,7 @@ can connect to the same component instance.
 |newpage|
 
 The application can use the client end of the interface connection to
-perform |i2c| bus operations e.g.::
+perform |I2C| bus operations e.g.::
 
   void my_application(client i2c_master_if i2c) {
     uint8_t data[2];
@@ -222,13 +222,13 @@ Here the operations such as ``i2c.read`` will
 block until the operation is completed on the bus.
 More information on interfaces and tasks can be be found in
 the :ref:`XMOS Programming Guide<programming_guide>`. By default the
-|i2c| synchronous master mode component does not use any logical cores of its
+|I2C| synchronous master mode component does not use any logical cores of its
 own. It is a *distributed* task which means it will perform its
 function on the logical core of the application task connected to
 it (provided the application task is on the same tile).
 
-I2C master asynchronous operation
-.................................
+|I2C| master asynchronous operation
+...................................
 
 The synchronous API will block your application until the bus
 operation is complete. In cases where the application cannot afford to
@@ -238,10 +238,10 @@ The asynchronous API offloads operations to another task. Calls are
 provide to initiate reads and writes and notifications are provided
 when the operation completes. This API requires more management in the
 application but can provide much more efficient operation.
-It is particularly suitable for applications where the |i2c| bus is
+It is particularly suitable for applications where the |I2C| bus is
 being used for continuous data transfer.
 
-Setting up an asynchronous |i2c| master component is done in the same
+Setting up an asynchronous |I2C| master component is done in the same
 manner as the synchronous component::
 
   port p_scl = XS1_PORT_4C;
@@ -311,18 +311,18 @@ bit is sent.
 
 |newpage|
 
-I2C slave library usage
-.......................
+|I2C| slave library usage
+.........................
 
-|i2c| slave components are instantiated as parallel tasks that run in a
+|I2C| slave components are instantiated as parallel tasks that run in a
 ``par`` statement. The application can connect via an interface
 connection.
 
 .. figure:: images/i2c_slave_task_diag.pdf
 
-   I2C slave task diagram
+   |I2C| slave task diagram
 
-For example, the following code instantiates an |i2c| slave component
+For example, the following code instantiates an |I2C| slave component
 and connect to it::
 
   port p_scl = XS1_PORT_4C;
@@ -384,15 +384,15 @@ More information on interfaces and tasks can be be found in the :ref:`XMOS Progr
 Master API
 ----------
 
-All |i2c| master functions can be accessed via the ``i2c.h`` header::
+All |I2C| master functions can be accessed via the ``i2c.h`` header::
 
   #include <i2c.h>
 
 You will also have to add ``lib_i2c`` to the
 ``USED_MODULES`` field of your application Makefile.
 
-Creating an I2C master instance
-...............................
+Creating an |I2C| master instance
+.................................
 
 .. doxygenfunction:: i2c_master
 
@@ -406,8 +406,8 @@ Creating an I2C master instance
 
 |newpage|
 
-I2C master supporting typedefs
-..............................
+|I2C| master supporting typedefs
+................................
 
 .. doxygenenum:: i2c_res_t
 
@@ -415,22 +415,22 @@ I2C master supporting typedefs
 
 |newpage|
 
-I2C master interface
-....................
+|I2C| master interface
+......................
 
 .. doxygeninterface:: i2c_master_if
 
 |newpage|
 
-I2C master asynchronous interface
-.................................
+|I2C| master asynchronous interface
+...................................
 
 .. doxygeninterface:: i2c_master_async_if
 
 Slave API
 ---------
 
-All |i2c| slave functions can be accessed via the ``i2c.h`` header::
+All |I2C| slave functions can be accessed via the ``i2c.h`` header::
 
   #include <i2c.h>
 
@@ -439,15 +439,15 @@ You will also have to add ``lib_i2c`` to the
 
 |newpage|
 
-Creating an I2C slave instance
-..............................
+Creating an |I2C| slave instance
+................................
 
 .. doxygenfunction:: i2c_slave
 
 |newpage|
 
-I2C slave interface
-...................
+|I2C| slave interface
+.....................
 
 .. doxygeninterface:: i2c_slave_callback_if
 

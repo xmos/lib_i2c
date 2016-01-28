@@ -11,8 +11,8 @@ Introduction
 Block diagram
 .............
 
-How to use I2C master
----------------------
+How to use |I2C| master
+-----------------------
 
 |appendix|
 |newpage|
