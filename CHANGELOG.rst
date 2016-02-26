@@ -1,6 +1,11 @@
 I2C library change log
 ======================
 
+3.1.5
+-----
+
+  * Update app notes
+
 3.1.4
 -----
 
