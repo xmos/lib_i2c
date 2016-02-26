@@ -29,7 +29,7 @@ Launching the demo application
 
 References
 ----------
-  
+
 .. nopoints::
 
   * XMOS Tools User Guide
@@ -39,33 +39,15 @@ References
   * XMOS xCORE Programming Guide
 
     http://www.xmos.com/published/xmos-programming-guide
-  
-  * XMOS xCORE-USB Device Library: 
 
-    http://www.xmos.com/published/xuddg
+ * XMOS |I2C| Library
 
-  * XMOS USB Device Design Guide: 
-
-    http://www.xmos.com/published/xmos-usb-device-design-guide
-
-  * USB HID Class Specification, USB.org: 
-
-    http://www.usb.org/developers/devclass_docs/HID1_11.pdf
-
-  * USB 2.0 Specification
-
-    http://www.usb.org/developers/docs/usb20_docs/usb_20_081114.zip
+   http://www.xmos.com/support/libraries/lib_i2c
 
 |newpage|
 
 Full source code listing
 ------------------------
-
-Source code for endpoint0.xc
-............................
-
-.. literalinclude:: endpoint0.xc
-  :largelisting:
 
 Source code for main.xc
 .......................
