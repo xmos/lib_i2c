@@ -40,9 +40,9 @@ References
 
     http://www.xmos.com/published/xmos-programming-guide
 
- * XMOS |I2C| Library
+  * XMOS |I2C| Library
 
-   http://www.xmos.com/support/libraries/lib_i2c
+    http://www.xmos.com/support/libraries/lib_i2c
 
 |newpage|
 
