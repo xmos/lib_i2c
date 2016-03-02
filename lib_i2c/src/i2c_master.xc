@@ -90,7 +90,8 @@ static int tx8(port p_scl, port p_sda, unsigned data,
                unsigned &fall_time) {
   unsigned CtlAdrsData = ((unsigned) bitrev(data)) >> 24;
   for (int i = 8; i != 0; i--) {
-    p_sda <: >> CtlAdrsData;
+    p_sda <: CtlAdrsData & 0x1;
+    CtlAdrsData >>= 1;
     high_pulse(p_scl, bit_time, fall_time);
   }
   return high_pulse_sample(p_scl, p_sda, bit_time, fall_time);

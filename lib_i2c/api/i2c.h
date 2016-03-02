@@ -332,7 +332,7 @@ extends client interface i2c_master_if : {
   inline i2c_regop_res_t write_reg16_addr8(client interface i2c_master_if i,
                                            uint8_t device_addr, uint8_t reg,
                                            uint16_t data) {
-    uint8_t a_data[3] = {reg, data, data >> 8};
+    uint8_t a_data[3] = {reg, data >> 8, data};
     size_t n;
     i.write(device_addr, a_data, 3, n, 1);
     if (n == 0)
