@@ -1,0 +1,11 @@
+<Xvcd zoomFactor="3.082876e+04" hScrollPos="0" vScrollPos="0" markerBarPos="7.201406e+05">
+    <Signals>
+        <Signal name="tile[0]_XS1_PORT_1F" radix="HEX"/>
+        <Signal name="tile[0]_XS1_PORT_1E" radix="HEX"/>
+        <Separator name="Direction"/>
+        <Signal name="tile[0]_XS1_PORT_1E_direction" radix="HEX"/>
+        <Signal name="tile[0]_XS1_PORT_1F_direction" radix="HEX"/>
+        <Signal name="tile[0]_XS1_PORT_1G_direction" radix="HEX"/>
+        <Signal name="tile[0]_XS1_PORT_1H_direction" radix="HEX"/>
+    </Signals>
+</Xvcd>

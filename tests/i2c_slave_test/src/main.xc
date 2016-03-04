@@ -8,7 +8,7 @@
 port p_scl = XS1_PORT_1A;
 port p_sda = XS1_PORT_1B;
 
-uint8_t test_data[] = 
+uint8_t test_data[] =
   {
     0xff,
     0x01,
@@ -44,8 +44,9 @@ void tester(server i2c_slave_callback_if i2c)
       break;
     case i2c.master_sent_data(uint8_t data) -> i2c_slave_ack_t response:
       debug_printf("xCORE got data: 0x%x\n", data);
-      if (data == 0xff)
+      if (data == 0xff) {
         _exit(0);
+      }
       response = ack_sequence[ack_index++];
       break;
     case i2c.start_master_read():
@@ -54,24 +55,27 @@ void tester(server i2c_slave_callback_if i2c)
       data = test_data[i];
       debug_printf("xCORE sending: 0x%x\n", data);
       i++;
-      if (i >= sizeof(test_data))
+      if (i >= sizeof(test_data)) {
         i = 0;
+      }
       break;
     case i2c.stop_bit():
-      debug_printf("xCORE got stop bit\n");
+      // The stop_bit function is timing critical. Needs to use printstr to meet
+      // timing and detect the start bit
+      printstr("xCORE got stop bit\n");
       break;
     }
   }
 }
-
 
 int main() {
   i2c_slave_callback_if i;
   par {
     tester(i);
     i2c_slave(i, p_scl, p_sda, 0x3c);
-    par (int i = 0;i < 7;i++)
+    par (int i = 0; i < 7;i++) {
       while (1);
+    }
   }
   return 0;
 }

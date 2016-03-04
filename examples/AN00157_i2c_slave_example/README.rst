@@ -15,12 +15,21 @@ Required tools and libraries
 
 Required hardware
 .................
+There is no hardware requirement for this application note. It has been designed
+to run on the simulator using the loopback plugin.
 
 Prerequisites
 .............
 
-  - This document assumes familiarity with the XMOS xCORE architecture, the Universal Serial Bus 2.0 Specification (and related specifications, the XMOS tool chain and the xC language. Documentation related to these aspects which are not specific to this application note are linked to in the references appendix.
+ * This document assumes familarity with |I2C| interfaces, the XMOS xCORE
+   architecture, the XMOS tool chain and the xC language. Documentation related
+   to these aspects which are not specific to this application note are linked
+   to in the references appendix.
 
-  - For descriptions of XMOS related terms found in this document please see the XMOS Glossary.
+ * For a description of XMOS related terms found in this document
+   please see the XMOS Glossary [#]_.
+
+.. [#] http://www.xmos.com/published/glossary
+
 
 

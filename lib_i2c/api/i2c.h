@@ -123,10 +123,10 @@ extends client interface i2c_master_if : {
       return 0;
     }
     res = i.read(device_addr, data, 1, 1);
-    if (res == I2C_NACK) {
-      result = I2C_REGOP_DEVICE_NACK;
-    } else {
+    if (res == I2C_ACK) {
       result = I2C_REGOP_SUCCESS;
+    } else {
+      result = I2C_REGOP_DEVICE_NACK;
     }
     return data[0];
   }
@@ -148,10 +148,12 @@ extends client interface i2c_master_if : {
     uint8_t a_data[2] = {reg, data};
     size_t n;
     i.write(device_addr, a_data, 2, n, 1);
-    if (n == 0)
+    if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
-    if (n < 2)
+    }
+    if (n < 2) {
       return I2C_REGOP_INCOMPLETE;
+    }
     return I2C_REGOP_SUCCESS;
   }
 
@@ -210,10 +212,12 @@ extends client interface i2c_master_if : {
     uint8_t a_data[3] = {reg, reg >> 8, data};
     size_t n;
     i.write(device_addr, a_data, 3, n, 1);
-    if (n == 0)
+    if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
-    if (n < 3)
+    }
+    if (n < 3) {
       return I2C_REGOP_INCOMPLETE;
+    }
     return I2C_REGOP_SUCCESS;
   }
 
@@ -272,10 +276,12 @@ extends client interface i2c_master_if : {
     uint8_t a_data[4] = {reg, reg >> 8, data, data >> 8};
     size_t n;
     i.write(device_addr, a_data, 4, n, 1);
-    if (n == 0)
+    if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
-    if (n < 4)
+    }
+    if (n < 4) {
       return I2C_REGOP_INCOMPLETE;
+    }
     return I2C_REGOP_SUCCESS;
   }
 
@@ -335,14 +341,14 @@ extends client interface i2c_master_if : {
     uint8_t a_data[3] = {reg, data >> 8, data};
     size_t n;
     i.write(device_addr, a_data, 3, n, 1);
-    if (n == 0)
+    if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
-    if (n < 3)
+    }
+    if (n < 3) {
       return I2C_REGOP_INCOMPLETE;
+    }
     return I2C_REGOP_SUCCESS;
   }
-
-
 }
 
 
