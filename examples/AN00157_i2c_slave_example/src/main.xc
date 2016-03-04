@@ -1,20 +1,20 @@
 // Copyright (c) 2016, XMOS Ltd, All rights reserved
-#include <i2c.h>
-#include <debug_print.h>
 #include <xs1.h>
 #include <syscall.h>
-#include <print.h>
 
-port p_slave_scl = XS1_PORT_1A;
-port p_slave_sda = XS1_PORT_1B;
+#include "i2c.h"
+#include "debug_print.h"
 
-port p_master_scl = XS1_PORT_1C;
-port p_master_sda = XS1_PORT_1D;
+port p_slave_scl = XS1_PORT_1E;
+port p_slave_sda = XS1_PORT_1F;
+
+port p_master_scl = XS1_PORT_1G;
+port p_master_sda = XS1_PORT_1H;
 
 /*
  * Interface definition between user application and I2C slave register file
  */
-interface register_if {
+typedef interface register_if {
   /* Set a register value
    */
   void set_register(int regnum, uint8_t data);
@@ -34,13 +34,13 @@ interface register_if {
    */
   [[notification]]
   slave void register_changed();
-};
+} register_if;
 
 #define NUM_REGISTERS 10
 
 [[distributable]]
 void i2c_slave_register_file(server i2c_slave_callback_if i2c,
-                             server interface register_if app)
+                             server register_if app)
 {
   uint8_t registers[NUM_REGISTERS];
 
@@ -62,6 +62,8 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
     case app.get_register(int regnum) -> uint8_t data:
       if (regnum >= 0 && regnum < NUM_REGISTERS) {
         data = registers[regnum];
+      } else {
+        data = 0;
       }
       break;
     case app.get_changed_regnum() -> unsigned regnum:
@@ -128,6 +130,22 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
       debug_printf("REGFILE: stop_bit\n");
       current_regnum = -1;
       break;
+    } // select
+  }
+}
+
+void slave_application(client register_if reg)
+{
+  // Invert the data of any register that is written
+  while (1) {
+    select {
+      case reg.register_changed():
+        unsigned regnum = reg.get_changed_regnum();
+        unsigned value = reg.get_register(regnum);
+        debug_printf("SLAVE: Change register %d value from %x to %x\n",
+          regnum, value, ~value & 0xff);
+        reg.set_register(regnum, ~value);
+        break;
     }
   }
 }
@@ -154,25 +172,9 @@ void master_application(client interface i2c_master_if i2c, uint8_t device_addr)
   _exit(0);
 }
 
-void slave_application(client interface register_if reg)
-{
-  while (1) {
-    // Invert the data of any register that is written
-    select {
-      case reg.register_changed():
-        unsigned regnum = reg.get_changed_regnum();
-        unsigned value = reg.get_register(regnum);
-        debug_printf("SLAVE: Change register %d value from %x to %x\n",
-          regnum, value, ~value & 0xff);
-        reg.set_register(regnum, ~value);
-        break;
-    }
-  }
-}
-
 int main() {
   i2c_slave_callback_if i_i2c;
-  interface register_if i_reg;
+  register_if i_reg;
   i2c_master_if i2c[1];
   uint8_t device_addr = 0x3c;
 

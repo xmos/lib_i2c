@@ -8,22 +8,419 @@ Overview
 Introduction
 ............
 
+The XMOS |I2C| library provides software defined, industry-standard,
+|I2C| components that allow you to create devices which can be either |I2C|
+bus masters or slaves using xCORE GPIO ports.
+
+|I2C| is a two-wire bus with defined protocols for connecting devices. There
+is a clock and a data line, both of which are pulled high by external pull-up resistors and driven low by the |I2C| devices.
+
+The XMOS |I2C| library includes support for master and slave devices at speeds of
+up to 400kb/s.
+
+This application note demonstrates how to create an |I2C| slave device
+using the XMOS |I2C| library. It creates an example register file which can be
+read and written by both |I2C| masters and a user application on the xCORE.
+
+The application note includes an |I2C| master which accesses the register file by
+looping back the clock and data lines between the master and slave. This is done
+in simulation using a loopback with pull-up enabled.
+
 Block diagram
 .............
+
+.. figure:: images/block_diagram.*
+   :width: 80%
+
+   Application block diagram
+
+The application uses three logical cores:
+
+   * The first core implements an |I2C| master and a test application performing
+     register reads and writes.
+   * The second core is used by the |I2C| slave.
+   * The third core is used by an example host application which uses the
+     register file.
+
+The register file is distributed between the two logical cores using it.
 
 How to use |I2C| slave
 ----------------------
 
+The Makefile
+............
+
+To start using the |I2C|, you need to add ``lib_i2c`` to you Makefile::
+
+  USED_MODULES = .. lib_i2c ...
+
+This demo also uses the logging library (``lib_logging``) for the ``debug_printf``
+function. This is a faster, but restricted version of the C-Standard Library
+``printf`` function. So the Makefile also includes::
+
+  USED_MODULES = .. lib_logging ..
+
+The logging library is configurable at compile-time allowing calls to
+``debug_printf()`` to be easily enabled or disabled. For the prints to
+be enabled it is necessary to add the following to the compile flags::
+
+  XCC_FLAGS = .. -DDEBUG_PRINT_ENABLE=1 ..
+
+Includes
+........
+
+This application requires a few system headers. XMOS xCORE specific
+defines for declaring and initialising hardware are defined in ``xs1.h`` and
+the ``_exit()`` function which allows the application to terminate once the
+demo is complete is provided by ``syscall.h``.
+
+.. literalinclude:: main.xc
+   :start-on: include <xs1.h>
+   :end-on: include <syscall.h>
+
+The |I2C| library functions are defined in ``i2c.h``. This header must
+be included in your code to use the library. The logging functions are
+provided by ``debug_print.h``.
+
+.. literalinclude:: main.xc
+   :start-on: include "i2c.h"
+   :end-on: include "debug_print.h"
+
+Allocating hardware resources
+.............................
+
+An |I2C| interface requires both a clock and data pin. In this application note
+there is a slave and a master and each require both a clock and data pin.
+On an xCORE the pins are controlled by ``ports``. The application therefore
+declares four 1-bit ports:
+
+.. literalinclude:: main.xc
+   :start-on: port p_slave_scl
+   :end-on: port p_master_sda
+
+|newpage|
+
+The register file interfaces
+............................
+
+The register file will interact with both the |I2C| slave and the user application.
+The interface to the |I2C| slave is defined ``i2c.h``. The interface
+to the user application is a custom interface which is declared in the application:
+
+.. literalinclude:: main.xc
+   :start-on: typedef interface register_if
+   :end-on: } register_if;
+
+This interface declares four functions, three of which the user application can use
+to acces the register file and one which allows the register file to notify
+the user application that something has changed. The ``notification`` call means
+that the user application does not have to waste cycles polling the register file
+to determine if a register value has changed.
+
+The register file implementation
+................................
+
+The register file has a fixed number of registers that are assumed to start at
+address 0. The number of registers is controlled by the define::
+
+  #define NUM_REGISTERS 10
+
+The register file implementation fuction is declared as:
+
+.. literalinclude:: main.xc
+   :start-on: [[distributable]]
+   :end-on: server register_if app
+
+The xC keyword ``distributable`` means that this function does not need to consume
+a whole logical core itself, but the functions it defines can be called in-line
+on other logical cores that are using its interface functions.
+
+The register file is declared with the ``i2c`` and ``app`` interfaces described
+above. In both cases the interfaces are declared as ``server`` so the register
+file will respond to the function calls but not initiate any. The only exception is the ``notification`` call where the register file informs the user application that a register has changed.
+
+|newpage|
+
+The register file then declares storage for the registers:
+
+.. literalinclude:: main.xc
+   :start-on: uint8_t registers[NUM_REGISTERS]
+   :end-before: // This variable
+
+The interface to the |I2C| slave needs some local state to track which
+register is being accessed. An |I2C| master will first perform a write
+operation with the register number being used and then either write data to
+that register or read from that register. The ``current_regnum`` variable
+is used to record which register is being read/written.
+
+The ``changed_regnum`` is used by the interface to the user application to record
+which register was last modified:
+
+.. literalinclude:: main.xc
+   :start-on: int current_regnum
+   :end-on: int changed_regnum
+
+And the rest of the register file is a ``while(1) { select`` loop. All
+``distributable`` functions must be of this form, with declarations followed
+by a ``while(1) { select`` loop.
+
+Within the loop the register file handles the functions provided by both
+interfaces. First the interface to the user application:
+
+.. literalinclude:: main.xc
+   :start-on: case app.set_register
+   :end-before: // Handle I2C slave
+
+The interface to the application is very straight-forward, with each function
+validating that the ``regnum`` specified is valid and then performing the
+requested operation.
+
+It is worth noting the syntax of the ``app.get_register`` function which is of the form::
+
+  case app.get_register(int regnum) -> uint8_t data:
+
+The ``->`` operator indicates the result of the ``get_register`` function is
+returned in the ``data`` variable. The assignment to the ``data`` variable is
+the data that will be returned.
+
+The |I2C| slave callback interface declares nine functions that the register
+file must implement. Of those functions, only five are actually used by the
+register file, but the others would be used by other |I2C| slave devices.
+
+.. literalinclude:: main.xc
+   :start-on: case i2c.ack_read_request
+   :end-before: case i2c.start_write_request
+
+.. literalinclude:: main.xc
+   :start-on: case i2c.ack_write_request
+   :end-before: case i2c.start_master_write
+
+The register file implements the ``ack_read_request()`` and ``ack_write_request()``
+functions to control whether an ACK or NACK is signaled on the bus for each start
+of read or write request. All writes are accepted, and reads are only accepted
+if the register number has been selected first.
+
+.. literalinclude:: main.xc
+   :start-on: case i2c.master_sent_data
+   :end-before: case i2c.start_master_read
+
+The ``master_sent_data()`` interface function is called for each byte received
+by the |I2C| slave. The first byte is assumed to be a register number.
+Subsequent bytes received before the ``stop_bit()`` function is called are
+assumed to be data to write to the specified register.
+
+If a register is written then the ``master_sent_data()`` function also informs
+the user application if by calling the ``app.register_changed()`` notification
+function after having stored which register was modified in the
+``changed_regnum`` variable.
+
+.. literalinclude:: main.xc
+   :start-on: case i2c.master_requires_data
+   :end-before: case i2c.stop_bit
+
+The ``master_requires_data()`` interface function is called whenever the |I2C|
+slave is required to send a byte to the master. If a register number has been
+selected first it will read that register, otherwise it returns 0.
+
+.. literalinclude:: main.xc
+   :start-on: case i2c.stop_bit
+   :end-before: // select
+
+Finally, the ``stop_bit()`` function is called to indicate that the |I2C|
+transaction is finished. The register file clears the ``current_regnum``
+variable to ensure it has to be set for the next transaction.
+
+Slave application
+.................
+
+The slave application gives an example of how the register file could be used.
+It is passed a ``client`` interface to the register file so that it can access
+the registers. It then sits in a ``while(1)`` loop inverting the data
+that is written to the register file and printing when it does this:
+
+.. literalinclude:: main.xc
+   :start-on: void slave_application
+   :end-before: void master_application
+
+Master application
+..................
+
+The master application is providing stimulus to test the slave register file
+and application:
+
+.. literalinclude:: main.xc
+   :start-on: void master_application
+   :end-before: {
+
+It is passed the interface to the |I2C| master and the device address of the
+slave that it is testing. It then performs a single register write and checks
+that it completes successfully:
+
+.. literalinclude:: main.xc
+   :start-on: i2c.write_reg
+   :end-before: // Read a single
+
+Then it reads the register value back and ensures the read completed correctly
+and that the data has been inverted:
+
+.. literalinclude:: main.xc
+   :start-on: i2c.read_reg
+   :end-before: // Test finished
+
+The application main() function
+...............................
+
+The ``main()`` function sets up the tasks in the application.
+
+Firstly, the ``interfaces`` are declared. In xC interfaces provide a
+means of concurrent tasks communicating with each other. In this
+application there is an interface to the |I2C| slave, an interface between the
+application and the register file, and an interface to the |I2C| master.
+
+.. literalinclude:: main.xc
+   :start-on: i2c_slave_callback_if i_i2c;
+   :end-on: i2c_master_if i2c[1];
+
+The address of the |I2C| slave is declared:
+
+.. literalinclude:: main.xc
+   :start-on: uint8_t device_addr = 0x3c
+   :end-before: par
+
+The rest of the ``main()`` function starts all the tasks in parallel
+using the xC ``par`` construct:
+
+.. literalinclude:: main.xc
+   :start-on: par
+   :end-before: return 0
+
+This code starts the |I2C| slave, register file, slave application, |I2C| master,
+and master application. Because the register file is marked as ``distributable``
+it will not actually use a logical core but will be run on the logical cores with
+the |I2C| slave and register file. Likewise, the |I2C| master is marked as
+``distributable`` and will share the logical core with the master application. So
+the entire system only requires three logical cores.
+
+|newpage|
 |appendix|
+
+Demo setup
+----------
+
+Using xTIMEcomposer
+...................
+
+The demo is designed to run on the XMOS simulator using a loopback plugin providing
+pull-ups on the pins. In xTIMEcomposer:
+
+ * Import and select the AN00157_i2c_slave_example project
+ * Select ``Project -> Build Project``
+ * Select ``Run -> Run Configurations...``
+ * Select the ``New launch configuration`` button
+
+.. figure:: images/new_project.*
+   :width: 8%
+
+   New launch configuration
+
+Then on the ``Main`` tab select: ``Run on: simulator``
+
+.. figure:: images/run_on_simulator.*
+   :width: 40%
+
+   Run on simulator
+
+On the ``Simulator`` tab enable ``Trace to file:``
+
+.. figure:: images/trace_to_file.*
+   :width: 80%
+
+   Trace to file
+
 |newpage|
 
-Demo Hardware Setup
--------------------
+On the ``Simulator`` tab, ``Singal Tracing`` section, select
+``Enable signal tracing``. Then under the ``Tile Trace Options`` click ``Add``
+and on ``tile[0]`` enable the ``Ports`` checkbox.
+
+.. figure:: images/signal_tracing.*
+   :width: 80%
+
+   Signal tracing
+
+On the ``Simulator`` tab, ``Loopback`` section, select ``Enable pin connections``.
+Then under the ``Pin Connetions`` click ``Add`` and create a loopback from
+``tile[0]``, ``XS1_PORT_1E`` to ``tile[0]``, ``XS1_PORT_1G`` and enable ``pullup``.
+Again, under the ``Pin Connetions`` click ``Add`` and create a loopback from
+``tile[0]``, ``XS1_PORT_1F`` to ``tile[0]``, ``XS1_PORT_1H`` and enable ``pullup``.
+
+.. figure:: images/loopback.*
+   :width: 80%
+
+   Loopback
+
+Click ``Apply`` and then click ``Run``. The application will run and generate
+the following output::
+
+  REGFILE: select reg[3]
+  REGFILE: reg[3] <- 12
+  SLAVE: Change register 3 value from 12 to ED
+  REGFILE: stop_bit
+  REGFILE: select reg[3]
+  REGFILE: reg[3] -> ED
+  REGFILE: stop_bit
+  MASTER: Read from addr 0x3C, 0x3 SUCCESS (got 0xED, expected 0xED)
 
 |newpage|
 
-Launching the demo application
-------------------------------
+When it finishes, it will switch to the VCD trace viewer and open the signal file
+created. Hide the console by clicking on the console button on the right-hand side
+of the window:
+
+.. figure:: images/hide_console.*
+   :width: 8%
+
+   Hide console
+
+An existing waveform setup can be loaded using the ``Read Session File`` button
+from the ``Waves`` window:
+
+.. figure:: images/read_session_file.*
+   :width: 8%
+
+   Read session file
+
+and open the ``xvcd.xml`` file. This configures the waves to show the clock and
+data waves and the direction of the ports.
+
+.. figure:: images/waves.*
+   :width: 100%
+
+   Waves
+
+|newpage|
+
+On the command-line
+...................
+
+On the command-line run change to the application note folder and run::
+
+  xmake
+
+Then run ``xsim`` with the following arguments::
+
+  xsim --trace-to trace.txt --plugin LoopbackPort.so
+    "-pullup -port tile[0] XS1_PORT_1E 1 0 -port tile[0] XS1_PORT_1G 1 0
+     -pullup -port tile[0] XS1_PORT_1F 1 0 -port tile[0] XS1_PORT_1H 1 0"
+     bin/AN00157_i2c_slave_example.xe
+
+If you would like to look at the waveforms to further understand how the |I2C|
+is working then add the following to the xsim command arguments before the name
+of the binary::
+
+  --vcd-tracing "-o trace.vcd -tile tile[0] -ports"
+
+The VCD file can be opened in xTIMEcomposer or any other VCD viewer.
 
 |newpage|
 
