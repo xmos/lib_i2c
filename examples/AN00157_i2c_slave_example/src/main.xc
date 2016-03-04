@@ -3,13 +3,37 @@
 #include <debug_print.h>
 #include <xs1.h>
 #include <syscall.h>
+#include <print.h>
 
-port p_scl = XS1_PORT_1A;
-port p_sda = XS1_PORT_1B;
+port p_slave_scl = XS1_PORT_1A;
+port p_slave_sda = XS1_PORT_1B;
 
+port p_master_scl = XS1_PORT_1C;
+port p_master_sda = XS1_PORT_1D;
+
+/*
+ * Interface definition between user application and I2C slave register file
+ */
 interface register_if {
+  /* Set a register value
+   */
   void set_register(int regnum, uint8_t data);
+
+  /* Get a register value.
+   */
   uint8_t get_register(int regnum);
+
+  /* Get the number of the register that has changed
+   * This will also clear the notification
+   */
+  [[clears_notification]]
+  unsigned get_changed_regnum();
+
+  /* Notification from the register file to the application that a register
+   * value has changed
+   */
+  [[notification]]
+  slave void register_changed();
 };
 
 #define NUM_REGISTERS 10
@@ -25,23 +49,31 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
   // the variable will be updated to the register the master wants to
   // read/update.
   int current_regnum = -1;
+  int changed_regnum = -1;
   while (1) {
     select {
 
     // Handle application requests to get/set register values.
     case app.set_register(int regnum, uint8_t data):
-      registers[regnum] = data;
+      if (regnum >= 0 && regnum < NUM_REGISTERS) {
+        registers[regnum] = data;
+      }
       break;
     case app.get_register(int regnum) -> uint8_t data:
-      data = registers[regnum];
+      if (regnum >= 0 && regnum < NUM_REGISTERS) {
+        data = registers[regnum];
+      }
+      break;
+    case app.get_changed_regnum() -> unsigned regnum:
+      regnum = changed_regnum;
       break;
 
     // Handle I2C slave transactions
     case i2c.start_read_request(void):
       break;
     case i2c.ack_read_request(void) -> i2c_slave_ack_t response:
-      // If the no register has been asked for via a previous write
-      // transaction the NACK, otherwise ACK.
+      // If no register has been selected using a previous write
+      // transaction the NACK, otherwise ACK
       if (current_regnum == -1) {
         response = I2C_SLAVE_NACK;
       } else {
@@ -51,23 +83,32 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
     case i2c.start_write_request(void):
       break;
     case i2c.ack_write_request(void) -> i2c_slave_ack_t response:
-      // Write requests are always accepted.
+      // Write requests are always accepted
       response = I2C_SLAVE_ACK;
       break;
     case i2c.start_master_write(void):
       break;
     case i2c.master_sent_data(uint8_t data) -> i2c_slave_ack_t response:
       // The master is trying to write, which will either select a register
-      // or write to a previously selected register.
+      // or write to a previously selected register
       if (current_regnum != -1) {
         registers[current_regnum] = data;
-        current_regnum = -1;
+        debug_printf("REGFILE: reg[%d] <- %x\n", current_regnum, data);
+
+        // Inform the user application that the register has changed
+        changed_regnum = current_regnum;
+        app.register_changed();
+
         response = I2C_SLAVE_ACK;
       }
       else {
-        if (data < NUM_REGISTERS)
+        if (data < NUM_REGISTERS) {
           current_regnum = data;
-        response = I2C_SLAVE_NACK;
+          debug_printf("REGFILE: select reg[%d]\n", current_regnum);
+          response = I2C_SLAVE_ACK;
+        } else {
+          response = I2C_SLAVE_NACK;
+        }
       }
       break;
     case i2c.start_master_read(void):
@@ -77,33 +118,71 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
       // return the value (other return 0).
       if (current_regnum != -1) {
         data = registers[current_regnum];
+        debug_printf("REGFILE: reg[%d] -> %x\n", current_regnum, data);
       } else {
         data = 0;
       }
       break;
     case i2c.stop_bit():
+      // The I2C transaction has completed, clear the regnum
+      debug_printf("REGFILE: stop_bit\n");
+      current_regnum = -1;
       break;
     }
   }
 }
 
-void my_application(client interface register_if reg)
+void master_application(client interface i2c_master_if i2c, uint8_t device_addr)
 {
-  reg.set_register(0, 0x99);
-  reg.set_register(1, 0x33);
+  i2c_regop_res_t reg_result;
+
+  // Write a single register
+  reg_result = i2c.write_reg(device_addr, 0x03, 0x12);
+  if (reg_result != I2C_REGOP_SUCCESS) {
+    debug_printf("Write reg 0x03 failed!\n");
+  }
+
+  // Read a single register and check the result
+  uint8_t data = i2c.read_reg(device_addr, 0x03, reg_result);
+  if (reg_result != I2C_REGOP_SUCCESS) {
+    debug_printf("Read reg 0x03 failed!\n");
+  }
+  debug_printf("MASTER: Read from addr 0x%x, 0x%x %s (got 0x%x, expected 0x%x)\n",
+    device_addr, 0x03, (data == 0xed) ? "SUCCESS" : "FAILED", data, 0xed);
+
+  // Test finished
+  _exit(0);
+}
+
+void slave_application(client interface register_if reg)
+{
   while (1) {
-    delay_milliseconds(500);
-    debug_printf("Register 2 value: 0x%x\n", reg.get_register(2));
+    // Invert the data of any register that is written
+    select {
+      case reg.register_changed():
+        unsigned regnum = reg.get_changed_regnum();
+        unsigned value = reg.get_register(regnum);
+        debug_printf("SLAVE: Change register %d value from %x to %x\n",
+          regnum, value, ~value & 0xff);
+        reg.set_register(regnum, ~value);
+        break;
+    }
   }
 }
 
 int main() {
   i2c_slave_callback_if i_i2c;
   interface register_if i_reg;
+  i2c_master_if i2c[1];
+  uint8_t device_addr = 0x3c;
+
   par {
-    my_application(i_reg);
     i2c_slave_register_file(i_i2c, i_reg);
-    i2c_slave(i_i2c, p_scl, p_sda, 0x3c);
+    i2c_slave(i_i2c, p_slave_scl, p_slave_sda, device_addr);
+    slave_application(i_reg);
+
+    i2c_master(i2c, 1, p_master_scl, p_master_sda, 200);
+    master_application(i2c[0], device_addr);
   }
   return 0;
 }
