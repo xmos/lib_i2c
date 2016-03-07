@@ -20,7 +20,7 @@ The XMOS |I2C| library includes support for master and slave devices at speeds o
 up to 400kb/s.
 
 This application note demonstrates using the |I2C| master library to work with
-the accelerometer device on the xCORE-200 eXplorerKIT board.
+the FXOS8700CQ accelerometer device on the xCORE-200 eXplorerKIT board.
 
 Block diagram
 .............
