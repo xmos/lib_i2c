@@ -13,7 +13,8 @@ The XMOS |I2C| library provides software defined, industry-standard,
 bus masters or slaves using xCORE GPIO ports.
 
 |I2C| is a two-wire bus with defined protocols for connecting devices. There
-is a clock and a data line, both of which are pulled high by external pull-up resistors and driven low by the |I2C| devices.
+is a clock and a data line, both of which are pulled high by external pull-up
+resistors and driven low by the |I2C| devices.
 
 The XMOS |I2C| library includes support for master and slave devices at speeds of
 up to 400kb/s.
@@ -43,7 +44,7 @@ To start using the |I2C|, you need to add ``lib_i2c`` to you Makefile::
   USED_MODULES = .. lib_i2c ...
 
 This demo also uses the logging library (``lib_logging``) for the ``debug_printf``
-function. This is a faster, but restricted version of the C-Standard Library
+function. This is a faster, but more limited version of the C-Standard Library
 ``printf`` function. So the Makefile also includes::
 
   USED_MODULES = .. lib_logging ..
@@ -57,8 +58,8 @@ be enabled it is necessary to add the following to the compile flags::
 Includes
 ........
 
-This application requires a few system headers. XMOS xCORE specific
-defines for declaring and initialising hardware are defined in ``xs1.h``:
+This application requires the system header that defines XMOS xCORE specific
+defines for declaring and initialising hardware:
 
 .. literalinclude:: main.xc
    :start-on: include <xs1.h>
@@ -75,7 +76,7 @@ provided by ``debug_print.h``.
 Allocating hardware resources
 .............................
 
-An |I2C| master requires a clock and data pin. On an xCORE the pins are
+An |I2C| master requires a clock and a data pin. On an xCORE the pins are
 controlled by ``ports``. The application therefore declares two 1-bit ports:
 
 .. literalinclude:: main.xc
@@ -85,7 +86,7 @@ controlled by ``ports``. The application therefore declares two 1-bit ports:
 Accelerometer defines
 .....................
 
-A number of defines are used to configure the accelerometer device address and
+A number of defines are used for the accelerometer device address and
 register numbers:
 
 .. literalinclude:: main.xc
@@ -104,6 +105,13 @@ Each register read is checked to ensure that it has completed correctly.
    :start-on: int read_acceleration
    :end-before: void accelerometer
 
+The |I2C| ``read_reg()`` function takes the device address, the register number
+to read and a variable in which to return whether the read was successful.
+
+By default it is assumed that the device address, register number and data are
+all 8-bit. The |I2C| library provides other functions with different data-width
+operands. Refer to the library documentation for details.
+
 Writing over |I2C|
 ..................
 
@@ -114,7 +122,9 @@ by writing to the accelerometer device to configure and then enable it:
    :start-on: void accelerometer
    :end-before: while (1)
 
-After that it continuually loops polling the accelerometer until it is ready
+|newpage|
+
+After that it continually loops polling the accelerometer until it is ready
 and then reading the values from the three axes and displaying the current
 status.
 
@@ -122,8 +132,7 @@ status.
    :start-on: while (1)
    :end-before: // End accelerometer
 
-The print uses a ``\r`` to ensure that only a single line of the screen is ever
-used.
+The print uses a ``\r`` to ensure that only a single line of the screen is used.
 
 The application main() function
 ...............................
@@ -171,8 +180,9 @@ development machine.
 Launching the demo application
 ------------------------------
 
-Once the demo example has been built either from the command line using xmake or via the build mechanism of xTIMEcomposer studio it can be executed
-on the xCORE-USB sliceKIT.
+Once the demo example has been built either from the command line using xmake or
+via the build mechanism of xTIMEcomposer studio it can be executed on the xCORE-200
+eXplorerKIT.
 
 Once built there will be a ``bin/`` directory within the project which contains
 the binary for the xCORE device. The xCORE binary has a XMOS standard .xe extension.
@@ -191,8 +201,10 @@ xCORE-200 eXplorerKIT.
 Launching from xTIMEcomposer Studio
 ...................................
 
-From xTIMEcomposer Studio use the run mechanism to download code to xCORE device. Select the xCORE binary from the ``bin/`` directory, right click and go to Run
-Configurations. Double click on xCORE application to create a new run configuration, enable the xSCOPE I/O mode in the dialog box and then
+From xTIMEcomposer Studio use the run mechanism to download code to xCORE device.
+Select the xCORE binary from the ``bin/`` directory, right click and go to Run
+Configurations. Double click on xCORE application to create a new run configuration,
+enable the xSCOPE I/O mode in the dialog box and then
 select Run.
 
 Once this command has executed the application will be running on the
