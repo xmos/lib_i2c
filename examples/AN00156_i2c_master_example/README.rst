@@ -1,9 +1,9 @@
 .. |I2C| replace:: I\ :sup:`2`\ C
 
-How to use the |I2C| master library
-===================================
+How to use the I2C master library
+=================================
 
-.. version:: 1.0.1
+.. version:: 1.0.2
 
 Summary
 -------

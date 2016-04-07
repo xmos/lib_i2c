@@ -1,7 +1,7 @@
 .. |I2C| replace:: I\ :sup:`2`\ C
 
-|I2C| Library
-=============
+I2C Library
+===========
 
 Summary
 -------
