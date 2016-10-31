@@ -16,10 +16,10 @@ Byte received: 0x44
 Sending ack
 Speed = 398 Kbps
 Master write transaction started, device address=0x22
-Byte received: 0x99
+Byte received: 0xfe
 Sending ack
 Speed = 398 Kbps
-Byte received: 0xfe
+Byte received: 0x99
 Sending ack
 Speed = 398 Kbps
 Byte received: 0x12
@@ -32,16 +32,32 @@ Byte received: 0x66
 Sending ack
 Speed = 398 Kbps
 Master write transaction started, device address=0x33
-Byte received: 0xcd
-Sending ack
-Speed = 398 Kbps
 Byte received: 0xab
 Sending ack
 Speed = 398 Kbps
-Byte received: 0xa3
+Byte received: 0xcd
 Sending ack
 Speed = 398 Kbps
 Byte received: 0x12
+Sending ack
+Speed = 398 Kbps
+Byte received: 0xa3
+Sending nack
+Speed = 398 Kbps
+Stop bit received
+ACK
+Start bit received
+Byte received: 0x22
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x11
+Byte received: 0xef
+Sending ack
+Speed = 398 Kbps
+Byte received: 0x45
+Sending ack
+Speed = 398 Kbps
+Byte received: 0x67
 Sending nack
 Speed = 398 Kbps
 Stop bit received
@@ -71,10 +87,10 @@ Byte received: 0x8a
 Sending ack
 Speed = 398 Kbps
 Master write transaction started, device address=0x45
-Byte received: 0x21
+Byte received: 0xa3
 Sending ack
 Speed = 398 Kbps
-Byte received: 0xa3
+Byte received: 0x21
 Sending ack
 Speed = 398 Kbps
 Repeated start bit received
@@ -94,10 +110,10 @@ Byte received: 0x8c
 Sending ack
 Speed = 398 Kbps
 Master write transaction started, device address=0x46
-Byte received: 0x99
+Byte received: 0x33
 Sending ack
 Speed = 398 Kbps
-Byte received: 0x33
+Byte received: 0x99
 Sending ack
 Speed = 398 Kbps
 Repeated start bit received
@@ -114,3 +130,25 @@ Waiting for stop/start bit
 Stop bit received
 ACK
 val=FF05
+Start bit received
+Byte received: 0x8e
+Sending ack
+Speed = 398 Kbps
+Master write transaction started, device address=0x47
+Byte received: 0x22
+Sending ack
+Speed = 398 Kbps
+Repeated start bit received
+Byte received: 0x8f
+Sending ack
+Speed = 398 Kbps
+Master read transaction started, device address=0x47
+Byte sent
+Master sends ACK.
+Byte sent
+Master sends NACK.
+Speed = 398 Kbps
+Waiting for stop/start bit
+Stop bit received
+ACK
+val=EE06

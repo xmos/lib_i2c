@@ -11,14 +11,17 @@ def runtest():
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
-                               tx_data = [0x99, 0x3A, 0xff, 0x05],
+                               tx_data = [0x99, 0x3A, 0xff, 0x05, 0x11, 0x22],
                                expected_speed = 400,
-                               ack_sequence = [False,
-                                               True, True, False,
-                                               True, False,
-                                               False,
-                                               True, False,
-                                               True, True, True, False])
+                               ack_sequence = [False, # NACK header
+                                               True, True, False, # NACK before data
+                                               True, False, # NACK before data
+                                               True, False, # NACK before data
+                                               False, # NACK address
+                                               True, False, # NACK before data
+                                               True, False, # NACK before data
+                                               True, True, False # NACK before data
+                                              ])
 
     tester = xmostest.ComparisonTester(open('reg_ops_nack.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
