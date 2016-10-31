@@ -9,6 +9,11 @@ I2C library change log
   * RESOLVED: Fixed byte ordering of write_reg16_addr8()
   * RESOLVED: Fixed master transmitting on multi-bit port
 
+3.1.6
+-----
+
+  * CHANGE: Change title to remove special characters
+
 3.1.5
 -----
 
