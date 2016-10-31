@@ -42,8 +42,10 @@ I2C library change log
 3.1.0
 -----
 
-  * ADDED: Add support for reading on i2c_master_single-port for xCORE-200 series.
-  * CHANGE: Document reg_read functions more clearly with respect to stop bit behavior.
+  * ADDED: Add support for reading on i2c_master_single-port for xCORE-200
+    series.
+  * CHANGE: Document reg_read functions more clearly with respect to stop bit
+    behavior.
 
 3.0.0
 -----
