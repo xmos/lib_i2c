@@ -157,7 +157,7 @@ extends client interface i2c_master_if : {
     return I2C_REGOP_SUCCESS;
   }
 
-  /** Read an 8-bit register on a slave device from a 16 bit register address.
+  /** Read an 8-bit register on a slave device from a 16-bit register address.
    *
    *  This function reads a 16-bit addressed, 8-bit register from the i2c
    *  bus. The function reads data by
@@ -168,7 +168,7 @@ extends client interface i2c_master_if : {
    *  The operation is performed as one transaction using a repeated start.
    *
    *  \param device_addr the address of the slave device to read from
-   *  \param reg         the address of the register to read
+   *  \param reg         the 16-bit address of the register to read (MSB first)
    *
    *  \returns           the value of the register
    */
@@ -195,7 +195,7 @@ extends client interface i2c_master_if : {
     return data[0];
   }
 
-  /** Write an 8-bit register on a slave device from a 16 bit register address.
+  /** Write an 8-bit register on a slave device from a 16-bit register address.
    *
    *  This function writes a 16-bit addressed, 8-bit register from the i2c
    *  bus. The function writes data by
@@ -203,7 +203,7 @@ extends client interface i2c_master_if : {
    *  transmitting the data to the slave device.
    *
    *  \param device_addr the address of the slave device to write to
-   *  \param reg         the address of the register to write
+   *  \param reg         the 16-bit address of the register to write (MSB first)
    *  \param data        the 8-bit value to write
    */
   inline i2c_regop_res_t write_reg8_addr16(client interface i2c_master_if i,
@@ -221,20 +221,20 @@ extends client interface i2c_master_if : {
     return I2C_REGOP_SUCCESS;
   }
 
-  /** Read an 16-bit register on a slave device from a 16 bit register address.
+  /** Read an 16-bit register on a slave device from a 16-bit register address.
    *
    *  This function reads a 16-bit addressed, 16-bit register from the i2c
    *  bus. The function reads data by
    *  transmitting the register addr and then reading the data from the slave
-   *  device.
+   *  device. It is assumed the data is returned MSB first on the bus.
    *
    *  Note that no stop bit is transmitted between the write and the read.
    *  The operation is performed as one transaction using a repeated start.
    *
    *  \param device_addr the address of the slave device to read from
-   *  \param reg         the address of the register to read
+   *  \param reg         the address of the register to read (MSB first)
    *
-   *  \returns           the value of the register
+   *  \returns           the 16-bit value of the register
    */
   inline uint16_t read_reg16(client interface i2c_master_if i,
                              uint8_t device_addr, uint16_t reg,
@@ -259,7 +259,7 @@ extends client interface i2c_master_if : {
     return ((uint16_t) data[0] << 8) | data[1];
   }
 
-  /** Write an 16-bit register on a slave device from a 16 bit register address.
+  /** Write an 16-bit register on a slave device from a 16-bit register address.
    *
    *  This function writes a 16-bit addressed, 16-bit register from the i2c
    *  bus. The function writes data by
@@ -267,8 +267,8 @@ extends client interface i2c_master_if : {
    *  transmitting the data to the slave device.
    *
    *  \param device_addr the address of the slave device to write to
-   *  \param reg         the address of the register to write
-   *  \param data        the 16-bit value to write
+   *  \param reg         the 16-bit address of the register to write (MSB first)
+   *  \param data        the 16-bit value to write (MSB first)
    */
   inline i2c_regop_res_t write_reg16(client interface i2c_master_if i,
                                uint8_t device_addr, uint16_t reg,
@@ -291,7 +291,7 @@ extends client interface i2c_master_if : {
    *  This function reads a 8-bit addressed, 16-bit register from the i2c
    *  bus. The function reads data by
    *  transmitting the register addr and then reading the data from the slave
-   *  device.
+   *  device. It is assumed that the data is return MSB first on the bus.
    *
    *  Note that no stop bit is transmitted between the write and the read.
    *  The operation is performed as one transaction using a repeated start.
@@ -299,7 +299,7 @@ extends client interface i2c_master_if : {
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read
    *
-   *  \returns           the value of the register
+   *  \returns           the 16-bit value of the register
    */
   inline uint16_t read_reg16_addr8(client interface i2c_master_if i,
                                    uint8_t device_addr, uint8_t reg,
@@ -333,7 +333,7 @@ extends client interface i2c_master_if : {
    *
    *  \param device_addr the address of the slave device to write to
    *  \param reg         the address of the register to write
-   *  \param data        the 8-bit value to write
+   *  \param data        the 16-bit value to write (MSB first)
    */
   inline i2c_regop_res_t write_reg16_addr8(client interface i2c_master_if i,
                                            uint8_t device_addr, uint8_t reg,
