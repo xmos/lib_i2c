@@ -17,14 +17,23 @@ void test(client i2c_master_if i2c)
   debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   result = i2c.write_reg16(0x33, 0xabcd, 0x12a3);
   debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
+  result = i2c.write_reg16_addr8(0x11, 0xef, 0x4567);
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
+
   unsigned val;
   val = i2c.read_reg(0x44, 0x33, result);
   debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   debug_printf("val=%x\n", val);
+
   val = i2c.read_reg8_addr16(0x45, 0xa321, result);
   debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   debug_printf("val=%x\n", val);
+
   val = i2c.read_reg16(0x46, 0x3399, result);
+  debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
+  debug_printf("val=%x\n", val);
+
+  val = i2c.read_reg16_addr8(0x47, 0x22, result);
   debug_printf(result == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
   debug_printf("val=%x\n", val);
   exit(0);

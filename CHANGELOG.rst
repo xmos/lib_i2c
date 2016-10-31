@@ -1,46 +1,49 @@
 I2C library change log
 ======================
 
-3.1.6
+4.0.0
 -----
 
-  * Change title
+  * CHANGE: Register read/write functions are now all MSB first
+  * RESOLVED: Numerous fixed to slave so it works correctly with master
+  * RESOLVED: Fixed byte ordering of write_reg16_addr8()
+  * RESOLVED: Fixed master transmitting on multi-bit port
 
 3.1.5
 -----
 
-  * Update app notes
+  * CHANGE: Update app notes
 
 3.1.4
 -----
 
-  * Remove invalid app notes
+  * CHANGE: Remove invalid app notes
 
 3.1.3
 -----
 
-  * Update to source code license and copyright
+  * CHANGE: Update to source code license and copyright
 
 3.1.2
 -----
 
-  * Fix incorrect reading of r/w bit in slave component
+  * RESOLVED: Fix incorrect reading of r/w bit in slave component
 
 3.1.1
 -----
 
-  * Minor user guide updates
+  * CHANGE: Minor user guide updates
 
 3.1.0
 -----
 
-  * Add support for reading on i2c_master_single-port for xCORE-200 series.
-  * Document reg_read functions more clearly with respect to stop bit behavior.
+  * ADDED: Add support for reading on i2c_master_single-port for xCORE-200 series.
+  * CHANGE: Document reg_read functions more clearly with respect to stop bit behavior.
 
 3.0.0
 -----
 
-  * Consolidated version, major rework from previous I2C components.
+  * CHANGE: Consolidated version, major rework from previous I2C components.
 
   * Changes to dependencies:
 

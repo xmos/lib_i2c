@@ -176,7 +176,7 @@ extends client interface i2c_master_if : {
                                   uint8_t device_addr, uint16_t reg,
                                   i2c_regop_res_t &result)
   {
-    uint8_t a_reg[2] = {reg, reg >> 8};
+    uint8_t a_reg[2] = {reg >> 8, reg};
     uint8_t data[1];
     size_t n;
     i2c_res_t res;
@@ -209,7 +209,7 @@ extends client interface i2c_master_if : {
   inline i2c_regop_res_t write_reg8_addr16(client interface i2c_master_if i,
                                            uint8_t device_addr, uint16_t reg,
                                            uint8_t data) {
-    uint8_t a_data[3] = {reg, reg >> 8, data};
+    uint8_t a_data[3] = {reg >> 8, reg, data};
     size_t n;
     i.write(device_addr, a_data, 3, n, 1);
     if (n == 0) {
@@ -240,7 +240,7 @@ extends client interface i2c_master_if : {
                              uint8_t device_addr, uint16_t reg,
                              i2c_regop_res_t &result)
   {
-    uint8_t a_reg[2] = {reg, reg >> 8};
+    uint8_t a_reg[2] = {reg >> 8, reg};
     uint8_t data[2];
     size_t n;
     i2c_res_t res;
@@ -273,7 +273,7 @@ extends client interface i2c_master_if : {
   inline i2c_regop_res_t write_reg16(client interface i2c_master_if i,
                                uint8_t device_addr, uint16_t reg,
                                uint16_t data) {
-    uint8_t a_data[4] = {reg, reg >> 8, data, data >> 8};
+    uint8_t a_data[4] = {reg >> 8, reg, data >> 8, data};
     size_t n;
     i.write(device_addr, a_data, 4, n, 1);
     if (n == 0) {
