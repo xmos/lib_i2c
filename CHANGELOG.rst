@@ -5,7 +5,8 @@ I2C library change log
 -----
 
   * CHANGE: Register read/write functions are now all MSB first
-  * RESOLVED: Numerous fixed to slave so it works correctly with master
+  * RESOLVED: i2c slave working properly (versions pre 4.0.0 not suitable for
+    i2c slave)
   * RESOLVED: Fixed byte ordering of write_reg16_addr8()
   * RESOLVED: Fixed master transmitting on multi-bit port
 
