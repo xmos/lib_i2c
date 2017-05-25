@@ -123,7 +123,10 @@ void i2c_master_async(server interface i2c_master_async_if i[n],
   i2c_master_if i2c_dist[1];
   par {
     i2c_master(i2c_dist, 1, p_scl, p_sda, kbits_per_second);
+// Disable 'slices interface preventing analysis' warning
+#pragma warning disable
     i2c_master_async_aux(i, n, i2c_dist[0], max_transaction_size);
+#pragma warning enable
   }
 }
 

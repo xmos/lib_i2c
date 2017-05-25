@@ -1,6 +1,12 @@
 I2C library change log
 ======================
 
+4.0.1
+-----
+
+  * RESOLVED: Suppressed warning "argument 1 of 'i2c_master_async_aux'
+    slices interface preventing analysis of its parallel usage".
+
 4.0.0
 -----
 
