@@ -671,9 +671,7 @@ typedef interface i2c_slave_callback_if {
  *  \param  p_scl  The SCL port of the I2C bus
  *  \param  p_sda  The SDA port of the I2C bus
  *  \param device_addr The address of the slave device
- *  \param max_transaction_size  The maximum number of bytes that will be
- *                               read or written by the master.
- *
+ *  
  */
 [[combinable]]
 void i2c_slave(client i2c_slave_callback_if i,
