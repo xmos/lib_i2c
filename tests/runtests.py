@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 
