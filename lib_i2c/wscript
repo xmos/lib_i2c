@@ -1,6 +1,6 @@
 def use_module(bld):
     sources = bld.path.ant_glob('src/**/*.xc')
-    bld.env.XCC_FLAGS.append('-Os')
+    bld.env.MODULE_XCC_FLAGS = bld.env.XCC_FLAGS + ['-Os']
     bld.module(
         source=sources,
         includes=['api'],
