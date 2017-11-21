@@ -86,7 +86,7 @@ static int high_pulse_sample(port p_i2c, unsigned bit_time,
                              unsigned S_REST,
                              unsigned &fall_time)
 {
-  #ifdef __XS2A__
+#ifdef __XS2A__
   int sample_value;
   timer tmr;
 
@@ -104,7 +104,7 @@ static int high_pulse_sample(port p_i2c, unsigned bit_time,
   tmr when timerafter(fall_time) :> void;
   p_i2c <: SCL_LOW | SDA_HIGH;
   return sample_value;
-  #else
+#else
   int expectedSDA = 0;
   timer tmr;
   p_i2c <: (expectedSDA ? SDA_HIGH : 0) | SCL_LOW | S_REST;
@@ -116,7 +116,7 @@ static int high_pulse_sample(port p_i2c, unsigned bit_time,
   tmr when timerafter(fall_time) :> void;
   p_i2c <: expectedSDA | SCL_LOW | S_REST;
   return expectedSDA;
-  #endif
+#endif
 }
 
 static unsigned start_bit(port p_i2c, unsigned bit_time,
@@ -215,9 +215,9 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
 
           tmr when timerafter(fall_time + bit_time/4) :> void;
           // ACK after every read byte until the final byte then NACK.
-          if (j == m-1)
+          if (j == m-1) {
             p_i2c <: SDA_HIGH | SCL_HIGH | other_bits_mask;
-          else {
+          } else {
             p_i2c <: SCL_HIGH | other_bits_mask;
           }
           // High pulse but make sure SDA is not driving before lowering
@@ -239,6 +239,7 @@ void i2c_master_single_port(server interface i2c_master_if c[n], unsigned n,
 
       result = (ack == 0) ? I2C_ACK : I2C_NACK;
       break;
+
     case (size_t i = 0; i < n; i++)
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
         c[i].write(uint8_t device, uint8_t buf[n], size_t n,

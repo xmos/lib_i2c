@@ -7,7 +7,7 @@ class I2CMasterChecker(xmostest.SimThread):
     """
 
     def __init__(self, scl_port, sda_port, expected_speed,
-                 tx_data = [], ack_sequence = [], clock_stretch = 0):
+                 tx_data=[], ack_sequence=[], clock_stretch=0):
         self._scl_port = scl_port
         self._sda_port = sda_port
         self._tx_data = tx_data
