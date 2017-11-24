@@ -6,7 +6,7 @@ else # USING_XWAF
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
 
-TARGET = SLICEKIT-L16
+TARGET = XCORE-200-EXPLORER
 
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to
@@ -24,10 +24,14 @@ APP_NAME =
 
 COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
-XCC_FLAGS_tx_only = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400
-XCC_FLAGS_rx_tx_400 = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=400
-XCC_FLAGS_rx_tx_100 = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=100
-XCC_FLAGS_rx_tx_10 = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=10
+XCC_FLAGS_tx_only_stop      = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=1
+XCC_FLAGS_tx_only_no_stop   = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=0
+XCC_FLAGS_rx_tx_400_stop    = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=400 -DSTOP=1
+XCC_FLAGS_rx_tx_400_no_stop = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=400 -DSTOP=0
+XCC_FLAGS_rx_tx_100_stop    = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=100 -DSTOP=1
+XCC_FLAGS_rx_tx_100_no_stop = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=100 -DSTOP=0
+XCC_FLAGS_rx_tx_10_stop     = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=10 -DSTOP=1
+XCC_FLAGS_rx_tx_10_no_stop  = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=10 -DSTOP=0
 
 
 # The USED_MODULES variable lists other module used by the application.

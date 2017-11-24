@@ -1,6 +1,12 @@
 I2C library change log
 ======================
 
+5.0.0
+-----
+
+  * CHANGE: i2c_master_single_port no longer supported on XS1.
+  * RESOLVED: Fixed timing of i2c master (both single port and multi-port).
+
 4.0.1
 -----
 

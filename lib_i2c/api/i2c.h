@@ -373,14 +373,11 @@ extends client interface i2c_master_if : {
                                   port p_scl, port p_sda,
                                   unsigned kbits_per_second);
 
+#ifdef __XS2A__
 /** Implements I2C on a single multi-bit port.
  *
- *  This function implements an I2C master bus using a single port. However,
- *  If this function is used with an L-series or U-series xCORE device then
- *  reading from the bus and clock stretching are not supported.
- *  The user needs to be aware that these restriction are appropriate for the
- *  application. On xCORE-200 devices, reading and clock stretching are
- *  supported.
+ *  This function implements an I2C master bus using a single port. It is only
+ *  supported on xCORE-200 devices.
  *
  *  \param  c      An array of server interface connections for clients to
  *                 connect to
@@ -398,12 +395,12 @@ extends client interface i2c_master_if : {
  *                           value
  */
 [[distributable]]
-void i2c_master_single_port(server interface i2c_master_if c[n], size_t n,
+void i2c_master_single_port(server interface i2c_master_if c[n], static const size_t n,
                             port p_i2c, unsigned kbits_per_second,
                             unsigned scl_bit_position,
                             unsigned sda_bit_position,
                             unsigned other_bits_mask);
-
+#endif
 
 
 /** This interface is used to communication with an I2C master component

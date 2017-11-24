@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2014-2017, XMOS Ltd, All rights reserved
 #include <stdio.h>
 #include <xs1.h>
 #include "debug_print.h"
@@ -8,41 +8,82 @@
 port p_scl = XS1_PORT_1A;
 port p_sda = XS1_PORT_1B;
 
+// Test the following pairs of operations:
+//  write,read
+//  read,read
+//  read,write
+//  write,write
+enum {
+  TEST_WRITE_1 = 0,
+  TEST_READ_1,
+  TEST_READ_2,
+  TEST_WRITE_2,
+  TEST_WRITE_3,
+  NUM_TESTS
+};
+
+static const char * unsafe ack_str(int ack)
+{
+  unsafe {
+    return (ack == I2C_ACK) ? "ack" : "nack";
+  }
+}
+
+#define MAX_DATA_BYTES 3
+
 void test(client i2c_master_if i2c)
 {
-  uint8_t data[3];
-  int ack;
-  size_t num_sent = 55;
+  // Have separate data arrays so that everything can be setup before starting
+  uint8_t data_write_1[MAX_DATA_BYTES] = {0};
+  uint8_t data_write_2[MAX_DATA_BYTES] = {0};
+  uint8_t data_write_3[MAX_DATA_BYTES] = {0};
+  uint8_t data_read_1[MAX_DATA_BYTES] = {0};
+  uint8_t data_read_2[MAX_DATA_BYTES] = {0};
+  int acks[NUM_TESTS] = {0};
+  size_t n1 = -1;
+  size_t n2 = -1;
+  size_t n3 = -1;
+
+  const int do_stop = STOP ? 1 : 0;
+
+  // Setup all data to be written
+  data_write_1[0] = 0x90; data_write_1[1] = 0xfe;
+  data_write_2[0] = 0xff; data_write_2[1] = 0x00; data_write_2[2] = 0xaa;
+  data_write_3[0] = 0xee;
+
+  // Execute all bus operations
   if (ENABLE_TX) {
-    data[0] = 0x90; data[1] = 0xfe;
-    ack = i2c.write(0x3c, data, 2, num_sent, 1);
-    debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-                 ack == I2C_ACK ? "ack" : "nack", num_sent);
+    acks[TEST_WRITE_1] = i2c.write(0x3c, data_write_1, 2, n1, do_stop);
   }
   if (ENABLE_RX) {
-    ack = i2c.read(0x22, data, 2, 1);
-    debug_printf("xCORE: %s\n",
-                 ack == I2C_ACK ? "ack" : "nack");
-    debug_printf("xCORE received: 0x%x, 0x%x\n",data[0], data[1]);
-    ack = i2c.read(0x22, data, 1, 1);
-    debug_printf("xCORE: %s\n",
-                 ack == I2C_ACK ? "ack" : "nack");
-    debug_printf("xCORE received: 0x%x\n",data[0]);
+    acks[TEST_READ_1] = i2c.read(0x22, data_read_1, 2, do_stop);
+    acks[TEST_READ_2] = i2c.read(0x22, data_read_2, 1, do_stop);
   }
   if (ENABLE_TX) {
-    data[0] = 0xff; data[1] = 0x00; data[2] = 0xaa;
-    ack = i2c.write(0x7b, data, 3, num_sent, 1);
-    debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-                 ack == I2C_ACK ? "ack" : "nack", num_sent);
-    data[0] = 0xee;
-    ack = i2c.write(0x31, data, 1, num_sent, 1);
-    debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-                 ack == I2C_ACK ? "ack" : "nack", num_sent);
+    acks[TEST_WRITE_2] = i2c.write(0x7b, data_write_2, 3, n2, do_stop);
+    acks[TEST_WRITE_3] = i2c.write(0x31, data_write_3, 1, n3, do_stop);
+  }
+
+  // Print out results after all the data transactions have finished
+  unsafe {
+    if (ENABLE_TX) {
+      debug_printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_1]), n1);
+      debug_printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_2]), n2);
+      debug_printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_3]), n3);
+    }
+
+    if (ENABLE_RX) {
+      debug_printf("xCORE got %s\n", ack_str(acks[TEST_READ_1]));
+      debug_printf("xCORE received: 0x%x, 0x%x\n", data_read_1[0], data_read_1[1]);
+      debug_printf("xCORE got %s\n", ack_str(acks[TEST_READ_2]));
+      debug_printf("xCORE received: 0x%x\n", data_read_2[0]);
+    }
   }
   exit(0);
 }
 
-int main(void) {
+int main(void)
+{
   i2c_master_if i2c[1];
   par {
     i2c_master(i2c, 1, p_scl, p_sda, SPEED);

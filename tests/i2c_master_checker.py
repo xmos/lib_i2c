@@ -20,6 +20,9 @@ class I2CMasterChecker(xmostest.SimThread):
 
         self._scl_change_time = None
         self._sda_change_time = None
+        self._last_sda_change_time = None
+        self._scl_value = 0
+        self._sda_value = 0
 
         self._bit_num = 0
         self._bit_times = []
@@ -34,7 +37,7 @@ class I2CMasterChecker(xmostest.SimThread):
         print "Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port)
 
     def error(self, str):
-         print "ERROR: %s (@ %s)" % (str, self.xsi.get_time())
+         print "ERROR: %s @ %s" % (str, self.xsi.get_time())
 
     def read_port(self, port, external_value):
       driving = self.xsi.is_port_driving(port)
@@ -81,12 +84,17 @@ class I2CMasterChecker(xmostest.SimThread):
            (self._expected_speed == 400 and time >  900):
             self.error("Data valid time not respected: %gns" % time)
 
-    def check_low_time(self, time):
+    def check_data_setup_time(self, time):
+        if (self._expected_speed == 100 and time < 250) or\
+           (self._expected_speed == 400 and time < 100):
+            self.error("Data setup time less than minimum in spec: %gns" % time)
+
+    def check_clock_low_time(self, time):
         if (self._expected_speed == 100 and time < 4700) or\
            (self._expected_speed == 400 and time < 1300):
             self.error("Clock low time less than minimum in spec: %gns" % time)
 
-    def check_high_time(self, time):
+    def check_clock_high_time(self, time):
         if (self._expected_speed == 100 and time < 4000) or\
            (self._expected_speed == 400 and time < 900):
             self.error("Clock high time less than minimum in spec: %gns" % time)
@@ -95,6 +103,13 @@ class I2CMasterChecker(xmostest.SimThread):
         if (self._expected_speed == 100 and time < 4000) or\
            (self._expected_speed == 400 and time < 600):
             self.error("Stop bit setup time less than minimum in spec: %gns" % time)
+
+    def check_bus_free_time(self, time):
+      """ Check the time from the STOP to the START condition
+      """
+      if (self._expected_speed == 100 and time < 4700) or \
+         (self._expected_speed == 400 and time < 1300):
+          self.error("STOP to START time less than minimum in spec: %gns" % time)
 
     def get_next_data_item(self):
         if self._tx_data_index >= len(self._tx_data):
@@ -120,10 +135,9 @@ class I2CMasterChecker(xmostest.SimThread):
       "SAMPLE_ACK"       : ( 1,    None,  "NOT_POSSIBLE",     "NOT_POSSIBLE" ),
       "ACKED"            : ( None, None,  "DRIVE_BIT",        "ACKED" ),
       "NACKED"           : ( None, None,  "NACKED_SELECT",    "ILLEGAL" ),
-      "NACKED_SELECT"    : ( 0,    1,     "GO_TO_REPEAT",     "GO_TO_STOPPED0" ),
+      "NACKED_SELECT"    : ( 0,    1,     "STOPPED",          "GO_TO_STOPPED0" ),
       "GO_TO_STOPPED0"   : ( 0,    0,     "GO_TO_STOPPED1",   "ILLEGAL" ),
       "GO_TO_STOPPED1"   : ( 1,    0,     "ILLEGAL",          "STOPPED" ),
-      "GO_TO_REPEAT"     : ( 1,    1,     "ILLEGAL",          "STOPPED" ),
       "REPEAT_START"     : ( 0,    1,     "ILLEGAL",          "STARTING" ),
       "ILLEGAL"          : ( None, None,  "ILLEGAL",          "ILLEGAL" ),
     }
@@ -143,23 +157,22 @@ class I2CMasterChecker(xmostest.SimThread):
       scl_changed = False
       sda_changed = False
 
-      scl_value = self.read_scl_value()
-      sda_value = self.read_sda_value()
+      scl_value = self._scl_value
+      sda_value = self._sda_value
 
-      while True:
+      # The value might already not be the same if both signals transitioned
+      # simultaneously previously
+      new_scl_value = self.read_scl_value()
+      new_sda_value = self.read_sda_value()
+      while new_scl_value == scl_value and new_sda_value == sda_value:
         self.wait_for_port_pins_change([self._scl_port, self._sda_port])
         new_scl_value = self.read_scl_value()
         new_sda_value = self.read_sda_value()
 
-        # When a multi-bit port is being used it is essential to wait until
-        # these bits actually change
-        if new_scl_value != scl_value or new_sda_value != sda_value:
-          break
-
       time_now = self.xsi.get_time()
 
-      print "wait_for_change {},{} -> {},{} @ {}".format(
-        scl_value, sda_value, new_scl_value, new_sda_value, time_now)
+      # print "wait_for_change {},{} -> {},{} @ {}".format(
+      #   scl_value, sda_value, new_scl_value, new_sda_value, time_now)
 
       #
       # SCL changed
@@ -167,13 +180,15 @@ class I2CMasterChecker(xmostest.SimThread):
       if scl_value != new_scl_value:
         scl_changed = True
 
+        # Ensure the clock timing is correct
         if self._scl_change_time:
           if new_scl_value == 0:
-            self.check_high_time(time_now - self._scl_change_time)
+            self.check_clock_high_time(time_now - self._scl_change_time)
           else:
-            self.check_low_time(time_now - self._scl_change_time)
+            self.check_clock_low_time(time_now - self._scl_change_time)
 
         self._scl_change_time = time_now
+        self._scl_value = new_scl_value
 
         # Record the time of the falling edges
         if new_scl_value == 0:
@@ -183,11 +198,14 @@ class I2CMasterChecker(xmostest.SimThread):
           self._prev_fall_time = fall_time
 
       #
-      # SDA changed
+      # SDA changed - don't detect simultaneous changes and have the clock
+      # be higher priority if they do.
       #
-      if sda_value != new_sda_value:
+      if not scl_changed and (sda_value != new_sda_value):
         sda_changed = True
+        self._last_sda_change_time = self._sda_change_time
         self._sda_change_time = time_now
+        self._sda_value = new_sda_value
 
         if new_scl_value == 0:
           self.check_data_valid_time(time_now - self._scl_change_time)
@@ -198,7 +216,7 @@ class I2CMasterChecker(xmostest.SimThread):
       return scl_changed, sda_changed
 
     def set_state(self, next_state):
-      print "State: {} -> {} @ {}".format(self._state, next_state, self.xsi.get_time())
+      # print "State: {} -> {} @ {}".format(self._state, next_state, self.xsi.get_time())
       self._prev_state = self._state
       self._state = next_state
 
@@ -276,7 +294,8 @@ class I2CMasterChecker(xmostest.SimThread):
       self.set_state("BYTE_DONE")
 
     def handle_nacked_select(self):
-      pass
+      # Simulate external pullup
+      self.drive_sda(1)
 
     def handle_go_to_stopped0(self):
       pass
@@ -291,16 +310,26 @@ class I2CMasterChecker(xmostest.SimThread):
       print("Start bit received")
       self._byte_num = 0
       self.start_read()
+      if self._last_sda_change_time is not None:
+        self.check_bus_free_time(self.xsi.get_time() - self._last_sda_change_time)
 
     def handle_illegal(self):
       self.error("Illegal state arrived at from {}".format(self._prev_state))
 
     def handle_drive_bit(self):
       if self._write_data is not None:
+        # Drive data being read by master
         self.drive_sda((self._write_data & 0x80) >> 7)
+      else:
+        # Simulate external pullup
+        self.drive_sda(1)
 
     def handle_sample_bit(self):
       if self._read_data is not None:
+        # Ensure that the data setup time has been respected
+        self.check_data_setup_time(self.xsi.get_time() - self._sda_change_time)
+
+        # Read the data value
         self._read_data = (self._read_data << 1) | self.read_sda_value()
 
       if self._write_data is not None:
@@ -321,7 +350,7 @@ class I2CMasterChecker(xmostest.SimThread):
           self.drive_sda(1)
         self.set_state("ACK_SENT")
       else:
-        # Pull up so that the master can release the bus
+        # Simulate external pullup
         self.drive_sda(1)
 
     def handle_ack_sent(self):
@@ -364,6 +393,8 @@ class I2CMasterChecker(xmostest.SimThread):
 
       # Ignore the blips on the ports at the start
       self.wait_until(10000)
+      self._scl_value = self.read_scl_value()
+      self._sda_value = self.read_sda_value()
 
       self._tx_data_index = 0
       self._ack_index = 0
@@ -379,6 +410,6 @@ class I2CMasterChecker(xmostest.SimThread):
         scl_changed, sda_changed = self.wait_for_change()
 
         if scl_changed and sda_changed:
-          self.error("SCL & SDA changed simultaneously")
+          self.error("Unsupported having SCL & SDA changing simultaneously")
 
         self.move_to_next_state(scl_changed, sda_changed)
