@@ -4,14 +4,23 @@
 #include <xclib.h>
 #include <timer.h>
 
-static const unsigned inline compute_low_period_time(unsigned bit_time)
+/* NOTE: the kbits_per_second needs to be passed around due to the fact that the
+ *       compiler won't compute a new static const from a static const.
+ */
+
+static const unsigned inline compute_low_period_time(
+  static const unsigned kbits_per_second)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
   // Ensure the clock low period is longer than the high period
   return bit_time/2 + bit_time/16;
 }
 
-static const unsigned inline compute_bus_off_time(unsigned bit_time)
+static const unsigned inline compute_bus_off_time(
+  static const unsigned kbits_per_second)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
+
   return bit_time/2 + bit_time/16;
 }
 
@@ -20,9 +29,10 @@ static const unsigned inline compute_bus_off_time(unsigned bit_time)
  *  Since the line going high may be delayed, the fall_time value may
  *  need to be adjusted
  */
-static void release_clock_and_wait(port i2c_scl,
-                                   unsigned &fall_time,
-                                   unsigned delay)
+static void release_clock_and_wait(
+  port i2c_scl,
+  unsigned &fall_time,
+  unsigned delay)
 {
   i2c_scl when pinseq(1) :> void;
 
@@ -40,14 +50,19 @@ static void release_clock_and_wait(port i2c_scl,
  *  sample the data line (if required). Timing is done via the fall_time
  *  reference and bit_time period supplied.
  */
-static int high_pulse_sample(port i2c_scl, port i2c_sda,
-                             unsigned bit_time,
-                             unsigned &fall_time)
+[[always_inline]]
+static int inline high_pulse_sample(
+  port i2c_scl,
+  port i2c_sda,
+  static const unsigned kbits_per_second,
+  unsigned &fall_time)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
+
   int sample_value = 0;
   timer tmr;
   i2c_sda :> int _;
-  tmr when timerafter(fall_time + compute_low_period_time(bit_time)) :> void;
+  tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
   release_clock_and_wait(i2c_scl, fall_time, (bit_time * 3) / 4);
   i2c_sda :> sample_value;
   fall_time = fall_time + bit_time;
@@ -59,11 +74,16 @@ static int high_pulse_sample(port i2c_scl, port i2c_sda,
 /** 'Pulse' the clock line high. Timing is done via the fall_time
  *  reference and bit_time period supplied.
  */
-static void high_pulse(port i2c_scl, unsigned bit_time,
-                       unsigned &fall_time)
+[[always_inline]]
+static void inline high_pulse(
+  port i2c_scl,
+  static const unsigned kbits_per_second,
+  unsigned &fall_time)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
+
   timer tmr;
-  tmr when timerafter(fall_time + compute_low_period_time(bit_time)) :> void;
+  tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
   release_clock_and_wait(i2c_scl, fall_time, (bit_time * 3) / 4);
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
@@ -73,18 +93,22 @@ static void high_pulse(port i2c_scl, unsigned bit_time,
 /** Output a start bit. The function returns the 'fall time' i.e. the
  *  reference clock time when the SCL line transitions to low.
  */
-static void start_bit(port i2c_scl, port i2c_sda,
-                      unsigned bit_time,
-                      unsigned &fall_time,
-                      int stopped)
+static void start_bit(
+  port i2c_scl,
+  port i2c_sda,
+  static const unsigned kbits_per_second,
+  unsigned &fall_time,
+  int stopped)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
+
   timer tmr;
 
   if (!stopped) {
-    tmr when timerafter(fall_time + compute_low_period_time(bit_time)) :> void;
+    tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
     // Release the SCL to allow it to be pulled high
     i2c_scl :> void;
-    delay_ticks(compute_bus_off_time(bit_time));
+    delay_ticks(compute_bus_off_time(kbits_per_second));
   }
 
   // Drive SDA low
@@ -99,39 +123,53 @@ static void start_bit(port i2c_scl, port i2c_sda,
 
 /** Output a stop bit.
  */
-static void stop_bit(port i2c_scl, port i2c_sda, unsigned bit_time,
-                     unsigned fall_time)
+static void stop_bit(
+  port i2c_scl,
+  port i2c_sda,
+  static const unsigned kbits_per_second,
+  unsigned &fall_time)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
+
   timer tmr;
   i2c_sda <: 0;
-  tmr when timerafter(fall_time + compute_low_period_time(bit_time)) :> void;
+  tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
   release_clock_and_wait(i2c_scl, fall_time, bit_time);
   i2c_sda :> void;
-  delay_ticks(compute_bus_off_time(bit_time));
+  delay_ticks(compute_bus_off_time(kbits_per_second));
 }
 
 /** Transmit 8 bits of data, then read the ack back from the slave and return
  *  that value.
  */
-static int tx8(port p_scl, port p_sda, unsigned data,
-               unsigned bit_time, unsigned &fall_time)
+static int tx8(
+  port p_scl,
+  port p_sda,
+  unsigned data,
+  static const unsigned kbits_per_second,
+  unsigned &fall_time)
 {
   // Data is transmitted MSB first
   data = bitrev(data) >> 24;
   for (int i = 8; i != 0; i--) {
     p_sda <: data & 0x1;
     data >>= 1;
-    high_pulse(p_scl, bit_time, fall_time);
+    high_pulse(p_scl, kbits_per_second, fall_time);
   }
-  return high_pulse_sample(p_scl, p_sda, bit_time, fall_time);
+  return high_pulse_sample(p_scl, p_sda, kbits_per_second, fall_time);
 }
 
 [[distributable]]
-void i2c_master(server interface i2c_master_if c[n], size_t n,
-                port p_scl, port p_sda, unsigned kbits_per_second)
+void i2c_master(
+  server interface i2c_master_if c[n],
+  size_t n,
+  port p_scl,
+  port p_sda,
+  static const unsigned kbits_per_second)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
+
   unsigned last_fall_time = 0;
-  unsigned bit_time = (XS1_TIMER_MHZ * 1000) / kbits_per_second;
   unsigned locked_client = -1;
   p_scl :> void;
   p_sda :> void;
@@ -145,15 +183,15 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
 
       const int stopped = locked_client == -1;
       unsigned fall_time = last_fall_time;
-      start_bit(p_scl, p_sda, bit_time, fall_time, stopped);
-      int ack = tx8(p_scl, p_sda, (device << 1) | 1, bit_time, fall_time);
+      start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      int ack = tx8(p_scl, p_sda, (device << 1) | 1, kbits_per_second, fall_time);
 
       if (ack == 0) {
         for (int j = 0; j < m; j++){
           unsigned char data = 0;
           timer tmr;
           for (int i = 8; i != 0; i--) {
-            int temp = high_pulse_sample(p_scl, p_sda, bit_time, fall_time);
+            int temp = high_pulse_sample(p_scl, p_sda, kbits_per_second, fall_time);
             data = (data << 1) | temp;
           }
           buf[j] = data;
@@ -166,7 +204,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
             p_sda <: 0;
           }
           // High pulse but make sure SDA is not driving before lowering SCL
-          tmr when timerafter(fall_time + compute_low_period_time(bit_time)) :> void;
+          tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
           release_clock_and_wait(p_scl, fall_time, bit_time);
           p_scl <: 0;
           p_sda :> void;
@@ -174,7 +212,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
         }
       }
       if (send_stop_bit) {
-        stop_bit(p_scl, p_sda, bit_time, fall_time);
+        stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
         locked_client = -1;
       }
       else {
@@ -194,17 +232,17 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
                 int send_stop_bit) -> i2c_res_t result:
       unsigned fall_time = last_fall_time;
       const int stopped = locked_client == -1;
-      start_bit(p_scl, p_sda, bit_time, fall_time, stopped);
-      int ack = tx8(p_scl, p_sda, (device << 1), bit_time, fall_time);
+      start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      int ack = tx8(p_scl, p_sda, (device << 1), kbits_per_second, fall_time);
       int j = 0;
       for (; j < n; j++) {
         if (ack != 0) {
           break;
         }
-        ack = tx8(p_scl, p_sda, buf[j], bit_time, fall_time);
+        ack = tx8(p_scl, p_sda, buf[j], kbits_per_second, fall_time);
       }
       if (send_stop_bit) {
-        stop_bit(p_scl, p_sda, bit_time, fall_time);
+        stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
         locked_client = -1;
       } else {
         locked_client = i;
@@ -220,7 +258,7 @@ void i2c_master(server interface i2c_master_if c[n], size_t n,
       timer tmr;
       unsigned fall_time;
       tmr :> fall_time;
-      stop_bit(p_scl, p_sda, bit_time, fall_time);
+      stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
       locked_client = -1;
       break;
 

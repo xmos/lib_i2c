@@ -4,12 +4,13 @@ from i2c_master_checker import I2CMasterChecker
 import os
 
 
-def do_master_test(speed, stop):
+def do_master_test(arch, stop, speed):
     resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_master_test/bin/rx_tx_%(speed)d_%(stop)s/i2c_master_test_rx_tx_%(speed)d_%(stop)s.xe' % {
+    binary = 'i2c_master_test/bin/rx_tx_%(speed)d_%(stop)s_%(arch)s/i2c_master_test_rx_tx_%(speed)d_%(stop)s_%(arch)s.xe' % {
       'speed' : speed,
-      'stop'  : stop
+      'stop'  : stop,
+      'arch'  : arch
     }
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
@@ -24,11 +25,14 @@ def do_master_test(speed, stop):
 
     tester = xmostest.ComparisonTester(open('master_test_%s.expect' % stop),
                                      'lib_i2c', 'i2c_master_sim_tests',
-                                     'basic_test', {'speed':speed, 'stop':stop},
+                                     'basic_test',
+                                     {'speed' : speed, 'stop' : stop, 'arch' : arch},
                                      regexp=True)
 
     if speed == 10:
         tester.set_min_testlevel('nightly')
+
+    sim_args = ['--weak-external-drive']
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
@@ -37,6 +41,7 @@ def do_master_test(speed, stop):
                               tester = tester)
 
 def runtest():
-    for stop in ['stop', 'no_stop']:
-      for speed in [400, 100, 10]:
-        do_master_test(speed, stop)
+    for arch in ['xs1', 'xs2']:
+      for stop in ['stop', 'no_stop']:
+        for speed in [400, 100, 10]:
+          do_master_test(arch, stop, speed)

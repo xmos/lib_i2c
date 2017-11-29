@@ -1,5 +1,7 @@
 import xmostest
 
+VERBOSE = False
+
 class I2CMasterChecker(xmostest.SimThread):
     """"
     This simulator thread will act as I2C slave and check any transactions
@@ -127,7 +129,8 @@ class I2CMasterChecker(xmostest.SimThread):
       "STOPPED"          : ( 1,    1,     "ILLEGAL",          "STARTING" ),
       "STARTING"         : ( 1,    0,     "DRIVE_BIT",        "ILLEGAL" ),
       "DRIVE_BIT"        : ( 0,    None,  "SAMPLE_BIT",       "DRIVE_BIT" ),
-      "SAMPLE_BIT"       : ( 1,    None,  "DRIVE_BIT",        "STOPPED" ),
+      "SAMPLE_BIT"       : ( 1,    None,  "DRIVE_BIT",        "CHECK_START_STOP" ),
+      "CHECK_START_STOP" : ( 1,    None,  "DRIVE_BIT",        "ILLEGAL" ),
       "BYTE_DONE"        : ( None, None,  "DRIVE_ACK",        "ILLEGAL" ),
       "DRIVE_ACK"        : ( 0,    None,  "SAMPLE_ACK",       "DRIVE_ACK" ),
       "ACK_SENT"         : ( 0,    None,  "SAMPLE_ACK",       "ACK_SENT" ),
@@ -150,6 +153,12 @@ class I2CMasterChecker(xmostest.SimThread):
     def expected_sda(self):
       return self.states[self._state][1]
 
+    def wait_for_stopped(self):
+      while self._scl_value != 1 or self._sda_value != 1:
+        self.wait_for_port_pins_change([self._scl_port, self._sda_port])
+        self._scl_value = self.read_scl_value()
+        self._sda_value = self.read_sda_value()
+
     def wait_for_change(self):
       """ Wait for either the SDA/SCL port to change and return which one it was.
           Need to also maintain the drive of any value set by the user.
@@ -171,8 +180,9 @@ class I2CMasterChecker(xmostest.SimThread):
 
       time_now = self.xsi.get_time()
 
-      # print "wait_for_change {},{} -> {},{} @ {}".format(
-      #   scl_value, sda_value, new_scl_value, new_sda_value, time_now)
+      if VERBOSE:
+        print "wait_for_change {},{} -> {},{} @ {}".format(
+          scl_value, sda_value, new_scl_value, new_sda_value, time_now)
 
       #
       # SCL changed
@@ -216,9 +226,17 @@ class I2CMasterChecker(xmostest.SimThread):
       return scl_changed, sda_changed
 
     def set_state(self, next_state):
-      # print "State: {} -> {} @ {}".format(self._state, next_state, self.xsi.get_time())
+      if VERBOSE:
+        print "State: {} -> {} @ {}".format(self._state, next_state, self.xsi.get_time())
       self._prev_state = self._state
       self._state = next_state
+
+      # Ensure the current state of the SCL/SDA is valid
+      self.check_scl_sda_lines()
+
+      # Execute the handler for the state
+      handler = getattr(self, "handle_" + self._state.lower())
+      handler()
 
     def move_to_next_state(self, scl_changed, sda_changed):
       if scl_changed:
@@ -293,16 +311,9 @@ class I2CMasterChecker(xmostest.SimThread):
 
       self.set_state("BYTE_DONE")
 
-    def handle_nacked_select(self):
-      # Simulate external pullup
-      self.drive_sda(1)
-
-    def handle_go_to_stopped0(self):
-      pass
-
-    def handle_go_to_stopped1(self):
-      print("Stop bit received");
-
+    #
+    # Handler functions for each state
+    #
     def handle_stopped(self):
       pass
 
@@ -312,9 +323,6 @@ class I2CMasterChecker(xmostest.SimThread):
       self.start_read()
       if self._last_sda_change_time is not None:
         self.check_bus_free_time(self.xsi.get_time() - self._last_sda_change_time)
-
-    def handle_illegal(self):
-      self.error("Illegal state arrived at from {}".format(self._prev_state))
 
     def handle_drive_bit(self):
       if self._write_data is not None:
@@ -338,6 +346,19 @@ class I2CMasterChecker(xmostest.SimThread):
       self._bit_num += 1
       if self._bit_num == 8:
         self.byte_done()
+
+    def handle_check_start_stop(self):
+      if self._sda_value:
+        if self._bit_num != 1:
+          self.error("Stopping when mid-byte")
+        self.set_state("STOPPED")
+      else:
+        if self._bit_num != 1:
+          self.error("Start bit detected mid-byte")
+        self.set_state("STARTING")
+
+    def handle_byte_done(self):
+      pass
 
     def handle_drive_ack(self):
       if self._drive_ack:
@@ -383,8 +404,24 @@ class I2CMasterChecker(xmostest.SimThread):
     def handle_acked(self):
       pass
 
+    def handle_nacked(self):
+      pass
+
+    def handle_nacked_select(self):
+      # Simulate external pullup
+      self.drive_sda(1)
+
+    def handle_go_to_stopped0(self):
+      pass
+
+    def handle_go_to_stopped1(self):
+      print("Stop bit received");
+
     def handle_repeat_start(self):
       print("Repeated start bit received")
+
+    def handle_illegal(self):
+      self.error("Illegal state arrived at from {}".format(self._prev_state))
 
     def run(self):
       # Simulate external pullup
@@ -392,9 +429,11 @@ class I2CMasterChecker(xmostest.SimThread):
       self.drive_sda(1)
 
       # Ignore the blips on the ports at the start
-      self.wait_until(10000)
+      self.wait_until(100)
       self._scl_value = self.read_scl_value()
       self._sda_value = self.read_sda_value()
+
+      self.wait_for_stopped()
 
       self._tx_data_index = 0
       self._ack_index = 0
@@ -402,11 +441,6 @@ class I2CMasterChecker(xmostest.SimThread):
       self._state = "STOPPED"
 
       while True:
-        self.check_scl_sda_lines()
-
-        handler = getattr(self, "handle_" + self._state.lower())
-        handler()
-
         scl_changed, sda_changed = self.wait_for_change()
 
         if scl_changed and sda_changed:

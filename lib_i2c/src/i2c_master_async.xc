@@ -117,7 +117,7 @@ void i2c_master_async_aux(server interface i2c_master_async_if i[n],
 void i2c_master_async(server interface i2c_master_async_if i[n],
                       size_t n,
                       port p_scl, port p_sda,
-                      unsigned kbits_per_second,
+                      static const unsigned kbits_per_second,
                       static const size_t max_transaction_size)
 {
   i2c_master_if i2c_dist[1];
@@ -164,19 +164,19 @@ static int inline adjust_fall(int event_time, int now, int fall_time)
   }
   return fall_time;
 }
-  
+
 
 [[combinable]]
 void i2c_master_async_comb(server interface i2c_master_async_if i[n],
                            size_t n,
                            port p_scl, port p_sda,
-                           unsigned kbits_per_second,
+                           static const unsigned kbits_per_second,
                            static const size_t max_transaction_size)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
 
   uint8_t buf[max_transaction_size];
   timer tmr;
-  unsigned bit_time = (XS1_TIMER_MHZ * 1000) / kbits_per_second;
   int state = IDLE;
   int waiting_for_clock_release = 0, timer_enabled = 0;
   int optype;

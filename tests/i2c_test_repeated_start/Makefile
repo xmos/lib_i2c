@@ -2,10 +2,6 @@ ifeq ($(USING_XWAF),1)
 all:
 	xwaf configure build 
 else # USING_XWAF
-# The TARGET variable determines what target system the application is
-# compiled for. It either refers to an XN file in the source directories
-# or a valid argument for the --target option when compiling.
-
 TARGET = SLICEKIT-L16
 
 # The APP_NAME variable determines the name of the final .xe file. It should
@@ -22,7 +18,16 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-XCC_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
+COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
+
+XCC_FLAGS_xs1 = $(COMMON_FLAGS)
+XCC_FLAGS_xs2 = $(COMMON_FLAGS)
+
+ifeq ($(findstring xs1, $(CONFIG)), xs1)
+  TARGET = SLICEKIT-L16
+else
+  TARGET = XCORE-200-EXPLORER
+endif
 
 # The USED_MODULES variable lists other module used by the application.
 
