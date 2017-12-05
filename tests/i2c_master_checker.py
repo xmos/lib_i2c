@@ -26,6 +26,8 @@ class I2CMasterChecker(xmostest.SimThread):
         self._scl_value = 0
         self._sda_value = 0
 
+        self._clock_release_time = None
+
         self._bit_num = 0
         self._bit_times = []
         self._prev_fall_time = None
@@ -137,10 +139,11 @@ class I2CMasterChecker(xmostest.SimThread):
       # This state will be transitioned by the handler
       "SAMPLE_ACK"       : ( 1,    None,  "NOT_POSSIBLE",     "NOT_POSSIBLE" ),
       "ACKED"            : ( None, None,  "DRIVE_BIT",        "ACKED" ),
+      # After a NACK, the master must generate a Stop or Repeated Start
       "NACKED"           : ( None, None,  "NACKED_SELECT",    "ILLEGAL" ),
-      "NACKED_SELECT"    : ( 0,    1,     "STOPPED",          "GO_TO_STOPPED0" ),
-      "GO_TO_STOPPED0"   : ( 0,    0,     "GO_TO_STOPPED1",   "ILLEGAL" ),
-      "GO_TO_STOPPED1"   : ( 1,    0,     "ILLEGAL",          "STOPPED" ),
+      "NACKED_SELECT"    : ( 0,    1,     "STOPPED",          "STOPPING_0" ),
+      "STOPPING_0"       : ( 0,    0,     "STOPPING_1",       "ILLEGAL" ),
+      "STOPPING_1"       : ( 1,    0,     "ILLEGAL",          "STOPPED" ),
       "REPEAT_START"     : ( 0,    1,     "ILLEGAL",          "STARTING" ),
       "ILLEGAL"          : ( None, None,  "ILLEGAL",          "ILLEGAL" ),
     }
@@ -174,7 +177,20 @@ class I2CMasterChecker(xmostest.SimThread):
       new_scl_value = self.read_scl_value()
       new_sda_value = self.read_sda_value()
       while new_scl_value == scl_value and new_sda_value == sda_value:
-        self.wait_for_port_pins_change([self._scl_port, self._sda_port])
+        if self._clock_release_time is not None:
+          # When clock stretching it is necessary simply to clock the simulation
+          # as there is no wait for data change with timeout
+          self.wait_for_next_cycle()
+          if self.xsi.get_time() >= self._clock_release_time:
+            self.drive_scl(1)
+            self._clock_release_time = None
+            if VERBOSE:
+              print "End clock stretching @ {}".format(self.xsi.get_time())
+
+        else:
+          # Default case, simply wait for one of the pins to change
+          self.wait_for_port_pins_change([self._scl_port, self._sda_port])
+
         new_scl_value = self.read_scl_value()
         new_sda_value = self.read_sda_value()
 
@@ -207,6 +223,13 @@ class I2CMasterChecker(xmostest.SimThread):
             self._bit_times.append(fall_time - self._prev_fall_time)
           self._prev_fall_time = fall_time
 
+        # Stretch the clock if required
+        if self._clock_stretch and new_scl_value == 0:
+          self.drive_scl(0)
+          self._clock_release_time = time_now + self._clock_stretch
+          if VERBOSE:
+            print "Start clock stretching @ {}".format(self.xsi.get_time())
+
       #
       # SDA changed - don't detect simultaneous changes and have the clock
       # be higher priority if they do.
@@ -220,7 +243,7 @@ class I2CMasterChecker(xmostest.SimThread):
         if new_scl_value == 0:
           self.check_data_valid_time(time_now - self._scl_change_time)
 
-        if self._state == "GO_TO_STOPPED1":
+        if self._state == "STOPPING_1":
           self.check_setup_stop_time(time_now - self._scl_change_time)
 
       return scl_changed, sda_changed
@@ -411,10 +434,10 @@ class I2CMasterChecker(xmostest.SimThread):
       # Simulate external pullup
       self.drive_sda(1)
 
-    def handle_go_to_stopped0(self):
+    def handle_stopping_0(self):
       pass
 
-    def handle_go_to_stopped1(self):
+    def handle_stopping_1(self):
       print("Stop bit received");
 
     def handle_repeat_start(self):

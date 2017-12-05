@@ -40,8 +40,13 @@ $(foreach arch,$(ARCHS),\
       $(foreach comb,$(COMBS),\
         $(eval $(call create_flags,$(comb),$(speed),$(arch),$(stop)))))))
 
-XCC_FLAGS_interfere_xs1 = $(COMMON_FLAGS) -DSPEED=100 -DCOMB=1 -DINTERFERE
-XCC_FLAGS_interfere_xs2 = $(COMMON_FLAGS) -DSPEED=100 -DCOMB=1 -DINTERFERE
+define create_flags_interfere
+XCC_FLAGS_interfere_$(1)_$(2) = $(COMMON_FLAGS) -DSPEED=100 -DCOMB=1 -DSTOP=$$($(2)_val) -DINTERFERE
+endef
+
+$(foreach arch,$(ARCHS),\
+  $(foreach stop,$(STOPS),\
+    $(eval $(call create_flags_interfere,$(arch),$(stop)))))
 
 ifeq ($(findstring xs1, $(CONFIG)), xs1)
   TARGET = SLICEKIT-L16

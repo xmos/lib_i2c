@@ -42,6 +42,6 @@ def runtest():
   for arch in ['xs1', 'xs2']:
     for stop in ['stop', 'no_stop']:
       do_master_test(arch, 400, 'non_comb', stop)
-      # for impl in ['comb', 'non_comb']:
-      #   for speed in [100, 10]:
-      #     do_master_test(arc, speed, impl, stop)
+      for impl in ['comb', 'non_comb']:
+        for speed in [100, 10]:
+          do_master_test(arch, speed, impl, stop)

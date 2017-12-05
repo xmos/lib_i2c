@@ -108,7 +108,7 @@ static void start_bit(
     tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
     // Release the SCL to allow it to be pulled high
     i2c_scl :> void;
-    delay_ticks(compute_bus_off_time(kbits_per_second));
+    release_clock_and_wait(i2c_scl, fall_time, compute_bus_off_time(kbits_per_second));
   }
 
   // Drive SDA low

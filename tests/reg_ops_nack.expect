@@ -1,86 +1,86 @@
 Start bit received
 Byte received: 0x88
-Sending nack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x44
+Sending nack
 Stop bit received
-NACK
 Start bit received
 Byte received: 0x44
-Sending ack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x22
-Byte received: 0xfe
 Sending ack
-Speed = 398 Kbps
+Byte received: 0xfe
+Speed = \d+ Kbps
+Sending ack
 Byte received: 0x99
+Speed = \d+ Kbps
 Sending nack
-Speed = 398 Kbps
 Stop bit received
-NACK
 Start bit received
 Byte received: 0x66
-Sending ack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x33
+Sending ack
 Byte received: 0xab
+Speed = \d+ Kbps
 Sending nack
-Speed = 398 Kbps
 Stop bit received
-NACK
 Start bit received
 Byte received: 0x22
-Sending ack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x11
+Sending ack
 Byte received: 0xef
+Speed = \d+ Kbps
 Sending nack
-Speed = 398 Kbps
 Stop bit received
-NACK
 Start bit received
 Byte received: 0x88
-Sending nack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x44
+Sending nack
 Stop bit received
-NACK
-val=0
 Start bit received
 Byte received: 0x8a
-Sending ack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x45
+Sending ack
 Byte received: 0xa3
+Speed = \d+ Kbps
 Sending nack
-Speed = 398 Kbps
 Stop bit received
-NACK
-val=0
 Start bit received
 Byte received: 0x8c
-Sending ack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x46
+Sending ack
 Byte received: 0x33
+Speed = \d+ Kbps
 Sending nack
-Speed = 398 Kbps
 Stop bit received
-NACK
-val=0
 Start bit received
 Byte received: 0x8e
-Sending ack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master write transaction started, device address=0x47
-Byte received: 0x22
 Sending ack
-Speed = 398 Kbps
-Repeated start bit received
+Byte received: 0x22
+Speed = \d+ Kbps
+Sending ack
+Start bit received
 Byte received: 0x8f
-Sending nack
-Speed = 398 Kbps
+Speed = \d+ Kbps
 Master read transaction started, device address=0x47
-ERROR: master driving SDA during slave data write
+Sending nack
+Stop bit received
+NACK
+NACK
+NACK
+NACK
+NACK
+val=0
+NACK
+val=0
+NACK
+val=0
 NACK
 val=45
