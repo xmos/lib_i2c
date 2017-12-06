@@ -8,6 +8,7 @@
 #ifdef __XC__
 
 #define BIT_TIME(KBITS_PER_SEC) ((XS1_TIMER_MHZ * 1000) / KBITS_PER_SEC)
+#define BIT_MASK(BIT_POS) (1 << BIT_POS)
 
 /** This type is used in I2C functions to report back on whether the
  *  slave performed and ACK or NACK on the last piece of data sent
@@ -399,8 +400,8 @@ extends client interface i2c_master_if : {
 [[distributable]]
 void i2c_master_single_port(server interface i2c_master_if c[n], static const size_t n,
                             port p_i2c, static const unsigned kbits_per_second,
-                            static const unsigned scl_bit_mask,
-                            static const unsigned sda_bit_mask,
+                            static const unsigned scl_bit_position,
+                            static const unsigned sda_bit_position,
                             static const unsigned other_bits_mask);
 #endif
 
