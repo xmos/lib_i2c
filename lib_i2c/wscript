@@ -5,4 +5,4 @@ def use_module(bld):
         source=sources,
         includes=['api'],
         depends_on=['lib_xassert(>=3.0.0)', 'lib_logging(>=2.1.0)'],
-        version='4.0.1')
+        version='4.0.2')
