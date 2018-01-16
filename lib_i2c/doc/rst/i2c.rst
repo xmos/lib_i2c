@@ -45,7 +45,7 @@ or NACK (leave the line high). This sequence is shown in :ref:`i2c_transaction_s
 .. figure:: images/transaction_start.png
    :width: 100%
 
-  |I2C| transaction start
+   |I2C| transaction start
 
 If the read/write bit of the transaction start is 1 then the master
 will execute a sequence of reads. Each read consists of the master
