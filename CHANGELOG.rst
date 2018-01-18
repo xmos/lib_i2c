@@ -9,6 +9,13 @@ I2C library change log
   * RESOLVED: Fixed bug with the master not coping with clock stretching on
     start bits.
 
+4.0.2
+-----
+
+  * RESOLVED: Make use of Wavedrom in documentation generation offline (fixes
+    automated build due to a known Wavevedrom issue where it would generate zero
+    size PNG)
+
 4.0.1
 -----
 

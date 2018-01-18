@@ -42,17 +42,15 @@ or NACK (leave the line high). This sequence is shown in :ref:`i2c_transaction_s
 
 .. _i2c_transaction_start:
 
-.. wavedrom:: |I2C| transaction start
+.. figure:: images/transaction_start.png
+   :width: 100%
 
-   { "signal" : [
-     { "name": "SDA", "wave": "10.=..=..=..=..=..=..0", "data": ["a6", "a5", "...", "a0","r/w","ACK"] },
-     { "name": "SCL", "wave": "1.0.u0.u0.u0.u0.u0.u0." }
-   ]}
+   |I2C| transaction start
 
 If the read/write bit of the transaction start is 1 then the master
 will execute a sequence of reads. Each read consists of the master
 driving the clock whilst the slave drives the data for 8-bits (most
-siginificant bit first). At the end of each byte, the master drives
+significant bit first). At the end of each byte, the master drives
 another clock pulse and will either drive either an ACK (0) or
 NACK (1) signal on the data line. When the master drives a NACK
 signal, the sequence of reads is complete. A read byte sequence is
@@ -60,19 +58,17 @@ show in :ref:`i2c_read_byte`
 
 .. _i2c_read_byte:
 
-.. wavedrom:: |I2C| read byte
+.. figure:: images/read_byte.png
+   :width: 100%
 
-   { "signal" : [
-     { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
-     { "name": "SCL", "wave": "0..u0.u0.u0.u0.u0.u0." }
-   ]}
+   |I2C| read byte
 
 |newpage|
 
 If the read/write bit of the transaction start is 1 then the master
-will execute a sequence of writess. Each read consists of the master
+will execute a sequence of writes. Each read consists of the master
 driving the clock whilst and also driving he data for 8-bits (most
-siginificant bit first). At the end of each byte, the slave drives
+significant bit first). At the end of each byte, the slave drives
 another clock pulse and will either drive either an ACK (0)
 (signalling that is can accept more data) or a NACK (1) (signalling
 that is cannot accept more data) on the data line. After the ACK/NACK
@@ -81,12 +77,10 @@ repeated start. A write byte sequence is show in :ref:`i2c_write_byte`
 
 .. _i2c_write_byte:
 
-.. wavedrom:: |I2C| write byte
+.. figure:: images/write_byte.png
+   :width: 100%
 
-   { "signal" : [
-     { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
-     { "name": "SCL", "wave": "0..u0.u0.u0.u0.u0.u0." }
-   ]}
+   |I2C| write byte
 
 After a transaction is complete, the master may start a new
 transaction with the same device (a *repeated start*) or will send a
@@ -95,12 +89,10 @@ the clock line is high (see :ref:`i2c_stop_bit`).
 
 .. _i2c_stop_bit:
 
-.. wavedrom:: |I2C| stop bit
+.. figure:: images/stop_bit.png
+   :width: 100%
 
-  { "signal" : [
-    { "name": "SDA", "wave": "0..u" },
-    { "name": "SCL", "wave": "0.u." }
-  ]}
+   |I2C| stop bit
 
 |newpage|
 
@@ -167,7 +159,7 @@ resource use and is very suitable for applications such as setup and
 configuration of attached peripherals.
 
 |I2C| master components are instantiated as parallel tasks that run in a
-``par`` statement. For synchronous oepration, the application
+``par`` statement. For synchronous operation, the application
 can connect via an interface connection using the ``i2c_master_if``
 interface type:
 
@@ -180,7 +172,7 @@ and connect to it::
 
   port p_scl = XS1_PORT_4C;
   port p_sda = XS1_PORT_1G;
-   
+
   int main(void) {
     i2c_master_if i2c[1];
     par {
@@ -246,7 +238,7 @@ manner as the synchronous component::
 
   port p_scl = XS1_PORT_4C;
   port p_sda = XS1_PORT_1G;
-   
+
   int main(void) {
     i2c_master_async_if i2c[1];
     par {
@@ -327,7 +319,7 @@ and connect to it::
 
   port p_scl = XS1_PORT_4C;
   port p_sda = XS1_PORT_1G;
-   
+
   int main(void) {
     i2c_slave_if i2c;
     par {

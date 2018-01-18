@@ -21,3 +21,4 @@ test_results.csv
 .lock-waf_*
 .waf-*/
 build/
+.*.swp
