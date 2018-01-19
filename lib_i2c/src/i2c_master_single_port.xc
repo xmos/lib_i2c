@@ -36,7 +36,7 @@ static const unsigned inline compute_low_period_ticks(
 
   // There is some jitter on the falling edges of the clock. In order to ensure
   // that the low period is respected we need to extend the minimum low period.
-  const unsigned jitter_ticks = 2;
+  const unsigned jitter_ticks = 3;
   return ticks + jitter_ticks;
 }
 
@@ -159,7 +159,7 @@ static void start_bit(
   if (!stopped) {
     tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
     p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
-    delay_ticks(compute_bus_off_ticks(kbits_per_second));
+    wait_for_clock_high(p_i2c, scl_bit_position, fall_time, compute_bus_off_ticks(kbits_per_second));
   }
 
   p_i2c <: SCL_HIGH | SDA_LOW  | other_bits_mask;
@@ -255,11 +255,12 @@ void i2c_master_single_port(
           p_i2c <: SCL_LOW | sda | other_bits_mask;
           tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
           p_i2c <: SCL_HIGH | sda | other_bits_mask;
-          tmr when timerafter(fall_time + bit_time) :> void;
+          wait_for_clock_high(p_i2c, scl_bit_position, fall_time, (bit_time * 3) / 4);
+          fall_time = fall_time + bit_time;
+          tmr when timerafter(fall_time) :> void;
 
           // Release the data bus
           p_i2c <: SCL_LOW | SDA_HIGH | other_bits_mask;
-          fall_time = fall_time + bit_time;
         }
       }
       if (send_stop_bit) {

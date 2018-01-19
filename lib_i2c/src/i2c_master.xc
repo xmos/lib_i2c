@@ -29,7 +29,7 @@ static const unsigned inline compute_low_period_ticks(
 
   // There is some jitter on the falling edges of the clock. In order to ensure
   // that the low period is respected we need to extend the minimum low period.
-  const unsigned jitter_ticks = 2;
+  const unsigned jitter_ticks = 3;
   return ticks + jitter_ticks;
 }
 
