@@ -7,25 +7,48 @@
 #include <xclib.h>
 #include <stdio.h>
 #include <timer.h>
+
 #include "xassert.h"
-#include <print.h>
 
 #define SDA_LOW     0
 #define SCL_LOW     0
 
-static const unsigned inline compute_low_period_time(
+/* NOTE: the kbits_per_second needs to be passed around due to the fact that the
+ *       compiler won't compute a new static const from a static const.
+ */
+
+/** Return the number of 10ns timer ticks required to meet the timing as defined
+ *  in the standards.
+ */
+static const unsigned inline compute_low_period_ticks(
   static const unsigned kbits_per_second)
 {
-  const unsigned bit_time = BIT_TIME(kbits_per_second);
-  // Ensure the clock low period is longer than the high period
-  return bit_time/2 + bit_time/32;
+  unsigned ticks = 0;
+  if (kbits_per_second <= 100) {
+    const unsigned four_point_seven_micro_seconds_in_ticks = 470;
+    ticks = four_point_seven_micro_seconds_in_ticks;
+  } else if (kbits_per_second <= 400) {
+    const unsigned one_point_three_micro_seconds_in_ticks = 130;
+    ticks = one_point_three_micro_seconds_in_ticks;
+  } else {
+    fail("Fast-mode Plus not implemented");
+  }
+
+  // There is some jitter on the falling edges of the clock. In order to ensure
+  // that the low period is respected we need to extend the minimum low period.
+  const unsigned jitter_ticks = 2;
+  return ticks + jitter_ticks;
 }
 
-static const unsigned inline compute_bus_off_time(
+static const unsigned inline compute_bus_off_ticks(
   static const unsigned kbits_per_second)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
-  return bit_time/2 + bit_time/32;
+
+  // Ensure the bus off time is respected. This is just over 1/2 bit time in
+  // the case of the Fast-mode I2C so adding bit_time/16 ensures the timing
+  // will be enforced
+  return bit_time/2 + bit_time/16;
 }
 
 /** Reads back the SCL line, waiting until it goes high (in
@@ -51,9 +74,14 @@ static void wait_for_clock_high(
   unsigned time;
   tmr when timerafter(fall_time + delay) :> time;
 
-  // Adjust timing due to clock stretching without clock drift in the normal case
-  if (time > fall_time + delay + 10) {
-    fall_time = time - delay;
+  // Adjust timing due to support clock stretching without clock drift in the
+  // normal case.
+
+  // If the time is beyond the time it takes simply to wake up and start
+  // executing then the clock needs to be adjusted
+  const int wake_up_ticks = 10;
+  if (time > fall_time + delay + wake_up_ticks) {
+    fall_time = time - delay - wake_up_ticks;
   }
 }
 
@@ -63,7 +91,7 @@ static void high_pulse_drive(
   static const unsigned kbits_per_second,
   static const unsigned scl_bit_position,
   static const unsigned sda_bit_position,
-  static const unsigned S_REST,
+  static const unsigned other_bits_mask,
   unsigned &fall_time)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
@@ -72,13 +100,13 @@ static void high_pulse_drive(
 
   timer tmr;
   sdaValue = sdaValue ? SDA_HIGH : SDA_LOW;
-  p_i2c <: SCL_LOW  | sdaValue | S_REST;
-  tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
-  p_i2c <: SCL_HIGH | sdaValue | S_REST;
+  p_i2c <: SCL_LOW  | sdaValue | other_bits_mask;
+  tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  p_i2c <: SCL_HIGH | sdaValue | other_bits_mask;
   wait_for_clock_high(p_i2c, scl_bit_position, fall_time, (bit_time * 3) / 4);
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
-  p_i2c <: SCL_LOW  | sdaValue | S_REST;
+  p_i2c <: SCL_LOW  | sdaValue | other_bits_mask;
 }
 
 static int high_pulse_sample(
@@ -86,7 +114,7 @@ static int high_pulse_sample(
   static const unsigned kbits_per_second,
   static const unsigned scl_bit_position,
   static const unsigned sda_bit_position,
-  static const unsigned S_REST,
+  static const unsigned other_bits_mask,
   unsigned &fall_time)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
@@ -95,9 +123,9 @@ static int high_pulse_sample(
 
   timer tmr;
 
-  p_i2c <: SCL_LOW | SDA_HIGH | S_REST;
-  tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
-  p_i2c <: SCL_HIGH | SDA_HIGH | S_REST;
+  p_i2c <: SCL_LOW | SDA_HIGH | other_bits_mask;
+  tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
   wait_for_clock_high(p_i2c, scl_bit_position, fall_time, (bit_time * 3) / 4);
 
   int sample_value = peek(p_i2c);
@@ -108,7 +136,7 @@ static int high_pulse_sample(
 
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
-  p_i2c <: SCL_LOW | SDA_HIGH | S_REST;
+  p_i2c <: SCL_LOW | SDA_HIGH | other_bits_mask;
 
   return sample_value;
 }
@@ -118,7 +146,7 @@ static void start_bit(
   static const unsigned kbits_per_second,
   static const unsigned scl_bit_position,
   static const unsigned sda_bit_position,
-  static const unsigned S_REST,
+  static const unsigned other_bits_mask,
   unsigned &fall_time,
   int stopped)
 {
@@ -129,14 +157,14 @@ static void start_bit(
   timer tmr;
 
   if (!stopped) {
-    tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
-    p_i2c <: SCL_HIGH | SDA_HIGH | S_REST;
-    delay_ticks(compute_bus_off_time(kbits_per_second));
+    tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+    p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
+    delay_ticks(compute_bus_off_ticks(kbits_per_second));
   }
 
-  p_i2c <: SCL_HIGH | SDA_LOW  | S_REST;
+  p_i2c <: SCL_HIGH | SDA_LOW  | other_bits_mask;
   delay_ticks(bit_time / 2);
-  p_i2c <: SCL_LOW  | SDA_LOW  | S_REST;
+  p_i2c <: SCL_LOW  | SDA_LOW  | other_bits_mask;
   tmr :> fall_time;
 }
 
@@ -145,7 +173,7 @@ static void stop_bit(
   static const unsigned kbits_per_second,
   static const unsigned scl_bit_position,
   static const unsigned sda_bit_position,
-  static const unsigned S_REST,
+  static const unsigned other_bits_mask,
   unsigned fall_time)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
@@ -154,12 +182,12 @@ static void stop_bit(
 
   timer tmr;
 
-  p_i2c <: SCL_LOW | SDA_LOW | S_REST;
-  tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
-  p_i2c <: SCL_HIGH | SDA_LOW | S_REST;
+  p_i2c <: SCL_LOW | SDA_LOW | other_bits_mask;
+  tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  p_i2c <: SCL_HIGH | SDA_LOW | other_bits_mask;
   wait_for_clock_high(p_i2c, scl_bit_position, fall_time, bit_time);
-  p_i2c <: SCL_HIGH | SDA_HIGH | S_REST;
-  delay_ticks(compute_bus_off_time(kbits_per_second));
+  p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
+  delay_ticks(compute_bus_off_ticks(kbits_per_second));
 }
 
 static int tx8(
@@ -167,15 +195,15 @@ static int tx8(
   static const unsigned kbits_per_second,
   static const unsigned scl_bit_position,
   static const unsigned sda_bit_position,
-  static const unsigned S_REST,
+  static const unsigned other_bits_mask,
   unsigned &fall_time)
 {
   unsigned bit_rev_data = ((unsigned) bitrev(data)) >> 24;
   for (int i = 8; i != 0; i--) {
-    high_pulse_drive(p_i2c, bit_rev_data & 1, kbits_per_second, scl_bit_position, sda_bit_position, S_REST, fall_time);
+    high_pulse_drive(p_i2c, bit_rev_data & 1, kbits_per_second, scl_bit_position, sda_bit_position, other_bits_mask, fall_time);
     bit_rev_data >>= 1;
   }
-  return high_pulse_sample(p_i2c, kbits_per_second, scl_bit_position, sda_bit_position, S_REST, fall_time);
+  return high_pulse_sample(p_i2c, kbits_per_second, scl_bit_position, sda_bit_position, other_bits_mask, fall_time);
 }
 
 [[distributable]]
@@ -225,7 +253,7 @@ void i2c_master_single_port(
           }
 
           p_i2c <: SCL_LOW | sda | other_bits_mask;
-          tmr when timerafter(fall_time + compute_low_period_time(kbits_per_second)) :> void;
+          tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
           p_i2c <: SCL_HIGH | sda | other_bits_mask;
           tmr when timerafter(fall_time + bit_time) :> void;
 
