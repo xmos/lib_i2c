@@ -9,59 +9,93 @@
 port p_scl = XS1_PORT_1A;
 port p_sda = XS1_PORT_1B;
 
+// Define the same tests as the i2c_master_test so that the expect files are the
+// same
+enum {
+  TEST_WRITE_1 = 0,
+  TEST_READ_1,
+  TEST_READ_2,
+  TEST_WRITE_2,
+  TEST_WRITE_3,
+  NUM_TESTS
+};
+
+static const char * unsafe ack_str(int ack)
+{
+  unsafe {
+    return (ack == I2C_ACK) ? "ack" : "nack";
+  }
+}
+
+#define MAX_DATA_BYTES 3
+
 void test(client i2c_master_async_if i2c)
 {
-  uint8_t data[3];
-  int ack;
-  size_t num_sent = 55;
-  data[0] = 0x90; data[1] = 0xfe;
-  i2c.write(0x3c, data, 2, 1);
-  select {
-  case i2c.operation_complete():
-    ack = i2c.get_write_result(num_sent);
-    break;
-  }
-  debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-               ack == I2C_ACK ? "ack" : "nack", num_sent);
-  i2c.read(0x22, 2, 1);
-  select {
-  case i2c.operation_complete():
-    ack = i2c.get_read_data(data, 2);
-    break;
-  }
-  debug_printf("xCORE: %s\n",
-               ack == I2C_ACK ? "ack" : "nack");
-  debug_printf("xCORE received: 0x%x, 0x%x\n",data[0], data[1]);
+  // Have separate data arrays so that everything can be setup before starting
+  uint8_t data_write_1[MAX_DATA_BYTES] = {0};
+  uint8_t data_write_2[MAX_DATA_BYTES] = {0};
+  uint8_t data_write_3[MAX_DATA_BYTES] = {0};
+  uint8_t data_read_1[MAX_DATA_BYTES] = {0};
+  uint8_t data_read_2[MAX_DATA_BYTES] = {0};
+  int acks[NUM_TESTS] = {0};
+  size_t n1 = -1;
+  size_t n2 = -1;
+  size_t n3 = -1;
 
-  i2c.read(0x22, 1, 1);
-  select {
-  case i2c.operation_complete():
-    ack = i2c.get_read_data(data, 1);
-    break;
-  }
-  debug_printf("xCORE: %s\n",
-               ack == I2C_ACK ? "ack" : "nack");
-  debug_printf("xCORE received: 0x%x\n",data[0]);
+  const int do_stop = STOP ? 1 : 0;
 
+  // Setup all data to be written
+  data_write_1[0] = 0x90; data_write_1[1] = 0xfe;
+  data_write_2[0] = 0xff; data_write_2[1] = 0x00; data_write_2[2] = 0xaa;
+  data_write_3[0] = 0xee;
 
-  data[0] = 0xff; data[1] = 0x00; data[2] = 0xaa;
-  i2c.write(0x7b, data, 3, 1);
+  // Execute all bus operations
+  i2c.write(0x3c, data_write_1, 2, do_stop);
   select {
   case i2c.operation_complete():
-    ack = i2c.get_write_result(num_sent);
+    acks[TEST_WRITE_1] = i2c.get_write_result(n1);
     break;
   }
-  debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-               ack == I2C_ACK ? "ack" : "nack", num_sent);
-  data[0] = 0xee;
-  i2c.write(0x31, data, 1, 1);
+
+  i2c.read(0x22, 2, do_stop);
   select {
   case i2c.operation_complete():
-    ack = i2c.get_write_result(num_sent);
+    acks[TEST_READ_1] = i2c.get_read_data(data_read_1, 2);
     break;
   }
-  debug_printf("xCORE: %s. Transmitted %d bytes.\n",
-               ack == I2C_ACK ? "ack" : "nack", num_sent);
+
+  i2c.read(0x22, 1, do_stop);
+  select {
+  case i2c.operation_complete():
+    acks[TEST_READ_2] = i2c.get_read_data(data_read_2, 1);
+    break;
+  }
+
+  i2c.write(0x7b, data_write_2, 3, do_stop);
+  select {
+  case i2c.operation_complete():
+    acks[TEST_WRITE_2] = i2c.get_write_result(n2);
+    break;
+  }
+
+  i2c.write(0x31, data_write_3, 1, do_stop);
+  select {
+  case i2c.operation_complete():
+    acks[TEST_WRITE_3] = i2c.get_write_result(n3);
+    break;
+  }
+
+  // Print out results after all the data transactions have finished
+  unsafe {
+    debug_printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_1]), n1);
+    debug_printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_2]), n2);
+    debug_printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_3]), n3);
+
+    debug_printf("xCORE got %s\n", ack_str(acks[TEST_READ_1]));
+    debug_printf("xCORE received: 0x%x, 0x%x\n", data_read_1[0], data_read_1[1]);
+    debug_printf("xCORE got %s\n", ack_str(acks[TEST_READ_2]));
+    debug_printf("xCORE received: 0x%x\n", data_read_2[0]);
+  }
   exit(0);
 }
 
@@ -90,7 +124,7 @@ void interference()
 int main(void) {
   i2c_master_async_if i2c[1];
   par {
-    #ifdef COMB
+    #if COMB
       #ifdef INTERFERE
       [[combine]]
       par {
@@ -101,7 +135,7 @@ int main(void) {
       i2c_master_async_comb(i2c, 1, p_scl, p_sda, SPEED, 10);
       #endif
     #else
-    i2c_master_async(i2c, 1, p_scl, p_sda, SPEED, 10);
+      i2c_master_async(i2c, 1, p_scl, p_sda, SPEED, 10);
     #endif
     {set_core_fast_mode_on();test(i2c[0]);}
     par(int i=0;i<6;i++) while(1);

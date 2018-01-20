@@ -3,18 +3,15 @@ import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
 
-
-def do_master_test(speed, comb):
+def do_master_test(arch, speed, impl, stop):
     resources = xmostest.request_resource("xsim")
 
-    if comb:
-        build_config = "comb_%d" % speed
-        config = {'speed':speed,'impl':'comb'}
-    else:
-        build_config = str(speed)
-        config = {'speed':speed,'impl':'noncomb'}
-
-    binary = 'i2c_master_async_test/bin/%(config)s/i2c_master_async_test_%(config)s.xe' % {'config':build_config}
+    binary = 'i2c_master_async_test/bin/%(impl)s_%(speed)s_%(arch)s_%(stop)s/i2c_master_async_test_%(impl)s_%(speed)s_%(arch)s_%(stop)s.xe' % {
+      'impl' : impl,
+      'speed' : speed,
+      'arch' : arch,
+      'stop' : stop
+    }
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
@@ -26,9 +23,10 @@ def do_master_test(speed, comb):
                                              True, True, True, False,
                                              True, False])
 
-    tester = xmostest.ComparisonTester(open('master_test.expect'),
+    tester = xmostest.ComparisonTester(open('master_test_%s.expect' % stop),
                                      'lib_i2c', 'i2c_master_sim_tests',
-                                     'async_basic_test', config,
+                                     'async_basic_test',
+                                     {'speed' : speed, 'impl' : impl, 'arch' : arch, 'stop' : stop},
                                      regexp=True)
 
     if speed == 10:
@@ -41,8 +39,9 @@ def do_master_test(speed, comb):
                               tester = tester)
 
 def runtest():
-    do_master_test(400, False)
-    do_master_test(100, False)
-    do_master_test(10, False)
-    do_master_test(100, True)
-    do_master_test(10, True)
+  for arch in ['xs1', 'xs2']:
+    for stop in ['stop', 'no_stop']:
+      do_master_test(arch, 400, 'non_comb', stop)
+      for impl in ['comb', 'non_comb']:
+        for speed in [100, 10]:
+          do_master_test(arch, speed, impl, stop)

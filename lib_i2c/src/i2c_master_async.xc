@@ -8,6 +8,9 @@
 
 enum i2c_async_master_state_t {
   IDLE,
+  REPEATED_START_CLOCK_LOW,
+  REPEATED_START_WAIT_FOR_CLOCK_HIGH,
+  REPEATED_START_HOLD_CLOCK_HIGH,
   START_BIT_0,
   START_BIT_1,
   WRITE_0,
@@ -25,6 +28,7 @@ enum i2c_async_master_state_t {
   STOP_BIT_2,
   STOP_BIT_3,
   STOP_BIT_4,
+  DONE_NO_STOP,
 };
 
 enum optype_t {
@@ -36,18 +40,19 @@ enum ack_t {
 };
 
 
-void i2c_master_async_aux(server interface i2c_master_async_if i[n],
-                          size_t n,
-                          client interface i2c_master_if i2c,
-                          static const size_t max_transaction_size)
+void i2c_master_async_aux(
+  server interface i2c_master_async_if i[n],
+  size_t n,
+  client interface i2c_master_if i2c,
+  static const size_t max_transaction_size)
 {
   uint8_t buf[max_transaction_size];
   uint8_t device_addr;
   size_t num_bytes, num_bytes_sent;
-  int send_stop_bit;
-  int optype;
-  int cur_client;
-  i2c_res_t res;
+  int send_stop_bit = 0;
+  int optype = 0;
+  int cur_client = -1;
+  i2c_res_t res = I2C_ACK;
 
   while (1) {
     select {
@@ -114,11 +119,12 @@ void i2c_master_async_aux(server interface i2c_master_async_if i[n],
 }
 
 
-void i2c_master_async(server interface i2c_master_async_if i[n],
-                      size_t n,
-                      port p_scl, port p_sda,
-                      unsigned kbits_per_second,
-                      static const size_t max_transaction_size)
+void i2c_master_async(
+  server interface i2c_master_async_if i[n],
+  size_t n,
+  port p_scl, port p_sda,
+  static const unsigned kbits_per_second,
+  static const size_t max_transaction_size)
 {
   i2c_master_if i2c_dist[1];
   par {
@@ -140,9 +146,10 @@ void i2c_master_async(server interface i2c_master_async_if i[n],
  *  this function will adjust both the next event time and the fall time
  *  reference to slip so that subsequent timings are correct.
  */
-static void inline adjust_for_slip(int now,
-                                   int &event_time,
-                                   int &?fall_time)
+static void inline adjust_for_slip(
+  int now,
+  int &event_time,
+  int &?fall_time)
 {
   // This value is the minimum number of timer ticks we estimate we can
   // get to a new event to from now.
@@ -150,13 +157,16 @@ static void inline adjust_for_slip(int now,
   if (event_time - now < SLIP_THRESHOLD) {
     int new_event_time = now + SLIP_THRESHOLD;
     if (!isnull(fall_time)) {
-      fall_time += new_event_time  - event_time;
+      fall_time += new_event_time - event_time;
     }
     event_time = new_event_time;
   }
 }
 
-static int inline adjust_fall(int event_time, int now, int fall_time)
+static int inline adjust_fall(
+  int event_time,
+  int now,
+  int fall_time)
 {
   const int SLIP_THRESHOLD = 100;
   if (now - event_time > SLIP_THRESHOLD) {
@@ -164,36 +174,40 @@ static int inline adjust_fall(int event_time, int now, int fall_time)
   }
   return fall_time;
 }
-  
 
 [[combinable]]
-void i2c_master_async_comb(server interface i2c_master_async_if i[n],
-                           size_t n,
-                           port p_scl, port p_sda,
-                           unsigned kbits_per_second,
-                           static const size_t max_transaction_size)
+void i2c_master_async_comb(
+  server interface i2c_master_async_if i[n],
+  size_t n,
+  port p_scl, port p_sda,
+  static const unsigned kbits_per_second,
+  static const size_t max_transaction_size)
 {
+  const unsigned bit_time = BIT_TIME(kbits_per_second);
 
-  uint8_t buf[max_transaction_size];
+  uint8_t buf[max_transaction_size] = {};
   timer tmr;
-  unsigned bit_time = (XS1_TIMER_MHZ * 1000) / kbits_per_second;
   int state = IDLE;
   int waiting_for_clock_release = 0, timer_enabled = 0;
-  int optype;
-  int fall_time;
-  int data;
-  int bitnum;
-  int bytes_sent;
-  int num_bytes;
-  int event_time;
-  int cur_client;
-  i2c_res_t res;
+  int optype = 0;
+  int fall_time = 0;
+  int data = 0;
+  int bitnum = 0;
+  int bytes_sent = 0;
+  int num_bytes = 0;
+  int event_time = 0;
+  int cur_client = -1;
+  int send_stop_bit = 0;
+  int stopped = 1;
+  i2c_res_t res = I2C_ACK;
+
   /* These select cases represent the main state machine for the I2C master
      component. The state machine will change state based on a timer event to
      progress the transaction or on an event from the SCL line when waiting
      for the clock to be released (supporting clock stretching). */
   while (1) {
     select {
+
     case waiting_for_clock_release => p_scl when pinseq(1) :> void:
       int now;
       tmr :> now;
@@ -202,6 +216,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
       case WRITE_ACK_0:
       case READ_ACK_0:
       case STOP_BIT_0:
+      case REPEATED_START_WAIT_FOR_CLOCK_HIGH:
       case READ_0:
         fall_time = fall_time + bit_time;
         event_time = fall_time;
@@ -228,8 +243,25 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
       waiting_for_clock_release = 0;
       timer_enabled = 1;
       break;
+
     case timer_enabled => tmr when timerafter(event_time) :> int now:
       switch (state) {
+      case REPEATED_START_CLOCK_LOW:
+        // The operation is finished, but no stop bit is being written
+        p_scl <: 0;
+        event_time = now + bit_time / 2;
+        state = REPEATED_START_WAIT_FOR_CLOCK_HIGH;
+        break;
+      case REPEATED_START_WAIT_FOR_CLOCK_HIGH:
+        p_scl :> void;
+        timer_enabled = 0;
+        waiting_for_clock_release = 1;
+        state = REPEATED_START_HOLD_CLOCK_HIGH;
+        break;
+      case REPEATED_START_HOLD_CLOCK_HIGH:
+        event_time = now + bit_time / 2;
+        state = START_BIT_0;
+        break;
       case START_BIT_0:
         p_sda <: 0;
         event_time = now + bit_time / 2;
@@ -255,8 +287,7 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         waiting_for_clock_release = 1;
         if (bitnum == 8)  {
           state = WRITE_ACK_0;
-        }
-        else {
+        } else {
           state = WRITE_0;
         }
         break;
@@ -285,7 +316,11 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
             // The master and slave disagree since the slave should nack
             // the last byte.
             res = I2C_ACK;
-            state = STOP_BIT_0;
+            if (send_stop_bit) {
+              state = STOP_BIT_0;
+            } else {
+              state = DONE_NO_STOP;
+            }
           } else {
             // get next byte of data.
             data = buf[bytes_sent];
@@ -299,11 +334,19 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
           if (all_data_sent) {
             // The master and slave agree that this is the end of the operation.
             res = I2C_NACK;
-            state = STOP_BIT_0;
+            if (send_stop_bit) {
+              state = STOP_BIT_0;
+            } else {
+              state = DONE_NO_STOP;
+            }
           } else {
             // The slave has aborted the operation.
             res = I2C_NACK;
-            state = STOP_BIT_0;
+            if (send_stop_bit) {
+              state = STOP_BIT_0;
+            } else {
+              state = DONE_NO_STOP;
+            }
           }
         } else if (ack == ACKED  && optype == READ) {
           // The slave has acked the addr, we can go ahead with the operation.
@@ -315,7 +358,11 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         } else if (ack == NACKED && optype == READ) {
           // The slave has nacked the addr (or the slave isn't there). Abort.
           res = I2C_NACK;
-          state = STOP_BIT_0;
+          if (send_stop_bit) {
+            state = STOP_BIT_0;
+          } else {
+            state = DONE_NO_STOP;
+          }
         }
         break;
       case READ_0:
@@ -339,21 +386,21 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         data += bit&1;
         event_time = fall_time;
         adjust_for_slip(now, event_time, fall_time);
-        if (bitnum == 8)  {
+        if (bitnum == 8) {
           buf[bytes_sent] = data;
           bytes_sent++;
           state = READ_ACK_0;
-        }
-        else {
+        } else {
           state = READ_0;
         }
         break;
       case READ_ACK_0:
         p_scl <: 0;
-        if (bytes_sent == num_bytes)
+        if (bytes_sent == num_bytes) {
           p_sda :> void;
-        else
+        } else {
           p_sda <: 0;
+        }
         fall_time = adjust_fall(event_time, now, fall_time);
         state = READ_ACK_1;
         event_time = fall_time + bit_time / 2 + bit_time / 32;
@@ -363,9 +410,13 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         p_scl :> void;
         timer_enabled = 0;
         waiting_for_clock_release = 1;
-        if (bytes_sent == num_bytes)
-          state = STOP_BIT_0;
-        else {
+        if (bytes_sent == num_bytes) {
+          if (send_stop_bit) {
+            state = STOP_BIT_0;
+          } else {
+            state = DONE_NO_STOP;
+          }
+        } else {
           data = 0;
           bitnum = 0;
           state = READ_0;
@@ -393,9 +444,18 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         p_sda :> void;
         event_time = now + bit_time/4;
         state = STOP_BIT_4;
+
+        // Know that the next transaction can start from the stopped state
+        stopped = 1;
         break;
+      #pragma fallthrough
+      case DONE_NO_STOP:
+        // Know that the next transaction needs to create a repeated start
+        stopped = 0;
+        // Fallthrough to STOP_BIT_4 code
       case STOP_BIT_4:
         i[cur_client].operation_complete();
+        cur_client = -1;
         timer_enabled = 0;
         state = IDLE;
         break;
@@ -404,12 +464,14 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
         break;
       }
       break;
+
     case i[int j].write(uint8_t device_addr, uint8_t buf0[n], size_t n,
-                        int send_stop_bit):
+                        int _send_stop_bit):
       data = (device_addr << 1) | 0;
       bitnum = 0;
       optype = WRITE;
       num_bytes = n;
+      send_stop_bit = _send_stop_bit;
       memcpy(buf, buf0, n);
       // The 'bytes_sent' variable gets increment after every byte *including*
       // the addr bytes. So we set it to -1 to be 0 after the addr byte.
@@ -417,21 +479,30 @@ void i2c_master_async_comb(server interface i2c_master_async_if i[n],
       timer_enabled = 1;
       cur_client = j;
       tmr :> event_time;
-      state = START_BIT_0;
+      if (!stopped) {
+        state = REPEATED_START_CLOCK_LOW;
+      } else {
+        state = START_BIT_0;
+      }
       break;
 
-    case i[int j].read(uint8_t device_addr, size_t n, int send_stop_bit):
+    case i[int j].read(uint8_t device_addr, size_t n, int _send_stop_bit):
       data = (device_addr << 1) | 1;
       bitnum = 0;
       optype = READ;
       num_bytes = n;
+      send_stop_bit = _send_stop_bit;
       // The 'bytes_sent' variable gets increment after every byte *including*
       // the addr bytes. So we set it to -1 to be 0 after the addr byte.
       bytes_sent = -1;
       timer_enabled = 1;
       cur_client = j;
       tmr :> event_time;
-      state = START_BIT_0;
+      if (!stopped) {
+        state = REPEATED_START_CLOCK_LOW;
+      } else {
+        state = START_BIT_0;
+      }
       break;
 
     case i[int j].send_stop_bit():

@@ -7,6 +7,9 @@
 
 #ifdef __XC__
 
+#define BIT_TIME(KBITS_PER_SEC) ((XS1_TIMER_MHZ * 1000) / KBITS_PER_SEC)
+#define BIT_MASK(BIT_POS) (1 << BIT_POS)
+
 /** This type is used in I2C functions to report back on whether the
  *  slave performed and ACK or NACK on the last piece of data sent
  *  to it.
@@ -235,7 +238,7 @@ extends client interface i2c_master_if : {
    *  The operation is performed as one transaction using a repeated start.
    *
    *  \param device_addr the address of the slave device to read from
-   *  \param reg         the address of the register to read (most 
+   *  \param reg         the address of the register to read (most
    *                     significant byte first)
    *
    *  \returns           the 16-bit value of the register
@@ -371,16 +374,13 @@ extends client interface i2c_master_if : {
 [[distributable]] void i2c_master(server interface i2c_master_if i[n],
                                   size_t n,
                                   port p_scl, port p_sda,
-                                  unsigned kbits_per_second);
+                                  static const unsigned kbits_per_second);
 
+#ifdef __XS2A__
 /** Implements I2C on a single multi-bit port.
  *
- *  This function implements an I2C master bus using a single port. However,
- *  If this function is used with an L-series or U-series xCORE device then
- *  reading from the bus and clock stretching are not supported.
- *  The user needs to be aware that these restriction are appropriate for the
- *  application. On xCORE-200 devices, reading and clock stretching are
- *  supported.
+ *  This function implements an I2C master bus using a single port. It is only
+ *  supported on xCORE-200 devices.
  *
  *  \param  c      An array of server interface connections for clients to
  *                 connect to
@@ -389,8 +389,8 @@ extends client interface i2c_master_if : {
  *                 You will need to set the relevant defines in i2c_conf.h in
  *                 you application to say which bits of the port are used
  *  \param  kbits_per_second The speed of the I2C bus
- *  \param  sda_bit_position The bit position of the SDA line on the port
- *  \param  scl_bit_position The bit position of the SCL line on the port
+ *  \param  sda_bit_position The bit of the SDA line on the port
+ *  \param  scl_bit_position The bit of the SCL line on the port
  *  \param  other_bits_mask  The mask for the other bits of the port to use
  *                           when driving it.  Note that, on occassions,
  *                           the other bits are left to float, so external
@@ -398,12 +398,12 @@ extends client interface i2c_master_if : {
  *                           value
  */
 [[distributable]]
-void i2c_master_single_port(server interface i2c_master_if c[n], size_t n,
-                            port p_i2c, unsigned kbits_per_second,
-                            unsigned scl_bit_position,
-                            unsigned sda_bit_position,
-                            unsigned other_bits_mask);
-
+void i2c_master_single_port(server interface i2c_master_if c[n], static const size_t n,
+                            port p_i2c, static const unsigned kbits_per_second,
+                            static const unsigned scl_bit_position,
+                            static const unsigned sda_bit_position,
+                            static const unsigned other_bits_mask);
+#endif
 
 
 /** This interface is used to communication with an I2C master component
@@ -521,7 +521,7 @@ typedef interface i2c_master_async_if {
 void i2c_master_async(server interface i2c_master_async_if i[n],
                       size_t n,
                       port p_scl, port p_sda,
-                      unsigned kbits_per_second,
+                      static const unsigned kbits_per_second,
                       static const size_t max_transaction_size);
 
 /** I2C master component (asynchronous API, combinable).
@@ -543,7 +543,7 @@ void i2c_master_async(server interface i2c_master_async_if i[n],
 void i2c_master_async_comb(server interface i2c_master_async_if i[n],
                            size_t n,
                            port p_scl, port p_sda,
-                           unsigned kbits_per_second,
+                           static const unsigned kbits_per_second,
                            static const size_t max_transaction_size);
 
 
@@ -671,7 +671,7 @@ typedef interface i2c_slave_callback_if {
  *  \param  p_scl  The SCL port of the I2C bus
  *  \param  p_sda  The SDA port of the I2C bus
  *  \param device_addr The address of the slave device
- *  
+ *
  */
 [[combinable]]
 void i2c_slave(client i2c_slave_callback_if i,

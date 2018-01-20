@@ -1,33 +1,32 @@
 Start bit received
 Byte received: 0x78
-Sending ack
 Speed = \d+ Kbps
 Master write transaction started, device address=0x3c
+Sending ack
 Byte received: 0x90
-Sending ack
 Speed = \d+ Kbps
+Sending ack
 Byte received: 0xfe
-Sending ack
 Speed = \d+ Kbps
-Stop bit received
-xCORE: ack. Transmitted 2 bytes.
+Sending ack
 Start bit received
 Byte received: 0xf6
-Sending ack
 Speed = \d+ Kbps
 Master write transaction started, device address=0x7b
-Byte received: 0xff
 Sending ack
+Byte received: 0xff
 Speed = \d+ Kbps
+Sending ack
 Byte received: 0x0
-Sending nack
 Speed = \d+ Kbps
+Sending nack
 Stop bit received
-xCORE: nack. Transmitted 2 bytes.
 Start bit received
 Byte received: 0x62
-Sending nack
 Speed = \d+ Kbps
 Master write transaction started, device address=0x31
+Sending nack
 Stop bit received
-xCORE: nack. Transmitted 0 bytes.
+xCORE got ack, 2
+xCORE got nack, 2
+xCORE got nack, 0

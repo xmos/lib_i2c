@@ -43,6 +43,7 @@ Typical Resource Usage
     - fn: i2c_master_single_port(i, 1, p, 100, 0, 0, 0);
     - pins: 2
     - ports: 1 (multi-bit)
+    - target: XCORE-200-EXPLORER
   * - configuration: Master (asynchronous)
     - globals: port p_scl = XS1_PORT_1A; port p_sda = XS1_PORT_1B;
     - locals: interface i2c_master_async_if i[1];
