@@ -32,7 +32,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_i2c}&quot;"/>
-									<listOptionValue builtIn="false" value="/Users/peter/sandboxes/swview/Installs/Mac/target/include"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include/xc&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include/clang&quot;"/>
@@ -209,7 +208,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_i2c}&quot;"/>
-									<listOptionValue builtIn="false" value="/Users/peter/sandboxes/swview/Installs/Mac/target/include"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include/clang&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/doc/rst}&quot;"/>
@@ -532,7 +530,6 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert/src}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_xassert}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/lib_i2c}&quot;"/>
-									<listOptionValue builtIn="false" value="/Users/peter/sandboxes/swview/Installs/Mac/target/include"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include/clang&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${XMOS_TOOL_PATH}/target/include/c++/v1&quot;"/>
