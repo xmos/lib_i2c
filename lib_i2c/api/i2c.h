@@ -391,11 +391,9 @@ extends client interface i2c_master_if : {
  *  \param  kbits_per_second The speed of the I2C bus
  *  \param  sda_bit_position The bit of the SDA line on the port
  *  \param  scl_bit_position The bit of the SCL line on the port
- *  \param  other_bits_mask  The mask for the other bits of the port to use
- *                           when driving it.  Note that, on occassions,
- *                           the other bits are left to float, so external
- *                           resistors shall be used to reinforce the default
- *                           value
+ *  \param  other_bits_mask  A value that is ORed into the port value driven
+ *                           to ``p_i2c``. The SDA and SCL bit values for this
+ *                           variable must be set to 0.
  */
 [[distributable]]
 void i2c_master_single_port(server interface i2c_master_if c[n], static const size_t n,
