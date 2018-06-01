@@ -5,11 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifdef __XC__
-
-#define BIT_TIME(KBITS_PER_SEC) ((XS1_TIMER_MHZ * 1000) / KBITS_PER_SEC)
-#define BIT_MASK(BIT_POS) (1 << BIT_POS)
-
 /** This type is used in I2C functions to report back on whether the
  *  slave performed and ACK or NACK on the last piece of data sent
  *  to it.
@@ -18,6 +13,11 @@ typedef enum {
   I2C_NACK,    ///< The slave has nack-ed the last byte.
   I2C_ACK,     ///< The slave has ack-ed the last byte.
 } i2c_res_t;
+
+#ifdef __XC__
+
+#define BIT_TIME(KBITS_PER_SEC) ((XS1_TIMER_MHZ * 1000) / KBITS_PER_SEC)
+#define BIT_MASK(BIT_POS) (1 << BIT_POS)
 
 /** This interface is used to communication with an I2C master component.
  *  It provides facilities for reading and writing to the bus.
@@ -386,16 +386,17 @@ extends client interface i2c_master_if : {
  *                 connect to
  *  \param  n      The number of clients connected
  *  \param  p_i2c  The multi-bit port containing both SCL and SDA.
- *                 You will need to set the relevant defines in i2c_conf.h in
- *                 you application to say which bits of the port are used
+ *                 The bit positions of SDA and SCL are configured using the
+ *                 ``sda_bit_position`` and ``scl_bit_position`` arguments.
  *  \param  kbits_per_second The speed of the I2C bus
  *  \param  sda_bit_position The bit of the SDA line on the port
  *  \param  scl_bit_position The bit of the SCL line on the port
- *  \param  other_bits_mask  The mask for the other bits of the port to use
- *                           when driving it.  Note that, on occassions,
- *                           the other bits are left to float, so external
- *                           resistors shall be used to reinforce the default
- *                           value
+ *  \param  other_bits_mask  A value that is ORed into the port value driven
+ *                           to ``p_i2c``. The SDA and SCL bit values for this
+ *                           variable must be set to 0. Note that ``p_i2c`` is
+ *                           configured with ``set_port_drive_low()`` and
+ *                           therefore external pullup resistors are required
+ *                           to produce a value 1 on a bit.
  */
 [[distributable]]
 void i2c_master_single_port(server interface i2c_master_if c[n], static const size_t n,

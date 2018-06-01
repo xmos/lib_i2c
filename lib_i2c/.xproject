@@ -1,1 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><xproject><repository>sc_i2c</repository><partnum>XM-001898-SM</partnum></xproject>
+<?xml version="1.0" encoding="UTF-8"?>
+<xproject><repository>lib_i2c</repository>
+<version>5.0.0dc6fb354094</version>
+</xproject>
