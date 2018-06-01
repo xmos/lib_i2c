@@ -386,8 +386,8 @@ extends client interface i2c_master_if : {
  *                 connect to
  *  \param  n      The number of clients connected
  *  \param  p_i2c  The multi-bit port containing both SCL and SDA.
- *                 You will need to set the relevant defines in i2c_conf.h in
- *                 you application to say which bits of the port are used
+ *                 The bit positions of SDA and SCL are configured using the
+ *                 ``sda_bit_position`` and ``scl_bit_position`` arguments.
  *  \param  kbits_per_second The speed of the I2C bus
  *  \param  sda_bit_position The bit of the SDA line on the port
  *  \param  scl_bit_position The bit of the SCL line on the port
