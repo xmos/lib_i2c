@@ -393,7 +393,10 @@ extends client interface i2c_master_if : {
  *  \param  scl_bit_position The bit of the SCL line on the port
  *  \param  other_bits_mask  A value that is ORed into the port value driven
  *                           to ``p_i2c``. The SDA and SCL bit values for this
- *                           variable must be set to 0.
+ *                           variable must be set to 0. Note that ``p_i2c`` is
+ *                           configured with ``set_port_drive_low()`` and
+ *                           therefore external pullup resistors are required
+ *                           to produce a value 1 on a bit.
  */
 [[distributable]]
 void i2c_master_single_port(server interface i2c_master_if c[n], static const size_t n,
