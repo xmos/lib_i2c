@@ -1,3 +1,4 @@
+# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
 import xmostest
 
 VERBOSE = False
