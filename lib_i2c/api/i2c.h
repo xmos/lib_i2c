@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 /** This type is used in I2C functions to report back on whether the
- *  slave performed and ACK or NACK on the last piece of data sent
+ *  slave performed an ACK or NACK on the last piece of data sent
  *  to it.
  */
 typedef enum {
@@ -27,22 +27,20 @@ typedef interface i2c_master_if {
 
   /** Write data to an I2C bus.
    *
-   *  \param device_addr t   the address of the slave device to write to.
+   *  \param device_addr     the address of the slave device to write to.
    *  \param buf             the buffer containing data to write.
    *  \param n               the number of bytes to write.
    *  \param num_bytes_sent  the function will set this value to the
    *                         number of bytes actually sent. On success, this
-   *                         will be equal to \n but it will be less if the
+   *                         will be equal to ``n`` but it will be less if the
    *                         slave sends an early NACK on the bus and the
    *                         transaction fails.
-   *  \param send_stop_bit   If this is set to non-zero then a stop bit
-   *                         will be output on the bus after the transaction.
+   *  \param send_stop_bit   If this is non-zero then a stop bit
+   *                         will be sent on the bus after the transaction.
    *                         This is usually required for normal operation. If
-   *                         this parameter is non-zero then no stop bit will
+   *                         this parameter is zero then no stop bit will
    *                         be omitted. In this case, no other task can use
-   *                         the component until either a new read or write
-   *                         call is made (a repeated start) or the
-   *                         send_stop_bit() function is called.
+   *                         the component until a stop bit has been sent.
    *
    *  \returns     whether the write succeeded
    */
@@ -55,15 +53,12 @@ typedef interface i2c_master_if {
    *  \param device_addr     the address of the slave device to read from
    *  \param buf             the buffer to fill with data
    *  \param n               the number of bytes to read
-   *  \param send_stop_bit   If this is set to non-zero then a stop bit
-   *                         will be output on the bus after the transaction.
+   *  \param send_stop_bit   If this is non-zero then a stop bit
+   *                         will be sent on the bus after the transaction.
    *                         This is usually required for normal operation. If
-   *                         this parameter is non-zero then no stop bit will
+   *                         this parameter is zero then no stop bit will
    *                         be omitted. In this case, no other task can use
-   *                         the component until either a new read or write
-   *                         call is made (a repeated start) or the
-   *                         send_stop_bit() function is called.
-
+   *                         the component until a stop bit has been sent.
    */
   [[guarded]]
   i2c_res_t read(uint8_t device_addr, uint8_t buf[n], size_t n,
@@ -85,7 +80,7 @@ typedef interface i2c_master_if {
   void shutdown();
 } i2c_master_if;
 
-/** This type is used the supplementary I2C register read/write functions to
+/** This type is used by the supplementary I2C register read/write functions to
  *  report back on whether the operation was a success or not.
  */
 typedef enum {
@@ -376,7 +371,7 @@ extends client interface i2c_master_if : {
                                   port p_scl, port p_sda,
                                   static const unsigned kbits_per_second);
 
-#ifdef __XS2A__
+#if defined(__XS2A__) || defined(__DOXYGEN__)
 /** Implements I2C on a single multi-bit port.
  *
  *  This function implements an I2C master bus using a single port. It is only
@@ -407,7 +402,7 @@ void i2c_master_single_port(server interface i2c_master_if c[n], static const si
 #endif
 
 
-/** This interface is used to communication with an I2C master component
+/** This interface is used to communicate with an I2C master component
  *  asynchronously.
  *  It provides facilities for reading and writing to the bus.
  *
@@ -419,16 +414,12 @@ typedef interface i2c_master_async_if {
    *  \param device_addr the address of the slave device to write to
    *  \param buf         the buffer containing data to write
    *  \param n           the number of bytes to write
-   *  \param send_stop_bit   If this is set to non-zero then a stop bit
-   *                         will be output on the bus after the transaction.
+   *  \param send_stop_bit   If this is non-zero then a stop bit
+   *                         will be sent on the bus after the transaction.
    *                         This is usually required for normal operation. If
-   *                         this parameter is non-zero then no stop bit will
+   *                         this parameter is zero then no stop bit will
    *                         be omitted. In this case, no other task can use
-   *                         the component until either a new read or write
-   *                         call is made (a repeated start) or the
-   *                         send_stop_bit() function is called.
-   *
-   *
+   *                         the component until a stop bit has been sent.
    */
   [[guarded]]
   void write(uint8_t device_addr, uint8_t buf[n], size_t n,
@@ -438,15 +429,12 @@ typedef interface i2c_master_async_if {
    *
    *  \param device_addr     the address of the slave device to read from.
    *  \param n               the number of bytes to read.
-   *  \param send_stop_bit   If this is set to non-zero then a stop bit
-   *                         will be output on the bus after the transaction.
+   *  \param send_stop_bit   If this is non-zero then a stop bit
+   *                         will be sent on the bus after the transaction.
    *                         This is usually required for normal operation. If
-   *                         this parameter is non-zero then no stop bit will
+   *                         this parameter is zero then no stop bit will
    *                         be omitted. In this case, no other task can use
-   *                         the component until either a new read or write
-   *                         call is made (a repeated start) or the
-   *                         send_stop_bit() function is called.
-   *
+   *                         the component until a stop bit has been sent.
    */
   [[guarded]]
   void read(uint8_t device_addr, size_t n, int send_stop_bit);
@@ -464,7 +452,7 @@ typedef interface i2c_master_async_if {
    *
    *  \param num_bytes_sent  the function will set this value to the
    *                         number of bytes actually sent. On success, this
-   *                         will be equal to \n but it will be less if the
+   *                         will be equal to ``n`` but it will be less if the
    *                         slave sends an early NACK on the bus and the
    *                         transaction fails.
 
@@ -480,9 +468,9 @@ typedef interface i2c_master_async_if {
    *
    *  \param buf         the buffer to fill with data.
    *  \param n           the number of bytes to read, this should be the same
-   *                     as the number of bytes specified in init_rx(),
+   *                     as the number of bytes specified in ``read()``,
    *                     otherwise the behavior is undefined.
-   *  \returns           Either ``I2C_SUCCEEDED`` or ``I2C_FAILED`` to indicate
+   *  \returns           Either ``I2C_ACK`` or ``I2C_NACK`` to indicate
    *                     whether the operation was a success.
    */
   [[clears_notification]]
@@ -492,7 +480,7 @@ typedef interface i2c_master_async_if {
    *
    *  This function will cause a stop bit to be sent on the bus. It should
    *  be used to complete/abort a transaction if the ``send_stop_bit`` argument
-   *  was not set when calling the rx() or write() functions.
+   *  was not set when calling the ``read()`` or ``write()`` functions.
    */
   void send_stop_bit(void);
 
@@ -514,10 +502,10 @@ typedef interface i2c_master_async_if {
  *  \param  p_scl  The SCL port of the I2C bus
  *  \param  p_sda  The SDA port of the I2C bus
  *  \param  kbits_per_second The speed of the I2C bus
+ *  \param  max_transaction_size The size of the local buffer in bytes. Any
+ *                        transactions exceeding this size will cause a run-time
+ *                        exception.
  *
- *  \component
- *  \paraminfo     kbits_per_second in [1..400], resources:noeffect
- *  \paraminfo     max_transaction_size resources:linear+orthoganol
  */
 void i2c_master_async(server interface i2c_master_async_if i[n],
                       size_t n,
@@ -539,6 +527,9 @@ void i2c_master_async(server interface i2c_master_async_if i[n],
  *  \param  p_scl  The SCL port of the I2C bus
  *  \param  p_sda  The SDA port of the I2C bus
  *  \param  kbits_per_second The speed of the I2C bus
+ *  \param  max_transaction_size The size of the local buffer in bytes. Any
+ *                        transactions exceeding this size will cause a run-time
+ *                        exception.
  */
 [[combinable]]
 void i2c_master_async_comb(server interface i2c_master_async_if i[n],
@@ -554,7 +545,7 @@ typedef enum i2c_slave_ack_t {
   I2C_SLAVE_NACK,
 } i2c_slave_ack_t;
 
-/** This interface is used to communication with an I2C slave component.
+/** This interface is used to communicate with an I2C slave component.
  *  It provides facilities for reading and writing to the bus. The I2C slave
  *  component acts a *client* to this interface. So the application must
  *  respond to these calls (i.e. the members of the interface are callbacks
@@ -666,7 +657,7 @@ typedef interface i2c_slave_callback_if {
  *
  *  This function instantiates an i2c_slave component.
  *
- *  \param i   the client end of the i2c_slave_if interface. The component
+ *  \param i   the client end of the i2c_slave_callback_if interface. The component
  *             takes the client end and will make calls on the interface when
  *             the master performs reads or writes.
  *  \param  p_scl  The SCL port of the I2C bus
