@@ -82,10 +82,8 @@ void i2c_slave(client i2c_slave_callback_if i,
         // or NACK the address.
         int ack;
         if (rw) {
-          i.start_read_request();
           ack = i.ack_read_request();
         } else {
-          i.start_write_request();
           ack = i.ack_write_request();
         }
 

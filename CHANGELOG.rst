@@ -5,6 +5,10 @@ I2C library change log
 -----
 
   * CHANGE: i2c_master_single_port no longer supported on XS1.
+  * CHANGE: Removed the start_read_request() and start_write_request() functions
+    from the i2c_slave_callback_if.
+  * CHANGE: Removed the start_master_read() and start_master_write() functions
+    from the i2c_slave_callback_if.
   * RESOLVED: Fixed timing of i2c master (both single port and multi-port).
   * RESOLVED: Fixed bug with the master not coping with clock stretching on
     start bits.

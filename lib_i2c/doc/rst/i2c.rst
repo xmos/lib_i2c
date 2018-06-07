@@ -346,25 +346,17 @@ function above needs to respond to the calls e.g.::
   {
     while (1) {
       select {
-      case i2c.start_read_request():
-        break;
       case i2c.master_requests_read() -> i2c_slave_ack_t response:
         response = I2C_SLAVE_ACK;
         break;
-      case i2c.start_write_request():
-        break;
       case i2c.master_requests_write() -> i2c_slave_ack_t response:
         response = I2C_SLAVE_ACK;
-        break;
-      case i2c.start_master_write():
         break;
       case i2c.master_sent_data(uint8_t data) -> i2c_slave_ack_t response:
          // handle write to device here, set response to NACK for the
          // last byte of data in the transaction.
          ...
          break;
-      case i2c.start_master_read():
-        break;
       case i2c.master_requires_data() -> uint8_t data:
          // handle read from device here
          ...
