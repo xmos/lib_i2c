@@ -25,12 +25,12 @@ void my_application(client i2c_master_if i2c, uint8_t target_device_addr) {
   uint8_t data[2] = { 0x1, 0x2 };
   size_t num_bytes_sent = 0;
 
- // Do a write operation with no stop bit
- i2c.write(target_device_addr, data, 2, num_bytes_sent, 0);
+  // Do a write operation with no stop bit
+  i2c.write(target_device_addr, data, 2, num_bytes_sent, 0);
 
- // This operation will begin with a repeated start bit
- i2c.read(target_device_addr, data, 2, 1);
- printf("Read data %d, %d from the bus.\n", data[0], data[1]);
+  // This operation will begin with a repeated start bit
+  i2c.read(target_device_addr, data, 2, 1);
+  printf("Read data %d, %d from the bus.\n", data[0], data[1]);
 }
 
 // end

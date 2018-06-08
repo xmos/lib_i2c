@@ -7,8 +7,8 @@
 void my_application(server i2c_slave_callback_if i2c);
 
 // I2C interface ports
-port p_scl = XS1_PORT_4C;
-port p_sda = XS1_PORT_1G;
+port p_scl = XS1_PORT_1E;
+port p_sda = XS1_PORT_1F;
 
 int main(void) {
   static const uint8_t device_addr = 0x3c;
@@ -32,14 +32,14 @@ void my_application(server i2c_slave_callback_if i2c) {
       response = I2C_SLAVE_ACK;
       break;
     case i2c.master_sent_data(uint8_t data) -> i2c_slave_ack_t response:
-       // handle write to device here, set response to NACK for the
-       // last byte of data in the transaction.
-       break;
+      // handle write to device here, set response to NACK for the
+      // last byte of data in the transaction.
+      break;
     case i2c.master_requires_data() -> uint8_t data:
-       // handle read from device here
-       break;
+      // handle read from device here
+      break;
     case i2c.stop_bit():
-       break;
+      break;
     }
   }
 }
