@@ -1,5 +1,9 @@
 // Copyright (c) 2018, XMOS Ltd, All rights reserved
 
+/* A simple application example used for code snippets in the library
+ * documentation.
+ */
+
 #include <xs1.h>
 #include <stdio.h>
 #include "i2c.h"
