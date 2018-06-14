@@ -105,6 +105,7 @@ extends client interface i2c_master_if : {
    *  Note that no stop bit is transmitted between the write and the read.
    *  The operation is performed as one transaction using a repeated start.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read
    *  \param result      indicates whether the read completed successfully. Will
@@ -143,6 +144,7 @@ extends client interface i2c_master_if : {
    *  transmitting the register addr and then
    *  transmitting the data to the slave device.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to write to
    *  \param reg         the address of the register to write
    *  \param data        the 8-bit value to write
@@ -172,6 +174,7 @@ extends client interface i2c_master_if : {
    *  Note that no stop bit is transmitted between the write and the read.
    *  The operation is performed as one transaction using a repeated start.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the 16-bit address of the register to read
    *                     (most significant byte first)
@@ -212,6 +215,7 @@ extends client interface i2c_master_if : {
    *  transmitting the register addr and then
    *  transmitting the data to the slave device.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to write to
    *  \param reg         the 16-bit address of the register to write
    *                     (most significant byte first)
@@ -242,6 +246,7 @@ extends client interface i2c_master_if : {
    *  Note that no stop bit is transmitted between the write and the read.
    *  The operation is performed as one transaction using a repeated start.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read (most
    *                     significant byte first)
@@ -281,6 +286,7 @@ extends client interface i2c_master_if : {
    *  bus. The function writes data by transmitting the register addr and then
    *  transmitting the data to the slave device.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to write to
    *  \param reg         the 16-bit address of the register to write
    *                     (most significant byte first)
@@ -317,6 +323,7 @@ extends client interface i2c_master_if : {
    *  Note that no stop bit is transmitted between the write and the read.
    *  The operation is performed as one transaction using a repeated start.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to read from
    *  \param reg         the address of the register to read
    *  \param result      indicates whether the read completed successfully. Will
@@ -355,6 +362,7 @@ extends client interface i2c_master_if : {
    *  bus. The function writes data by transmitting the register addr and then
    *  transmitting the data to the slave device.
    *
+   *  \param i           the interface to the I2C master
    *  \param device_addr the address of the slave device to write to
    *  \param reg         the address of the register to write
    *  \param data        the 16-bit value to write (most significant byte first)
