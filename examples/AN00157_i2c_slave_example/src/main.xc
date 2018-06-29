@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include <syscall.h>
 
@@ -71,8 +71,6 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
       break;
 
     // Handle I2C slave transactions
-    case i2c.start_read_request(void):
-      break;
     case i2c.ack_read_request(void) -> i2c_slave_ack_t response:
       // If no register has been selected using a previous write
       // transaction the NACK, otherwise ACK
@@ -82,13 +80,9 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
         response = I2C_SLAVE_ACK;
       }
       break;
-    case i2c.start_write_request(void):
-      break;
     case i2c.ack_write_request(void) -> i2c_slave_ack_t response:
       // Write requests are always accepted
       response = I2C_SLAVE_ACK;
-      break;
-    case i2c.start_master_write(void):
       break;
     case i2c.master_sent_data(uint8_t data) -> i2c_slave_ack_t response:
       // The master is trying to write, which will either select a register
@@ -112,8 +106,6 @@ void i2c_slave_register_file(server i2c_slave_callback_if i2c,
           response = I2C_SLAVE_NACK;
         }
       }
-      break;
-    case i2c.start_master_read(void):
       break;
     case i2c.master_requires_data() -> uint8_t data:
       // The master is trying to read, if a register is selected then

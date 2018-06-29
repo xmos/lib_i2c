@@ -1,5 +1,4 @@
 # Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
-#!/usr/bin/env python
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 

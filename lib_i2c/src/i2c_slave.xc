@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
 #include <i2c.h>
 #include <xs1.h>
 #include <xclib.h>
@@ -82,10 +82,8 @@ void i2c_slave(client i2c_slave_callback_if i,
         // or NACK the address.
         int ack;
         if (rw) {
-          i.start_read_request();
           ack = i.ack_read_request();
         } else {
-          i.start_write_request();
           ack = i.ack_write_request();
         }
 
@@ -159,7 +157,6 @@ void i2c_slave(client i2c_slave_callback_if i,
             if (bitnum == 0) {
               // Stretch clock (hold low) while application code is called
               p_scl <: 0;
-              i.start_master_read();
               data = i.master_requires_data();
               // Data is transmitted MSB first
               data = bitrev(data) >> 24;
@@ -209,7 +206,6 @@ void i2c_slave(client i2c_slave_callback_if i,
           if (bitnum == 8) {
             // Stretch clock (hold low) while application code is called
             p_scl <: 0;
-            i.start_master_write();
             int ack = i.master_sent_data(data);
             if (ack == I2C_SLAVE_NACK) {
               // Release the data bus so it is pulled high to signal NACK

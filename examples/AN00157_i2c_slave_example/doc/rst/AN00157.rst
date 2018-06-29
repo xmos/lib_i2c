@@ -193,7 +193,7 @@ register file, but the others would be used by other |I2C| slave devices.
 
 .. literalinclude:: main.xc
    :start-on: case i2c.ack_write_request
-   :end-before: case i2c.start_master_write
+   :end-before: case i2c.master_sent_data
 
 The register file implements the ``ack_read_request()`` and ``ack_write_request()``
 functions to control whether an ACK or NACK is signaled on the bus for each start
@@ -202,7 +202,7 @@ if the register number has been selected first.
 
 .. literalinclude:: main.xc
    :start-on: case i2c.master_sent_data
-   :end-before: case i2c.start_master_read
+   :end-before: case i2c.master_requires_data
 
 The ``master_sent_data()`` interface function is called for each byte received
 by the |I2C| slave. The first byte is assumed to be a register number.
