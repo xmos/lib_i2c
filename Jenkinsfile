@@ -23,11 +23,6 @@ pipeline {
         libraryChecks("${REPO}")
       }
     }
-    stage('Build') {
-      steps {
-        xCompile("${REPO}/lib_i2c")
-      }
-    }
     stage('Test') {
       steps {
         xmostest("${REPO}", "tests")
