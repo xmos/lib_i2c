@@ -30,7 +30,7 @@ pipeline {
     }
     stage('Test') {
       steps {
-        xmostest("${REPO}/tests")
+        xmostest("${REPO}", "tests")
       }
     }
     stage('AppNotes') {
