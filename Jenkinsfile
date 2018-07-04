@@ -20,7 +20,9 @@ pipeline {
     }
     stage('Library checks') {
       steps {
-        libraryChecks("${REPO}")
+        dir("${SANDBOX}"){
+          libraryChecks("${REPO}")
+        }
       }
     }
     stage('Build') {
