@@ -23,15 +23,14 @@ pipeline {
         libraryChecks("${REPO}")
       }
     }
-    stage('Test') {
-      steps {
-        sh 'echo ${SANDBOX}'
-        // xmostest("${REPO}", "tests")
-      }
-    }
     stage('AppNotes') {
       steps {
         allAppNotes("${REPO}/examples")
+      }
+    }
+    stage('Test') {
+      steps {
+        xmostest("${REPO}", "tests")
       }
     }
   }
