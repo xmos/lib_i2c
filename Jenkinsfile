@@ -25,7 +25,8 @@ pipeline {
     }
     stage('Test') {
       steps {
-        xmostest("${REPO}", "tests")
+        sh 'echo ${SANDBOX}'
+        // xmostest("${REPO}", "tests")
       }
     }
     stage('AppNotes') {
