@@ -25,17 +25,23 @@ pipeline {
     }
     stage('Build') {
       steps {
-        xCompile("${REPO}/lib_i2c")
+        dir("${SANDBOX}") {
+          xCompile("${REPO}/lib_i2c")
+        }
       }
     }
     stage('Test') {
       steps {
-        xmostest("${REPO}", "tests")
+        dir("${SANDBOX}") {
+          xmostest("${REPO}", "tests")
+        }
       }
     }
     stage('AppNotes') {
       steps {
-        allAppNotes("${REPO}/examples")
+        dir("${SANDBOX}") {
+          allAppNotes("${REPO}/examples")
+        }
       }
     }
   }
