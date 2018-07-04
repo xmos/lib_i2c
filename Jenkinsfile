@@ -25,7 +25,7 @@ pipeline {
     }
     stage('Build') {
       steps {
-        xCompile("${REPO}")
+        xCompile("${REPO}/lib_i2c")
       }
     }
     stage('Test') {
