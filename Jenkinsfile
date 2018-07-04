@@ -20,30 +20,22 @@ pipeline {
     }
     stage('Library checks') {
       steps {
-        dir("${SANDBOX}"){
-          libraryChecks("${REPO}")
-        }
+        libraryChecks("${REPO}")
       }
     }
     stage('Build') {
       steps {
-        dir("${SANDBOX}") {
-          xCompile("${REPO}/lib_i2c")
-        }
+        xCompile("${REPO}/lib_i2c")
       }
     }
     stage('Test') {
       steps {
-        dir("${SANDBOX}") {
-          xmostest("${REPO}", "tests")
-        }
+        xmostest("${REPO}", "tests")
       }
     }
     stage('AppNotes') {
       steps {
-        dir("${SANDBOX}") {
-          allAppNotes("${REPO}/examples")
-        }
+        allAppNotes("${REPO}/examples")
       }
     }
   }
