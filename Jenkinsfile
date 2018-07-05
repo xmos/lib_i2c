@@ -25,7 +25,7 @@ pipeline {
     }
     stage('AppNotes') {
       steps {
-        appNote("${REPO}/examples/AN00156_i2c_master_example")
+        allAppNotes("${REPO}/examples")
       }
     }
     stage('Test') {
