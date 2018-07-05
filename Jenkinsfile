@@ -4,7 +4,6 @@ pipeline {
   }
   environment {
     VIEW = 'swapps'
-    SANDBOX = 'i2c'
     REPO = 'lib_i2c'
   }
   options {
@@ -35,6 +34,7 @@ pipeline {
   }
   post {
     always {
+      archiveArtifacts artifacts: "${REPO}/**/*.*", fingerprint: true
       cleanWs()
     }
   }
