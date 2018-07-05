@@ -25,7 +25,7 @@ pipeline {
     }
     stage('AppNotes') {
       steps {
-        allAppNotes("${REPO}/examples")
+        allAppNotes("${REPO}/examples/")
       }
     }
     stage('Test') {
