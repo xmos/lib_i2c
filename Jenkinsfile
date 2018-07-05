@@ -27,8 +27,7 @@ pipeline {
     }
     stage('Test') {
       steps {
-        sh "echo 'Skipping the long stuff'"
-        // xmostest("${REPO}", "tests")
+        xmostest("${REPO}", "tests")
       }
     }
   }
