@@ -1,5 +1,3 @@
-@Library('xmos_jenkins_shared_library@viewEnv_update') _
-
 pipeline {
   agent {
     label 'x86&&macOS&&Apps'
@@ -23,14 +21,15 @@ pipeline {
         libraryChecks("${REPO}")
       }
     }
-    stage('AppNotes') {
+    stage('App Notes') {
       steps {
         allAppNotes("${REPO}/examples")
       }
     }
     stage('Test') {
       steps {
-        xmostest("${REPO}", "tests")
+        sh "echo 'Skipping the long stuff'"
+        // xmostest("${REPO}", "tests")
       }
     }
   }
