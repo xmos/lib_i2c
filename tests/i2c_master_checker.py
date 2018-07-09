@@ -1,7 +1,15 @@
 # Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
 import xmostest
+from enum import Enum
 
-VERBOSE = False
+VERBOSE = True
+
+class i2c_change(enum.Enum):
+    nothing           = 0
+    positive_edge_SCL = 1
+    negative_edge_SCL = 2
+    positive_edge_SDA = 3
+    negative_edge_SDA = 4
 
 class I2CMasterChecker(xmostest.SimThread):
     """"
@@ -27,6 +35,10 @@ class I2CMasterChecker(xmostest.SimThread):
         self._scl_value = 0
         self._sda_value = 0
 
+	self.last_negative_edge_scl = None
+	self.last_positive_edge_scl = None
+        self.last_change    = i2c_change.nothing
+
         self._clock_release_time = None
 
         self._bit_num = 0
@@ -42,7 +54,11 @@ class I2CMasterChecker(xmostest.SimThread):
         print "Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port)
 
     def error(self, str):
-         print "ERROR: %s @ %s" % (str, self.xsi.get_time())
+       print "ERROR: %s @ %s" % (str, self.xsi.get_time())
+
+    def info(self, str):
+       if VERBOSE:
+           print "INFO: %s @ %s" % (str, self.xsi.get_time())
 
     def read_port(self, port, external_value):
       driving = self.xsi.is_port_driving(port)
@@ -80,6 +96,118 @@ class I2CMasterChecker(xmostest.SimThread):
             self._ack_index += 1
             return ack
 
+    #
+    # The following tests are designed to check particular specificiation points
+    # in the I2C spec.
+    #
+
+    # I2C Spec: test fSCL
+    def check_clock_period(self, time):
+        if (self._expected_speed == 100 and time < 10000) or\
+           (self._expected_speed == 400 and time < 2500):
+            self.error("Clock period less than minimum in spec: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Clock period OK: %g >= 10000 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Clock period OK: %g >= 2500 ns" % time)
+
+    # I2C Spec: test tHD;STA
+    def check_hold_start_time(self, time):
+        if (self._expected_speed == 100 and time < 4000) or\
+           (self._expected_speed == 400 and time < 600):
+            self.error("Start bit hold time less than minimum in spec: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Start bit hold time OK: %g >= 4000 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Start bit hold time OK: %g >= 600 ns" % time)
+
+    # I2C Spec test tLOW
+    def check_clock_low_time(self, time):
+        if (self._expected_speed == 100 and time < 4700) or\
+           (self._expected_speed == 400 and time < 1300):
+            self.error("Clock low time less than minimum in spec: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Clock low time OK: %g >= 4700 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Clock low time OK: %g >= 1300 ns" % time)
+
+    # I2C Spec:test tHIGH
+    def check_clock_high_time(self, time):
+        if (self._expected_speed == 100 and time < 4000) or\
+           (self._expected_speed == 400 and time < 600):
+            self.error("Clock high time less than minimum in spec: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Clock high time OK: %g >= 4000 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Clock high time OK: %g >= 600 ns" % time)
+
+    # I2C Spec: test tSU;STA
+    def check_setup_start_time(self, time):
+        if (self._expected_speed == 100 and time < 4700) or\
+           (self._expected_speed == 400 and time < 600):
+            self.error("Start bit setup time less than minimum in spec: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Start bit setup time OK: %g >= 4700 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Start bit setup time OK: %g >= 600 ns" % time)
+
+    # I2C Spec: test tHD;DAT
+    # If this test fails it indicates a test environment problem
+    # Output from the device under test should always be tested by tVD;DAT or tVD;ACK
+    # TODO: handle negative hold times up to -300ns as per spec.
+    def check_data_hold_time(self, time):
+        if (self._expected_speed == 100 and time > 0) or\
+           (self._expected_speed == 400 and time > 0):
+            self.error("Data hold time not respected: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Data hold time OK: %g >= 0 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Data hold time OK: %g >= 0 ns" % time)
+
+    # I2C Spec: test tSU;DAT
+    # If this test fails it indicates a test environment problem
+    # Output from the device under test should always be tested by tVD;DAT or tVD;ACK
+    def check_data_setup_time(self, time):
+        if (self._expected_speed == 100 and time < 250) or\
+           (self._expected_speed == 400 and time < 100):
+            self.error("Data setup time less than minimum in spec: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Data setup time OK: %g >= 250 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Data setup time OK: %g >= 100 ns" % time)
+
+    # I2C Spec: test tSU;STO
+    def check_setup_stop_time(self, time):
+        if (self._expected_speed == 100 and time < 4000) or\
+           (self._expected_speed == 400 and time < 600):
+            self.error("Stop bit setup time less than minimum in spec: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Stop bit setup time OK: %g >= 4000 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Stop bit setup time OK: %g >= 600 ns" % time)
+
+    # I2C Spec: test tBUF
+    def check_bus_free_time(self, time):
+      """ Check the time from the STOP to the START condition
+      """
+      if (self._expected_speed == 100 and time < 4700) or \
+         (self._expected_speed == 400 and time < 1300):
+          self.error("STOP to START time less than minimum in spec: %gns" % time)
+      else:
+          if (self._expected_speed == 100):
+              self.info("STOP to START time OK: %g >= 4700 ns" % time)
+          if (self._expected_speed == 400):
+              self.info("STOP to START time OK: %g >= 1300 ns" % time)
+
+    # I2C Spec: test tVD;DAT
     def check_data_valid_time(self, time):
         if time < 0:
             # Data change must have been for a previous bit
@@ -88,33 +216,109 @@ class I2CMasterChecker(xmostest.SimThread):
         if (self._expected_speed == 100 and time > 3450) or\
            (self._expected_speed == 400 and time >  900):
             self.error("Data valid time not respected: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("Data valid time OK: %g <= 3450 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("Data valid time OK: %g <= 900 ns" % time)
 
-    def check_data_setup_time(self, time):
-        if (self._expected_speed == 100 and time < 250) or\
-           (self._expected_speed == 400 and time < 100):
-            self.error("Data setup time less than minimum in spec: %gns" % time)
+    # I2C Spec: test tVD;ACK
+    def check_ack_valid_time(self, time):
+        if time < 0:
+            # Data change must have been for a previous bit
+            return
 
-    def check_clock_low_time(self, time):
-        if (self._expected_speed == 100 and time < 4700) or\
-           (self._expected_speed == 400 and time < 1300):
-            self.error("Clock low time less than minimum in spec: %gns" % time)
+        if (self._expected_speed == 100 and time > 3450) or\
+           (self._expected_speed == 400 and time >  900):
+            self.error("ACK valid time not respected: %gns" % time)
+	else:
+            if (self._expected_speed == 100):
+                self.info("ACK valid time OK: %g <= 3450 ns" % time)
+            if (self._expected_speed == 400):
+                self.info("ACK valid time OK: %g <= 900 ns" % time)
 
-    def check_clock_high_time(self, time):
-        if (self._expected_speed == 100 and time < 4000) or\
-           (self._expected_speed == 400 and time < 900):
-            self.error("Clock high time less than minimum in spec: %gns" % time)
 
-    def check_setup_stop_time(self, time):
-        if (self._expected_speed == 100 and time < 4000) or\
-           (self._expected_speed == 400 and time < 600):
-            self.error("Stop bit setup time less than minimum in spec: %gns" % time)
+   def do_timing_checks (self):
+      #
+      # Apply checks. Tests are listed in the order they appear in the
+      # I2C specification.
+      #
 
-    def check_bus_free_time(self, time):
-      """ Check the time from the STOP to the START condition
-      """
-      if (self._expected_speed == 100 and time < 4700) or \
-         (self._expected_speed == 400 and time < 1300):
-          self.error("STOP to START time less than minimum in spec: %gns" % time)
+      # fSCL - test against last SCL edge of the same type
+      if current_change == i2c_change.negative_edge_SCL and\
+         self.last_negative_edge_SCL != None:
+      	check_clock_period(self, time_now - self.last_negative_edge_SCL)
+
+      if current_change == i2c_change.positive_edge_SCL and\
+         self.last_positive_edge_SCL != None:
+      	check_clock_period(self, time_now - self.last_positive_edge_SCL)
+
+      # tHD;STA
+      if self.last_change == i2c_change.negative_edge_SCL and\
+           current_change == i2c_change.negative_edge_SDA :
+        check_hold_start_time(self, time_difference)
+
+      # tHD;STA - Possible negative values
+#      if self.last_change == i2c_change.positive_edge_SCL and\
+#           current_change == i2c_change.negative_edge_SDA :
+          # This condition may indicate an early SDA transition
+
+
+      # tLOW - test against last SCL edge regardless of SDA
+      if current_change == i2c_change.positive_edge_SCL and\
+         self.last_negative_edge_SCL != None:
+        check_clock_low_time(self, time_now - self.last_negative_edge_SCL)
+
+      # tHIGH - test against last SCL edge regardless of SDA
+      if current_change == i2c_change.negative_edge_SCL and\
+         self.last_positive_edge_SCL != None:
+        check_clock_high_time(self, time_now - self.last_positive_edge_SCL)
+
+      # tSU;STA
+      if self.last_change == i2c_change.positive_edge_SCL and\
+           current_change == i2c_change.negative_edge_SDA :
+        check_setup_start_time(self, time_difference)
+
+      # tHD;DAT
+      if self.last_change == i2c_change.negative_edge_SCL and\
+          (current_change == i2c_change.negative_edge_SDA or\
+           current_change == i2c_change.positive_edge_SDA) :
+        check_data_hold_time(self, time_difference)
+
+      # tSU;DAT
+      if (self.last_change == i2c_change.positive_edge_SDA  or\
+          self.last_change == i2c_change.negative_edge_SDA) and\
+            current_change == i2c_change.positive_edge_SCL :
+        check_data_setup_time(self, time_difference)
+
+      # tSU;STO
+      if self.last_change == i2c_change.positive_edge_SCL and\
+           current_change == i2c_change.positive_edge_SDA :
+        check_setup_stop_time(self, time_difference)
+
+      # tBUF
+      if self.last_change == i2c_change.positive_edge_SDA and\
+           current_change == i2c_change.negative_edge_SDA and\
+           new_scl_value  == 1:
+        check_bus_free_time(self, time_difference)
+
+      # tVD;DAT
+      # TODO: identify that this is a data cycle driven by lib_i2c
+      if self.last_change == i2c_change.negative_edge_SCL and\
+          (current_change == i2c_change.negative_edge_SDA or\
+           current_change == i2c_change.positive_edge_SDA) :
+        check_data_valid_time(self, time_difference)
+
+      # tVD;ACK
+      # TODO: identify that this is an ACK cycle driven by lib_i2c
+      if self.last_change == i2c_change.negative_edge_SCL and\
+          (current_change == i2c_change.negative_edge_SDA or\
+           current_change == i2c_change.positive_edge_SDA) :
+        check_ack_valid_time(self, time_difference)
+
+
+
+
 
     def get_next_data_item(self):
         if self._tx_data_index >= len(self._tx_data):
@@ -201,28 +405,58 @@ class I2CMasterChecker(xmostest.SimThread):
         print "wait_for_change {},{} -> {},{} @ {}".format(
           scl_value, sda_value, new_scl_value, new_sda_value, time_now)
 
+
+      #
+      # SCL changed
+      #
+      if scl_value != new_scl_value:
+	if (new_scl_value == 0):
+	  self.info("SCL Negedge")
+          current_change = i2c_change.negative_edge_SCL
+	else:
+	  self.info("SCL Posedge")
+          current_change = i2c_change.positive_edge_SCL
+
+      #
+      # SDA changed
+      #
+      if sda_value != new_sda_value:
+	if (new_sda_value == 0):
+	  self.info("SDA Negedge")
+          current_change = i2c_change.negative_edge_SDA
+	else:
+	  self.info("SDA Posedge")
+          current_change = i2c_change.positive_edge_SDA
+
+      time_difference = time_now - self.last_change_time
+
+
+      #
+      # update record of previous transitions
+      #
+      self.last_change_time = time_now
+      self.last_change      = current_change
+
+      if current_change == i2c_change.negative_edge_SCL:
+        if self.last_negative_edge_SCL != None:
+          self._bit_times.append(time_now - self.last_negative_edge_SCL)
+	self.last_negative_edge_SCL = time_now
+
+
+      if current_change == i2c_change.positive_edge_SCL:
+	self.last_positive_edge_scl = time_now
+
+      if current_change == i2c_change.positive_edge_SCL or\
+         current_change == i2c_change.negative_edge_SCL:
+        self._scl_change_time = time_now
+        self._scl_value = new_scl_value
+
+
       #
       # SCL changed
       #
       if scl_value != new_scl_value:
         scl_changed = True
-
-        # Ensure the clock timing is correct
-        if self._scl_change_time:
-          if new_scl_value == 0:
-            self.check_clock_high_time(time_now - self._scl_change_time)
-          else:
-            self.check_clock_low_time(time_now - self._scl_change_time)
-
-        self._scl_change_time = time_now
-        self._scl_value = new_scl_value
-
-        # Record the time of the falling edges
-        if new_scl_value == 0:
-          fall_time = self.xsi.get_time()
-          if self._prev_fall_time is not None:
-            self._bit_times.append(fall_time - self._prev_fall_time)
-          self._prev_fall_time = fall_time
 
         # Stretch the clock if required
         if self._clock_stretch and new_scl_value == 0:
@@ -237,15 +471,6 @@ class I2CMasterChecker(xmostest.SimThread):
       #
       if not scl_changed and (sda_value != new_sda_value):
         sda_changed = True
-        self._last_sda_change_time = self._sda_change_time
-        self._sda_change_time = time_now
-        self._sda_value = new_sda_value
-
-        if new_scl_value == 0:
-          self.check_data_valid_time(time_now - self._scl_change_time)
-
-        if self._state == "STOPPING_1":
-          self.check_setup_stop_time(time_now - self._scl_change_time)
 
       return scl_changed, sda_changed
 
