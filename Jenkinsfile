@@ -22,12 +22,12 @@ pipeline {
     }
     stage('App Notes') {
       steps {
-        allAppNotes("${REPO}/examples")
+        buildAllAppNotes("${REPO}/examples")
       }
     }
     stage('Test') {
       steps {
-        xmostest("${REPO}", "tests")
+        runXmostest("${REPO}", "tests")
       }
     }
   }
