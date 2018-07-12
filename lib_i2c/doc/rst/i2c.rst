@@ -362,7 +362,8 @@ Creating an |I2C| slave instance
 Known Issues
 ------------
 
-There are no known issues with this library.
+ * The reg_ops_nack test fails on the XS1 architecture because it is unable to meet timing.
+   This library is not recommended for use with the XS1 architecture.
 
 
 .. include:: ../../../CHANGELOG.rst

@@ -38,5 +38,6 @@ def do_test(arch):
                               tester=tester)
 
 def runtest():
-  for arch in ['xs1', 'xs2']:
+  # See BUG 17936 - the xs1 is not fast enough to run this test
+  for arch in ['xs2']:
     do_test(arch)
