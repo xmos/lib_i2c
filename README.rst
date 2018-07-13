@@ -17,15 +17,12 @@ The libary is compatible with multiple slave devices existing on the same
 bus. The |I2C| master component can be used by multiple tasks within
 the xCORE device (each addressing the same or different slave devices).
 
-The library can also be used to implement multiple |I2C| physical interfaces
-on a single xCORE device simultaneously.
-
 Features
 ........
 
  * |I2C| master and |I2C| slave modes.
- * Supports speed up to 400 Kb/s (|I2C| Fast-mode).
- * Clock stretching support.
+ * Supports speed up to 400 Kb/s.
+ * Clock stretching suppoirt.
  * Synchronous and asynchronous APIs for efficient usage of processing cores.
 
 
@@ -76,6 +73,4 @@ Related application notes
 
 The following application notes use this library:
 
-  * AN00156: How to use the I2C master library
-  * AN00157: How to use the I2C slave library
-  * AN00181: xCORE-200 explorer accelerometer demo
+  * AN00181 - xCORE-200 explorer accelerometer demo

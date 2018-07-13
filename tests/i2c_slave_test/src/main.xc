@@ -28,13 +28,19 @@ void tester(server i2c_slave_callback_if i2c)
   int i = 0;
   while (1) {
     select {
-    case i2c.ack_read_request(void) -> i2c_slave_ack_t response:
+    case i2c.start_read_request(void):
       debug_printf("xCORE got start of read transaction\n");
+      break;
+    case i2c.ack_read_request(void) -> i2c_slave_ack_t response:
       response = I2C_SLAVE_ACK;
       break;
-    case i2c.ack_write_request(void) -> i2c_slave_ack_t response:
+    case i2c.start_write_request(void):
       debug_printf("xCORE got start of write transaction\n");
+      break;
+    case i2c.ack_write_request(void) -> i2c_slave_ack_t response:
       response = I2C_SLAVE_ACK;
+      break;
+    case i2c.start_master_write():
       break;
     case i2c.master_sent_data(uint8_t data) -> i2c_slave_ack_t response:
       debug_printf("xCORE got data: 0x%x\n", data);
@@ -42,6 +48,8 @@ void tester(server i2c_slave_callback_if i2c)
         _exit(0);
       }
       response = ack_sequence[ack_index++];
+      break;
+    case i2c.start_master_read():
       break;
     case i2c.master_requires_data() -> uint8_t data:
       data = test_data[i];
