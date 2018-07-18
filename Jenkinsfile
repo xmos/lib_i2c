@@ -17,12 +17,12 @@ pipeline {
     }
     stage('Library checks') {
       steps {
-        libraryChecks("${REPO}")
+        xcoreLibraryChecks("${REPO}")
       }
     }
     stage('App Notes') {
       steps {
-        buildAllAppNotes("${REPO}/examples")
+        xcoreAllAppNotesBuild("${REPO}/examples")
       }
     }
     stage('Test') {
