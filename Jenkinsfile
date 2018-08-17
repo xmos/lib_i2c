@@ -20,6 +20,11 @@ pipeline {
         xcoreLibraryChecks("${REPO}")
       }
     }
+    stage('Oscar stage') {
+        steps {
+            echo "Hello World"
+            }
+    }
     stage('App Notes') {
       steps {
         xcoreAllAppNotesBuild("${REPO}/examples")
