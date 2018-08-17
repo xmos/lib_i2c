@@ -15,11 +15,6 @@ pipeline {
         prepareAppsSandbox("${VIEW}", "${REPO}")
       }
     }
-    stage('Library checks') {
-      steps {
-        xcoreLibraryChecks("${REPO}")
-      }
-    }
     stage('Oscar stage') {
         steps {
             echo "Hello World"
