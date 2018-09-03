@@ -93,7 +93,8 @@ static int inline high_pulse_sample(
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
   p_scl <: 0;
-  return sample_value;
+  // Mask off all but lowest bit of input - allows use of bit[0] of multibit port
+  return sample_value & 1;
 }
 
 /** 'Pulse' the clock line high. Timing is done via the fall_time
