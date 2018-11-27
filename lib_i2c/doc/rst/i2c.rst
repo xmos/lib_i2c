@@ -42,12 +42,10 @@ or NACK (leave the line high). This sequence is shown in :ref:`i2c_transaction_s
 
 .. _i2c_transaction_start:
 
-.. wavedrom:: |I2C| transaction start
+.. figure:: images/transaction_start.png
+    :width: 100%
 
-   { "signal" : [
-     { "name": "SDA", "wave": "10.=..=..=..=..=..=..0", "data": ["a6", "a5", "...", "a0","r/w","ACK"] },
-     { "name": "SCL", "wave": "1.0.u0.u0.u0.u0.u0.u0." }
-   ]}
+    |I2C| transaction start
 
 If the read/write bit of the transaction start is 1 then the master
 will execute a sequence of reads. Each read consists of the master
@@ -60,12 +58,10 @@ show in :ref:`i2c_read_byte`
 
 .. _i2c_read_byte:
 
-.. wavedrom:: |I2C| read byte
+.. figure:: images/read_byte.png
+    :width: 100%
 
-   { "signal" : [
-     { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
-     { "name": "SCL", "wave": "0..u0.u0.u0.u0.u0.u0." }
-   ]}
+    |I2C| read byte
 
 |newpage|
 
@@ -81,12 +77,10 @@ repeated start. A write byte sequence is show in :ref:`i2c_write_byte`
 
 .. _i2c_write_byte:
 
-.. wavedrom:: |I2C| write byte
+.. figure:: images/write_byte.png
+    :width: 100%
 
-   { "signal" : [
-     { "name": "SDA", "wave": "0.=..=..=..=..=..=..0", "data": ["b7","b6", "b5", "...", "b0","ACK"] },
-     { "name": "SCL", "wave": "0..u0.u0.u0.u0.u0.u0." }
-   ]}
+    |I2C| write byte
 
 After a transaction is complete, the master may start a new
 transaction with the same device (a *repeated start*) or will send a
@@ -95,12 +89,10 @@ the clock line is high (see :ref:`i2c_stop_bit`).
 
 .. _i2c_stop_bit:
 
-.. wavedrom:: |I2C| stop bit
+.. figure:: images/stop_bit.png
+    :width: 30%
 
-  { "signal" : [
-    { "name": "SDA", "wave": "0..u" },
-    { "name": "SCL", "wave": "0.u." }
-  ]}
+    |I2C| stop bit
 
 |newpage|
 
