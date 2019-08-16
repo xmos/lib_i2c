@@ -16,6 +16,7 @@
 Installs/*
 test_results.csv
 *.log
+**/.venv/**
 
 # waf build files
 .lock-waf_*
