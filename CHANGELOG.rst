@@ -6,6 +6,12 @@ I2C library change log
 
   * CHANGED: Build files updated to support new "xcommon" behaviour in xwaf.
 
+5.0.1
+-----
+
+  * CHANGE: Renamed example application directories to have standard "app"
+    prefix.
+
 5.0.0
 -----
 
