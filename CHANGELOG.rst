@@ -1,6 +1,12 @@
 I2C library change log
 ======================
 
+5.0.1
+-----
+
+  * CHANGE: Renamed example application directories to have standard "app_"
+    prefix.
+
 5.0.0
 -----
 
