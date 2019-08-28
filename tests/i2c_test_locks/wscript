@@ -1,10 +1,14 @@
+def options(opt):
+    opt.load('xwaf.xcommon')
 
 def configure(conf):
-    conf.load('xwaf.compiler_xcc')
+    conf.load('xwaf.xcommon')
 
 def build(bld):
-    bld.env.XCC_FLAGS = ['-O2', '-g', '-save-temps', '-DDEBUG_PRINT_ENABLE=1', '-report']
-    bld.env.TARGET_ARCH = 'SLICEKIT-L16'
+    bld.do_xcommon()
 
-    depends_on = ['lib_i2c', 'lib_logging']
-    prog = bld.program(depends_on=depends_on)
+def dist(ctx):
+    ctx.load('xwaf.xcommon')
+
+def distcheck(ctx):
+    ctx.load('xwaf.xcommon')

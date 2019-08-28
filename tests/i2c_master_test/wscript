@@ -1,57 +1,14 @@
-
-import fnmatch
-import re
-from waflib import Build, Options
-from waflib.Build import BuildContext, CleanContext
-
-def options(ctx):
-    ctx.add_option('--config', action='store', default='')
+def options(opt):
+    opt.load('xwaf.xcommon')
 
 def configure(conf):
-    def make_config(name, flags):
-        conf.setenv(name)
-        conf.load('xwaf.compiler_xcc')
-        conf.env.XCC_FLAGS = flags
-    for key, value in CONFIGS.iteritems():
-        make_config(key, value)
+    conf.load('xwaf.xcommon')
 
 def build(bld):
-    if not bld.variant:
-        if not bld.options.config:
-            bld.fatal('specify a config with --config')
+    bld.do_xcommon()
 
-        build_configs = [
-            c for c in CONFIGS.keys()
-            if fnmatch.fnmatch(c, bld.options.config)
-        ]
-        build_commands = ['{}_{}'.format(bld.cmd, c) for c in build_configs]
+def dist(ctx):
+    ctx.load('xwaf.xcommon')
 
-        if not build_commands:
-            bld.fatal(
-                '{} does not match any configs'.format(bld.options.config))
-
-        cmd_str = {'build': 'Building', 'clean': 'Cleaning'}[bld.cmd]
-        print('{} configs:\n    {}'.format(cmd_str, '\n    '.join(
-            build_configs)))
-        Options.commands = build_commands + Options.commands
-        return
-
-    depends_on = ['lib_i2c', 'lib_logging']
-    
-    bld.env.TARGET_ARCH = 'SLICEKIT-L16'
-
-    prog = bld.program(depends_on=depends_on)
-
-CONFIGS = {
-    'tx_only': ['-O2', '-g', '-save-temps', '-DDEBUG_PRINT_ENABLE=1', '-report', '-DENABLE_TX=1', '-DENABLE_RX=0', '-DSPEED=400'],
-    'rx_tx_10': ['-O2', '-g', '-save-temps', '-DDEBUG_PRINT_ENABLE=1', '-report', '-DENABLE_TX=1', '-DENABLE_RX=1', '-DSPEED=10'],
-    'rx_tx_100': ['-O2', '-g', '-save-temps', '-DDEBUG_PRINT_ENABLE=1', '-report', '-DENABLE_TX=1', '-DENABLE_RX=1', '-DSPEED=100'],
-    'rx_tx_400': ['-O2', '-g', '-save-temps', '-DDEBUG_PRINT_ENABLE=1', '-report', '-DENABLE_TX=1', '-DENABLE_RX=1', '-DSPEED=400'],
-}
-
-for config in CONFIGS.keys():
-    for ctx in (BuildContext, CleanContext):
-        raw_context = ctx.__name__.replace('Context', '').lower()
-        class tmp(ctx):
-            cmd = raw_context + '_' + config
-            variant = config
+def distcheck(ctx):
+    ctx.load('xwaf.xcommon')
