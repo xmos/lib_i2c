@@ -8,7 +8,7 @@ TARGET = SLICEKIT-L16
 # not include the .xe postfix. If left blank the name will default to
 # the project name
 
-APP_NAME = 
+APP_NAME =
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
@@ -22,7 +22,7 @@ XCC_FLAGS = -O2 -g -DDEBUG_PRINT_ENABLE=1 -report
 
 # The USED_MODULES variable lists other module used by the application.
 
-USED_MODULES = lib_i2c(>=5.0.0) lib_logging(>=2.1.0)
+USED_MODULES = lib_i2c(>=6.0.0) lib_logging(>=2.1.0)
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
