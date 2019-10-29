@@ -1,8 +1,0 @@
-def use_module(bld):
-    sources = bld.path.ant_glob('src/**/*.xc')
-    bld.env.MODULE_XCC_FLAGS = bld.env.XCC_FLAGS + ['-Os']
-    bld.module(
-        source=sources,
-        includes=['api'],
-        depends_on=['lib_xassert(>=3.0.0)', 'lib_logging(>=2.1.0)'],
-        version='5.0.1')

@@ -1,6 +1,11 @@
 I2C library change log
 ======================
 
+6.0.0
+-----
+
+  * CHANGED: Build files updated to support new "xcommon" behaviour in xwaf.
+
 5.0.1
 -----
 
