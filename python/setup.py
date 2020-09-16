@@ -9,7 +9,7 @@ import setuptools
 # least the same minor version as specified in the requirements.txt file.
 # The same modules should appear in the requirements.txt file as given below.
 setuptools.setup(
-    name='lib_i2s',
+    name='lib_i2c',
     packages=setuptools.find_packages(),
     install_requires=[
         'flake8~=3.8',
