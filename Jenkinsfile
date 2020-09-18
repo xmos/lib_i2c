@@ -8,7 +8,7 @@ pipeline {
   }
   environment {
     REPO = 'lib_i2c'
-    VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
+    VIEW = "lib_i2c_develop_test_infr_apps.txt"
   }
   options {
     skipDefaultCheckout()
