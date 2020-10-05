@@ -1,6 +1,11 @@
 I2C library change log
 ======================
 
+6.0.1
+-----
+
+  * CHANGED: Pin Python package versions
+
 6.0.0
 -----
 
