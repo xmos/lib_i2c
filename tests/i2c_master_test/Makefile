@@ -17,7 +17,6 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-ARCHS = xs1 xs2
 SPEEDS = 10 100 400
 STOPS = stop no_stop
 
@@ -27,25 +26,19 @@ stop_val = 1
 no_stop_val = 0
 
 define create_flags
-XCC_FLAGS_rx_tx_$(1)_$(2)_$(3) = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=$(1) -DSTOP=$$($(2)_val)
+XCC_FLAGS_rx_tx_$(1)_$(2) = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=$(1) -DSTOP=$$($(2)_val)
 endef
 
-$(foreach arch,$(ARCHS),\
-  $(foreach speed,$(SPEEDS),\
-    $(foreach stop,$(STOPS),\
-        $(eval $(call create_flags,$(speed),$(stop),$(arch))))))
+$(foreach speed,$(SPEEDS),\
+  $(foreach stop,$(STOPS),\
+      $(eval $(call create_flags,$(speed),$(stop)))))
 
 
-XCC_FLAGS_tx_only_stop_xs1      = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=1
-XCC_FLAGS_tx_only_stop_xs2      = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=1
-XCC_FLAGS_tx_only_no_stop_xs1   = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=0
-XCC_FLAGS_tx_only_no_stop_xs2   = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=0
+XCC_FLAGS_tx_only_stop      = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=1
+XCC_FLAGS_tx_only_no_stop   = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=0
 
-ifeq ($(findstring xs1, $(CONFIG)), xs1)
-  TARGET = SLICEKIT-L16
-else
-  TARGET = XCORE-200-EXPLORER
-endif
+
+TARGET = XCORE-AI-EXPLORER
 
 # The USED_MODULES variable lists other module used by the application.
 

@@ -1,13 +1,13 @@
 ifeq ($(USING_XWAF),1)
 all:
-	xwaf configure build 
+	xwaf configure build
 else # USING_XWAF
 
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to
 # the project name
 
-APP_NAME = 
+APP_NAME =
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:
@@ -19,14 +19,9 @@ APP_NAME =
 
 COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
-XCC_FLAGS_xs1 = $(COMMON_FLAGS)
-XCC_FLAGS_xs2 = $(COMMON_FLAGS)
+XCC_FLAGS = $(COMMON_FLAGS)
 
-ifeq ($(findstring xs1, $(CONFIG)), xs1)
-  TARGET = SLICEKIT-L16
-else
-  TARGET = XCORE-200-EXPLORER
-endif
+TARGET = XCORE-AI-EXPLORER
 
 # The USED_MODULES variable lists other module used by the application.
 

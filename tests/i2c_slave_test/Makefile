@@ -1,18 +1,18 @@
 ifeq ($(USING_XWAF),1)
 all:
-	xwaf configure build 
+	xwaf configure build
 else # USING_XWAF
 # The TARGET variable determines what target system the application is
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
 
-TARGET = SLICEKIT-L16
+TARGET = XCORE-AI-EXPLORER
 
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to
 # the project name
 
-APP_NAME = 
+APP_NAME =
 
 # The flags passed to xcc when building the application
 # You can also set the following to override flags for a particular language:

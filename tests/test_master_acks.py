@@ -1,13 +1,12 @@
-# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+# Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 
-def do_master_test(arch, stop):
+def do_master_test(stop):
     resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_master_test/bin/tx_only_%(stop)s_%(arch)s/i2c_master_test_tx_only_%(stop)s_%(arch)s.xe' % {
+    binary = 'i2c_master_test/bin/tx_only_%(stop)s/i2c_master_test_tx_only_%(stop)s.xe' % {
       'stop' : stop,
-      'arch' : arch,
     }
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
@@ -21,7 +20,7 @@ def do_master_test(arch, stop):
     tester = xmostest.ComparisonTester(open('ack_test_%s.expect' % stop),
                                       'lib_i2c', 'i2c_master_sim_tests',
                                       'ack_test',
-                                      {'speed':400, 'arch' : arch, 'stop' : stop},
+                                      {'speed':400, 'stop' : stop},
                                       regexp=True)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
@@ -31,6 +30,5 @@ def do_master_test(arch, stop):
                               tester = tester)
 
 def runtest():
-  for arch in ['xs1', 'xs2']:
-    for stop in ['stop', 'no_stop']:
-        do_master_test(arch, stop)
+  for stop in ['stop', 'no_stop']:
+      do_master_test(stop)

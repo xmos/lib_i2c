@@ -1,17 +1,15 @@
-# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+# Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
 
-
-def do_test(arch, stop):
+def do_test(stop):
     resources = xmostest.request_resource("xsim")
 
     speed = 400
-    binary = 'i2c_master_test/bin/rx_tx_%(speed)s_%(stop)s_%(arch)s/i2c_master_test_rx_tx_%(speed)s_%(stop)s_%(arch)s.xe' % {
+    binary = 'i2c_master_test/bin/rx_tx_%(speed)s_%(stop)s/i2c_master_test_rx_tx_%(speed)s_%(stop)s.xe' % {
       'speed' : speed,
       'stop' : stop,
-      'arch' : arch,
     }
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
@@ -28,7 +26,7 @@ def do_test(arch, stop):
     tester = xmostest.ComparisonTester(open('master_test_%s.expect' % stop),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                       'clock_stretch',
-                                      {'speed' : speed, 'stop' : stop, 'arch' : arch},
+                                      {'speed' : speed, 'stop' : stop},
                                      regexp=True)
 
     # vcd_args = '-o test.vcd'
@@ -37,7 +35,7 @@ def do_test(arch, stop):
 
     # sim_args = ['--weak-external-drive', '--trace-to', 'sim.log']
     # sim_args += [ '--vcd-tracing', vcd_args ]
- 
+
     sim_args = ['--weak-external-drive']
 
     xmostest.run_on_simulator(resources['xsim'], binary,
@@ -47,6 +45,5 @@ def do_test(arch, stop):
                               tester = tester)
 
 def runtest():
-  for arch in ['xs1', 'xs2']:
-    for stop in ['stop', 'no_stop']:
-      do_test(arch, stop)
+  for stop in ['stop', 'no_stop']:
+    do_test(stop)

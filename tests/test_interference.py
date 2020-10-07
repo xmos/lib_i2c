@@ -1,15 +1,14 @@
-# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+# Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
 
-def do_master_test(arch, stop):
+def do_master_test(stop):
     resources = xmostest.request_resource("xsim")
 
     speed = 100
 
-    binary = 'i2c_master_async_test/bin/interfere_%(arch)s_%(stop)s/i2c_master_async_test_interfere_%(arch)s_%(stop)s.xe' % {
-     'arch' : arch,
+    binary = 'i2c_master_async_test/bin/interfere_%(stop)s/i2c_master_async_test_interfere_%(stop)s.xe' % {
      'stop' : stop,
     }
 
@@ -26,7 +25,7 @@ def do_master_test(arch, stop):
     tester = xmostest.ComparisonTester(open('master_test_%s.expect' % stop),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                      'async_interference_test',
-                                     {'speed':speed, 'arch' : arch, 'stop' : stop},
+                                     {'speed':speed, 'stop' : stop},
                                      regexp=True)
 
     sim_args = ['--weak-external-drive']
@@ -38,6 +37,5 @@ def do_master_test(arch, stop):
                               tester = tester)
 
 def runtest():
-  for arch in ['xs1', 'xs2']:
-    for stop in ['stop', 'no_stop']:
-      do_master_test(arch, stop)
+  for stop in ['stop', 'no_stop']:
+    do_master_test(stop)

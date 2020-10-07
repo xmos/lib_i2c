@@ -1,15 +1,12 @@
-# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+# Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
 
-
-def do_test(arch):
+def do_test():
     resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_master_reg_test/bin/%(arch)s/i2c_master_reg_test_%(arch)s.xe' % {
-      'arch' : arch
-    }
+    binary = 'i2c_master_reg_test/bin/i2c_master_reg_test.xe'
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
@@ -28,7 +25,7 @@ def do_test(arch):
     tester = xmostest.ComparisonTester(open('reg_ops_nack.expect'),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                      'reg_ops_nack_test',
-                                     {'arch' : arch},
+                                     None,
                                      regexp=True)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
@@ -38,6 +35,4 @@ def do_test(arch):
                               tester=tester)
 
 def runtest():
-  # See BUG 17936 - the xs1 is not fast enough to run this test
-  for arch in ['xs2']:
-    do_test(arch)
+  do_test()
