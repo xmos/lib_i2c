@@ -1,6 +1,12 @@
 I2C library change log
 ======================
 
+6.0.1
+-----
+
+  * CHANGED: Pin Python package versions
+  * REMOVED: not necessary cpanfile
+
 6.0.0
 -----
 
