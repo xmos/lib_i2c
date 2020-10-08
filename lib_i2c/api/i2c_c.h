@@ -24,7 +24,7 @@ typedef enum {
   I2C_REGOP_NOT_STARTED  ///< the operation could not start
 } i2c_regop_res_t;
 
-#define I2S_CALLBACK_ATTR __attribute__((fptrgroup("i2c_callback")))
+#define I2C_CALLBACK_ATTR __attribute__((fptrgroup("i2c_callback")))
 
 typedef struct i2c_master_struct i2c_master_t;
 
@@ -53,7 +53,7 @@ struct i2c_master_struct {
     int stopped; /* init to 1 */
     i2c_res_t res; /* init to I2C_ACK? */
 
-    I2S_CALLBACK_ATTR i2c_operation_complete_t operation_complete;
+    I2C_CALLBACK_ATTR i2c_operation_complete_t operation_complete;
     void *app_data;
 };
 
