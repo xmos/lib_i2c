@@ -2,6 +2,7 @@
 #ifndef _i2c_c_h_
 #define _i2c_c_h_
 
+#include <sys/types.h>
 #include <xcore/port.h>
 #include <xcore/clock.h>
 #include <xcore/hwtimer.h>
@@ -73,7 +74,10 @@ i2c_res_t i2c_master_read(
 
 i2c_res_t i2c_result_get(
         i2c_master_t *ctx,
-        size_t *num_bytes_transferred);
+        ssize_t *num_bytes_transferred);
+
+i2c_res_t i2c_master_stop_bit_send(
+        i2c_master_t *ctx);
 
 void i2c_master_init(
         i2c_master_t *ctx,

@@ -22,10 +22,10 @@ def do_test():
                                              True, True, True])
 
     tester = xmostest.ComparisonTester(open('reg_test.expect'),
-                                     'lib_i2c', 'i2c_master_sim_tests',
-                                     'reg_ops_test',
-                                     None,
-                                     regexp=True)
+                                       'lib_i2c', 'i2c_master_sim_tests',
+                                       'reg_ops_test',
+                                       None,
+                                       regexp=True)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads=[checker],
@@ -34,4 +34,4 @@ def do_test():
                               tester=tester)
 
 def runtest():
-  do_test()
+    do_test()
