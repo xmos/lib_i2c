@@ -117,13 +117,13 @@ DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, test) {
         if (res == I2C_STARTED) {
             while (!op.done);
             op.done = 0;
-            acks[TEST_WRITE_1] = i2c_result_get(i2c_ctx_ptr, &n2);
+            acks[TEST_WRITE_2] = i2c_result_get(i2c_ctx_ptr, &n2);
         }
         res = i2c_master_write(i2c_ctx_ptr, 0x31, data_write_3, 1, do_stop);
         if (res == I2C_STARTED) {
             while (!op.done);
             op.done = 0;
-            acks[TEST_WRITE_1] = i2c_result_get(i2c_ctx_ptr, &n3);
+            acks[TEST_WRITE_3] = i2c_result_get(i2c_ctx_ptr, &n3);
         }
     }
 
