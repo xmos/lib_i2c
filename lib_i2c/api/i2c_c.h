@@ -35,13 +35,18 @@ struct i2c_master_struct {
     port_t p_sda;
     size_t max_transaction_size; /* size of buf */
     unsigned kbits_per_second;
-    unsigned bit_time; /*= BIT_TIME(kbits_per_second);*/
+    uint32_t bit_time; /*= BIT_TIME(kbits_per_second);*/
+    uint32_t half_bit_time;
+    uint32_t quarter_bit_time;
+    uint32_t scl_low_time;
 
     uint8_t *buf; /* buffer provided by app */
     hwtimer_t tmr; /* not the shared one, but could be assigned the shared timer? */
     int state; /* init to IDLE */
-    /* not needed? */int waiting_for_clock_release;
-    /* not needed? */int timer_enabled;
+
+    int waiting_for_clock_release;
+    int timer_enabled;
+
     int optype;
     uint32_t fall_time;
     int data;
@@ -70,6 +75,9 @@ i2c_res_t i2c_master_read(
         uint8_t *buf,
         size_t n,
         int send_stop_bit);
+
+i2c_res_t i2c_master_stop_bit_send(
+        i2c_master_t *ctx);
 
 i2c_res_t i2c_result_get(
         i2c_master_t *ctx,

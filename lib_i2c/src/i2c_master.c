@@ -56,7 +56,7 @@ enum ack_t {
  *  reference to slip so that subsequent timings are correct.
  */
 __attribute__((always_inline))
-static void inline adjust_for_slip(
+static inline void adjust_for_slip(
         uint32_t now,
         uint32_t *event_time,
         uint32_t *fall_time)
@@ -74,7 +74,7 @@ static void inline adjust_for_slip(
 }
 
 __attribute__((always_inline))
-static int inline adjust_fall(
+static inline int adjust_fall(
         uint32_t event_time,
         uint32_t now,
         uint32_t fall_time)
@@ -86,12 +86,11 @@ static int inline adjust_fall(
     return fall_time;
 }
 
-DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_scl_isr, data)
-{
-    i2c_master_t *ctx = data;
-
+__attribute__((always_inline))
+static inline uint32_t scl_isr(i2c_master_t *ctx) {
     uint32_t now;
 
+    (void) port_in(ctx->p_scl);
     now = hwtimer_get_time(ctx->tmr);
 
     switch (ctx->state) {
@@ -99,27 +98,23 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_scl_isr, data)
     case WRITE_ACK_0:
     case READ_ACK_0:
     case STOP_BIT_0:
-    case REPEATED_START_WAIT_FOR_CLOCK_HIGH:
+    case REPEATED_START_HOLD_CLOCK_HIGH:
     case READ_0:
         ctx->fall_time += ctx->bit_time;
         ctx->event_time = ctx->fall_time;
-        adjust_for_slip(now, &ctx->event_time, &ctx->fall_time);
         break;
     case WRITE_ACK_1:
         ctx->fall_time += ctx->bit_time;
-        ctx->event_time = ctx->fall_time - ctx->bit_time / 4;
-        adjust_for_slip(now, &ctx->event_time, &ctx->fall_time);
+        ctx->event_time = ctx->fall_time - ctx->quarter_bit_time;
         ctx->state = WRITE_ACK_2;
         break;
     case STOP_BIT_2:
-        ctx->event_time = now + ctx->bit_time / 2;
-        adjust_for_slip(now, &ctx->event_time, NULL);
+        ctx->event_time = now + ctx->half_bit_time;
         ctx->state = STOP_BIT_3;
         break;
     case READ_1:
         ctx->fall_time += ctx->bit_time;
-        ctx->event_time = ctx->fall_time - ctx->bit_time / 4;
-        adjust_for_slip(now, &ctx->event_time, &ctx->fall_time);
+        ctx->event_time = ctx->fall_time - ctx->quarter_bit_time;
         ctx->state = READ_2;
         break;
     default:
@@ -128,30 +123,30 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_scl_isr, data)
     }
 
     ctx->waiting_for_clock_release = 0;
-    triggerable_disable_trigger(ctx->p_scl);
     port_clear_trigger_in(ctx->p_scl);
+    triggerable_disable_trigger(ctx->p_scl);
 
     ctx->timer_enabled = 1;
     hwtimer_set_trigger_time(ctx->tmr, ctx->event_time);
     triggerable_enable_trigger(ctx->tmr);
+
+    return now;
 }
 
-DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
-{
-    i2c_master_t *ctx = data;
-
+__attribute__((always_inline))
+static inline uint32_t timer_isr(i2c_master_t *ctx) {
     uint32_t now;
     uint32_t event_time;
 
     now = hwtimer_get_time(ctx->tmr);
-    //event_time = hwtimer_get_trigger_time(ctx->tmr);
     event_time = ctx->event_time;
 
     switch (ctx->state) {
     case REPEATED_START_CLOCK_LOW:
         // The operation is finished, but no stop bit is being written
         port_out(ctx->p_scl, 0);
-        event_time = now + ctx->bit_time / 2;
+        event_time = now + ctx->scl_low_time;
+        port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         ctx->state = REPEATED_START_WAIT_FOR_CLOCK_HIGH;
         break;
     case REPEATED_START_WAIT_FOR_CLOCK_HIGH:
@@ -161,14 +156,14 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         ctx->state = REPEATED_START_HOLD_CLOCK_HIGH;
         break;
     case REPEATED_START_HOLD_CLOCK_HIGH:
-        event_time = now + ctx->bit_time / 2;
+        event_time = now + ctx->half_bit_time;
         ctx->state = START_BIT_0;
         break;
     case START_BIT_0:
         port_out(ctx->p_sda, 0);
-      event_time = now + ctx->bit_time / 2;
-      ctx->state = START_BIT_1;
-      break;
+        event_time = now + ctx->half_bit_time;
+        ctx->state = START_BIT_1;
+        break;
     case START_BIT_1:
         ctx->fall_time = now;
         // Fallthrough to WRITE_0 state
@@ -179,8 +174,8 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         ctx->data <<= 1;
         ctx->bitnum++;
         ctx->state = WRITE_1;
-        event_time = ctx->fall_time + ctx->bit_time / 2 + ctx->bit_time / 32;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
+        event_time = now + ctx->scl_low_time;
+        port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         break;
     case WRITE_1:
         (void) port_in(ctx->p_scl);
@@ -196,8 +191,8 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         port_out(ctx->p_scl, 0);
         (void) port_in(ctx->p_sda);
         ctx->fall_time = adjust_fall(event_time, now, ctx->fall_time);
-        event_time = ctx->fall_time + ctx->bit_time / 2 + ctx->bit_time / 32;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
+        event_time = now + ctx->scl_low_time;
+        port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         ctx->state = WRITE_ACK_1;
         break;
     case WRITE_ACK_1:
@@ -209,7 +204,6 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         int ack;
         ack = port_in(ctx->p_sda);
         event_time = ctx->fall_time;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
         if (ack == ACKED && ctx->optype == WRITE) {
             ctx->bytes_sent++;
             const int all_data_sent = (ctx->bytes_sent == ctx->num_bytes);
@@ -273,8 +267,8 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         ctx->fall_time = adjust_fall(event_time, now, ctx->fall_time);
         ctx->bitnum++;
         ctx->state = READ_1;
-        event_time = ctx->fall_time + ctx->bit_time / 2 + ctx->bit_time / 32;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
+        event_time = now + ctx->scl_low_time;
+        port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         break;
     case READ_1:
         (void) port_in(ctx->p_scl);
@@ -287,7 +281,6 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         ctx->data <<= 1;
         ctx->data += bit & 1;
         event_time = ctx->fall_time;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
         if (ctx->bitnum == 8) {
             ctx->buf[ctx->bytes_sent] = ctx->data;
             ctx->bytes_sent++;
@@ -306,8 +299,8 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         }
         ctx->fall_time = adjust_fall(event_time, now, ctx->fall_time);
         ctx->state = READ_ACK_1;
-        event_time = ctx->fall_time + ctx->bit_time / 2 + ctx->bit_time / 32;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
+        event_time = now + ctx->scl_low_time;
+        port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         break;
     case READ_ACK_1:
         (void) port_in(ctx->p_scl);
@@ -327,15 +320,14 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         break;
     case STOP_BIT_0:
         port_out(ctx->p_scl, 0);
-        ctx->fall_time = adjust_fall(event_time, now, ctx->fall_time);
-        event_time = ctx->fall_time + ctx->bit_time / 4;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
+        ctx->fall_time = now;
+        event_time = ctx->fall_time + ctx->quarter_bit_time;
         ctx->state = STOP_BIT_1;
         break;
     case STOP_BIT_1:
         port_out(ctx->p_sda, 0);
-        event_time = ctx->fall_time + ctx->bit_time / 2;
-        adjust_for_slip(now, &event_time, &ctx->fall_time);
+        event_time = ctx->fall_time + ctx->scl_low_time;
+        port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         ctx->state = STOP_BIT_2;
         break;
     case STOP_BIT_2:
@@ -345,7 +337,7 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         break;
     case STOP_BIT_3:
         (void) port_in(ctx->p_sda);
-        event_time = now + ctx->bit_time / 4;
+        event_time = now + ctx->quarter_bit_time;
         ctx->state = STOP_BIT_4;
 
         // Know that the next transaction can start from the stopped state
@@ -368,17 +360,48 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_timer_isr, data)
         hwtimer_change_trigger_time(ctx->tmr, event_time);
         ctx->event_time = event_time;
     } else {
+        hwtimer_clear_trigger_time(ctx->tmr);
         triggerable_disable_trigger(ctx->tmr);
+
+        if (ctx->waiting_for_clock_release) {
+            port_set_trigger_in_equal(ctx->p_scl, 1);
+            triggerable_enable_trigger(ctx->p_scl);
+        } else {
+            if (ctx->state == IDLE) {
+                if (ctx->operation_complete != NULL) {
+                    ctx->operation_complete(ctx);
+                }
+            }
+        }
     }
 
-    if (ctx->waiting_for_clock_release) {
-        port_set_trigger_in_equal(ctx->p_scl, 1);
-        triggerable_enable_trigger(ctx->p_scl);
-    }
+    return now;
+}
 
-    if (ctx->state == IDLE) {
-        if (ctx->operation_complete != NULL) {
-            ctx->operation_complete(ctx);
+DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_isr, data)
+{
+    i2c_master_t *ctx = data;
+    uint32_t now;
+
+    while (ctx->waiting_for_clock_release || ctx->timer_enabled) {
+        if (ctx->waiting_for_clock_release) {
+            now = scl_isr(ctx);
+        } else if (ctx->timer_enabled) {
+            now = timer_isr(ctx);
+        }
+
+        if (ctx->timer_enabled) {
+            adjust_for_slip(now, &ctx->event_time, &ctx->fall_time);
+            if (ctx->event_time - now >= 200) {
+                break;
+            }
+        } else {
+//            if (port_peek(ctx->p_scl) == 0) {
+//                /*
+//                 * If SCL isn't high yet then exit the ISR and wait for an interrupt.
+//                 */
+//                break;
+//            }
         }
     }
 }
@@ -449,6 +472,22 @@ i2c_res_t i2c_master_read(
     }
 }
 
+i2c_res_t i2c_master_stop_bit_send(
+        i2c_master_t *ctx)
+{
+    if (ctx->state == IDLE) {
+        ctx->state = STOP_BIT_0;
+        ctx->timer_enabled = 1;
+        ctx->event_time = hwtimer_get_time(ctx->tmr);
+        hwtimer_set_trigger_time(ctx->tmr, ctx->event_time);
+        triggerable_enable_trigger(ctx->tmr);
+
+        return I2C_STARTED;
+    } else {
+        return I2C_NOT_STARTED;
+    }
+}
+
 i2c_res_t i2c_result_get(
         i2c_master_t *ctx,
         size_t *num_bytes_transferred)
@@ -487,10 +526,13 @@ void i2c_master_init(
     ctx->max_transaction_size = max_transaction_size;
     ctx->kbits_per_second = kbits_per_second;
     ctx->bit_time = BIT_TIME(kbits_per_second);
+    ctx->half_bit_time = ctx->bit_time / 2;
+    ctx->quarter_bit_time = ctx->bit_time / 4;
+    ctx->scl_low_time = ctx->half_bit_time + ctx->bit_time / 32;
 
     ctx->stopped = 1;
     ctx->res = I2C_ACK;
 
-    triggerable_setup_interrupt_callback(ctx->tmr,   ctx, INTERRUPT_CALLBACK(i2c_timer_isr));
-    triggerable_setup_interrupt_callback(ctx->p_scl, ctx, INTERRUPT_CALLBACK(i2c_scl_isr));
+    triggerable_setup_interrupt_callback(ctx->tmr,   ctx, INTERRUPT_CALLBACK(i2c_isr));
+    triggerable_setup_interrupt_callback(ctx->p_scl, ctx, INTERRUPT_CALLBACK(i2c_isr));
 }
