@@ -26,4 +26,4 @@ def do_test():
                               tester = tester)
 
 def runtest():
-  do_test()
+    do_test()

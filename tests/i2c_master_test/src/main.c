@@ -1,0 +1,167 @@
+// Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
+#include <xs1.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <xcore/parallel.h>
+#include <xcore/port.h>
+#include <xcore/hwtimer.h>
+#include <xcore/triggerable.h>
+#include <xcore/interrupt.h>
+#include <xcore/interrupt_wrappers.h>
+#include "i2c_c.h"
+
+#define SETSR(c) asm volatile("setsr %0" : : "n"(c));
+
+port_t p_scl = XS1_PORT_1A;
+port_t p_sda = XS1_PORT_1B;
+
+// Test the following pairs of operations:
+// write -> read
+// read  -> read
+// read  -> write
+// write -> write
+enum {
+    TEST_WRITE_1 = 0,
+    TEST_READ_1,
+    TEST_READ_2,
+    TEST_WRITE_2,
+    TEST_WRITE_3,
+    NUM_TESTS
+};
+
+typedef struct {
+    volatile int done;
+} i2c_op_t;
+
+I2C_CALLBACK_ATTR
+static void i2c_operation_complete(i2c_master_t *ctx)
+{
+    i2c_op_t *op = ctx->app_data;
+    op->done = 1;
+}
+
+static const char* ack_str(i2c_res_t ack)
+{
+    return (ack == I2C_ACK) ? "ack" : "nack";
+}
+
+#define MAX_DATA_BYTES 3
+
+DECLARE_JOB(test, (void));
+
+DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, test) {
+    // Have separate data arrays so that everything can be setup before starting
+    uint8_t data_write_1[MAX_DATA_BYTES] = {0};
+    uint8_t data_write_2[MAX_DATA_BYTES] = {0};
+    uint8_t data_write_3[MAX_DATA_BYTES] = {0};
+    uint8_t data_read_1[MAX_DATA_BYTES] = {0};
+    uint8_t data_read_2[MAX_DATA_BYTES] = {0};
+    int acks[NUM_TESTS] = {0};
+    ssize_t n1 = -1;
+    ssize_t n2 = -1;
+    ssize_t n3 = -1;
+
+    const int do_stop = STOP ? 1 : 0;
+
+    i2c_master_t i2c_ctx;
+    i2c_master_t* i2c_ctx_ptr = &i2c_ctx;
+    i2c_op_t op = {
+            .done = 0,
+    };
+
+    i2c_res_t res;
+
+    i2c_master_init(
+            i2c_ctx_ptr,
+            p_scl,
+            p_sda,
+            SPEED, /* kbps */
+            MAX_DATA_BYTES,
+            &op,
+            i2c_operation_complete);
+
+    SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
+
+    interrupt_unmask_all();
+
+    // Setup all data to be written
+    data_write_1[0] = 0x90; data_write_1[1] = 0xfe;
+    data_write_2[0] = 0xff; data_write_2[1] = 0x00; data_write_2[2] = 0xaa;
+    data_write_3[0] = 0xee;
+
+    // Execute all bus operations
+    if (ENABLE_TX) {
+        res = i2c_master_write(i2c_ctx_ptr, 0x3c, data_write_1, 2, do_stop);
+        if (res == I2C_STARTED) {
+            while (!op.done);
+            op.done = 0;
+            acks[TEST_WRITE_1] = i2c_result_get(i2c_ctx_ptr, &n1);
+        }
+    }
+    if (ENABLE_RX) {
+        res = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_1, 2, do_stop);
+        if (res == I2C_STARTED) {
+            while (!op.done);
+            op.done = 0;
+            acks[TEST_READ_1] = i2c_result_get(i2c_ctx_ptr, NULL);
+        }
+        res = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_2, 1, do_stop);
+        if (res == I2C_STARTED) {
+            while (!op.done);
+            op.done = 0;
+            acks[TEST_READ_2] = i2c_result_get(i2c_ctx_ptr, NULL);
+        }
+    }
+    if (ENABLE_TX) {
+        res = i2c_master_write(i2c_ctx_ptr, 0x7b, data_write_2, 3, do_stop);
+        if (res == I2C_STARTED) {
+            while (!op.done);
+            op.done = 0;
+            acks[TEST_WRITE_2] = i2c_result_get(i2c_ctx_ptr, &n2);
+        }
+        res = i2c_master_write(i2c_ctx_ptr, 0x31, data_write_3, 1, do_stop);
+        if (res == I2C_STARTED) {
+            while (!op.done);
+            op.done = 0;
+            acks[TEST_WRITE_3] = i2c_result_get(i2c_ctx_ptr, &n3);
+        }
+    }
+
+    // Print out results after all the data transactions have finished
+    if (ENABLE_TX) {
+      printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_1]), n1);
+      printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_2]), n2);
+      printf("xCORE got %s, %d\n", ack_str(acks[TEST_WRITE_3]), n3);
+    }
+
+    if (ENABLE_RX) {
+      printf("xCORE got %s\n", ack_str(acks[TEST_READ_1]));
+      printf("xCORE received: 0x%X, 0x%X\n", data_read_1[0], data_read_1[1]);
+      printf("xCORE got %s\n", ack_str(acks[TEST_READ_2]));
+      printf("xCORE received: 0x%X\n", data_read_2[0]);
+    }
+
+    exit(0);
+}
+
+DECLARE_JOB(burn, (void));
+
+void burn(void) {
+    SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
+    for(;;);
+}
+
+int main(void) {
+    PAR_JOBS (
+        PJOB(INTERRUPT_PERMITTED(test),()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ())
+    );
+
+    return 0;
+}
