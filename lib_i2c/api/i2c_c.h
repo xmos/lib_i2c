@@ -93,4 +93,104 @@ void i2c_master_async_init(
         void *app_data,
         i2c_master_async_operation_complete_t op_complete);
 
+
+/** I2C Slave Response
+*
+*  This type is used to describe the I2C slave response.
+*/
+typedef enum i2c_slave_ack_t {
+    I2C_SLAVE_ACK,  ///<< ACK to accept request
+    I2C_SLAVE_NACK, ///<< NACK to ignore request
+} i2c_slave_ack_t;
+
+/** Master has requested a read.
+ *
+ *  This callback function is called by the component
+ *  if the bus master requests a read from this slave device.
+ *
+ *  At this point the slave can choose to accept the request (and
+ *  drive an ACK signal back to the master) or not (and drive a NACK
+ *  signal).
+ *
+ *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
+ *            ``I2C_SLAVE_NACK``.
+ */
+typedef i2c_slave_ack_t (*ack_read_request_t)(void *app_data);
+
+/** Master has requested a write.
+ *
+ *  This callback function is called by the component
+ *  if the bus master requests a write from this slave device.
+ *
+ *  At this point the slave can choose to accept the request (and
+ *  drive an ACK signal back to the master) or not (and drive a NACK
+ *  signal).
+ *
+ *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
+ *            ``I2C_SLAVE_NACK``.
+ */
+typedef i2c_slave_ack_t (*ack_write_request_t)(void *app_data);
+
+/** Master requires data.
+ *
+ *  This callback function will be called when the I2C master requires data
+ *  from the slave.
+ *
+ *  \return   the data to pass to the master.
+ */
+typedef uint8_t (*master_requires_data_t)(void *app_data);
+
+/** Master has sent some data.
+ *
+ *  This callback function will be called when the I2C master has transferred
+ *  a byte of data to the slave.
+ */
+typedef i2c_slave_ack_t (*master_sent_data_t)(void *app_data, uint8_t data);
+
+/** Stop bit.
+*
+*  This callback function will be called by the component when a stop bit
+*  is sent by the master.
+*/
+typedef void (*stop_bit_t)(void *app_data);
+
+/** Shutdown the I2C component.
+ *
+ *  This function will cause the I2C slave task to shutdown and return.
+ */
+typedef int (*shutdown_t)(void *app_data);
+
+/**
+ * Callback group representing callback events that can occur during the
+ * operation of the sI2C lave task. Must be initialized by the application
+ * prior to passing it to one of the I2C tasks.
+ */
+typedef struct {
+    I2C_CALLBACK_ATTR ack_read_request_t ack_read_request;
+    I2C_CALLBACK_ATTR ack_write_request_t ack_write_request;
+    I2C_CALLBACK_ATTR master_requires_data_t master_requires_data;
+    I2C_CALLBACK_ATTR master_sent_data_t master_sent_data;
+    I2C_CALLBACK_ATTR stop_bit_t stop_bit;
+    I2C_CALLBACK_ATTR shutdown_t shutdown;
+    void *app_data;
+} i2c_callback_group_t;
+
+/** I2C slave task.
+ *
+ *  This function instantiates an i2c_slave component.
+ *
+ *  \param i2c_cbg     The I2C callback group pointing to the application's
+ *                     functions to use for initialization and getting and
+ *                     receiving frames. Also points to application specific
+ *                     data which will be shared between the callbacks.
+ *  \param  p_scl      the SCL port of the I2C bus
+ *  \param  p_sda      the SDA port of the I2C bus
+ *  \param device_addr the address of the slave device
+ *
+ */
+void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
+               port_t p_scl,
+               port_t p_sda,
+               uint8_t device_addr);
+
 #endif
