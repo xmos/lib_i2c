@@ -24,7 +24,7 @@ def do_test():
     tester = xmostest.ComparisonTester(open('reg_test.expect'),
                                        'lib_i2c', 'i2c_master_sim_tests',
                                        'reg_ops_test',
-                                       None,
+                                       {},
                                        regexp=True)
 
     xmostest.run_on_simulator(resources['xsim'], binary,

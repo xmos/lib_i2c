@@ -15,9 +15,10 @@ def do_test():
     sim_args = ['--weak-external-drive']
 
     tester = xmostest.ComparisonTester(open('repeated_start.expect'),
-                                     'lib_i2c', 'i2c_master_sim_tests',
-                                      'repeated_start', None,
-                                     regexp=True)
+                                      'lib_i2c', 'i2c_master_sim_tests',
+                                      'repeated_start',
+                                      {},
+                                      regexp=True)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],

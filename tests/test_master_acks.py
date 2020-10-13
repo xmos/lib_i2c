@@ -30,5 +30,5 @@ def do_master_test(stop):
                               tester = tester)
 
 def runtest():
-  for stop in ['stop', 'no_stop']:
-      do_master_test(stop)
+    for stop in ['stop', 'no_stop']:
+        do_master_test(stop)
