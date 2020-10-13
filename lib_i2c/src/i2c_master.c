@@ -295,7 +295,9 @@ i2c_res_t i2c_master_write(
         ctx->stopped = 0;
     }
 
-    *num_bytes_sent = j;
+    if (num_bytes_sent != NULL) {
+        *num_bytes_sent = j;
+    }
 
     result = (ack == 0) ? I2C_ACK : I2C_NACK;
 
