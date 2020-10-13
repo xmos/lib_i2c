@@ -104,7 +104,7 @@ static inline int high_pulse_sample(
 
     (void) port_in(p_sda);
     hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-    release_clock_and_wait(p_scl, fall_time, three_quarter_bit_time);
+    release_clock_and_wait(ctx, fall_time, three_quarter_bit_time);
     sample_value = port_in(p_sda);
 
     *fall_time += bit_time;
@@ -130,7 +130,7 @@ static inline void high_pulse(
     const uint32_t low_period_ticks = ctx->low_period_ticks;
 
     hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-    release_clock_and_wait(p_scl, fall_time, three_quarter_bit_time);
+    release_clock_and_wait(ctx, fall_time, three_quarter_bit_time);
 
     *fall_time += bit_time;
     hwtimer_wait_until(tmr, *fall_time);
@@ -154,7 +154,7 @@ static void start_bit(
 
     if (!stopped) {
         hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-        release_clock_and_wait(p_scl, fall_time, bus_off_ticks);
+        release_clock_and_wait(ctx, fall_time, bus_off_ticks);
     }
 
     // Drive SDA low
@@ -174,7 +174,6 @@ static void stop_bit(
         uint32_t *fall_time)
 {
     const port_t p_sda = ctx->p_sda;
-    const port_t p_scl = ctx->p_scl;
     const hwtimer_t tmr = ctx->tmr;
     const uint32_t bit_time = ctx->bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
@@ -182,7 +181,7 @@ static void stop_bit(
 
     port_out(p_sda, 0);
     hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-    release_clock_and_wait(p_scl, fall_time, bit_time);
+    release_clock_and_wait(ctx, fall_time, bit_time);
 
     (void) port_in(p_sda);
     hwtimer_delay(tmr, bus_off_ticks);
@@ -224,7 +223,7 @@ i2c_res_t i2c_master_read(
     const uint32_t low_period_ticks = ctx->low_period_ticks;
     uint32_t fall_time = ctx->last_fall_time;
 
-    start_bit(ctx, fall_time, ctx->stopped);
+    start_bit(ctx, &fall_time, ctx->stopped);
 
     int ack = tx8(ctx, (device << 1) | 1, &fall_time);
     result = (ack == 0) ? I2C_ACK : I2C_NACK;
@@ -232,7 +231,6 @@ i2c_res_t i2c_master_read(
     if (result == I2C_ACK) {
         for (int j = 0; j < m; j++) {
             unsigned char data = 0;
-            timer tmr;
             for (int i = 8; i != 0; i--) {
                 int temp = high_pulse_sample(ctx, &fall_time);
                 data = (data << 1) | temp;
