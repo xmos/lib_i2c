@@ -2,12 +2,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <xcore/_support/xcore_meta_macro.h>
-#include <xcore/interrupt_wrappers.h>
 #include <xcore/triggerable.h>
 #include <xcore/assert.h>
 #include "xclib.h"
-#include "debug_print.h"
 #include "i2c_c.h"
 
 enum i2c_slave_state {
@@ -40,7 +37,6 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
     int rw = 0;
     int stop_bit_check = 0;
     int ignore_stop_bit = 1;
-    int shutdown_req = 0;
     int data;
     int val;
     int bit;
@@ -64,13 +60,11 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
         }
 
         if (state == WAITING_FOR_START_OR_STOP || stop_bit_check) {
-            // debug_printf("\tsda event enabled\n");
             port_set_trigger_in_equal(p_sda, sda_val);
             triggerable_enable_trigger(p_sda);
         }
 
         if (state != WAITING_FOR_START_OR_STOP) {
-            // debug_printf("\tscl event enabled\n");
             port_set_trigger_in_equal(p_scl, scl_val);
             triggerable_enable_trigger(p_scl);
         }
@@ -83,6 +77,9 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
                 port_clear_trigger_in(p_scl);
                 port_clear_trigger_in(p_sda);
                 switch (state) {
+                default:
+                    xassert(0); /* Unhandled state*/
+                    break;
                 case READING_ADDR:
                     /* Wait for clock to go back to high */
                     if (scl_val == 0) {
@@ -97,7 +94,6 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
                         scl_val = 0;
                         break;
                     }
-                    // debug_printf("got addr : %d\n",data);
 
                     // We have gathered the whole device address sent by the master
                     if (data != device_addr) {

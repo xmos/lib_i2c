@@ -29,17 +29,6 @@ enum {
     NUM_TESTS
 };
 
-typedef struct {
-    volatile int done;
-} i2c_op_t;
-
-I2C_CALLBACK_ATTR
-static void i2c_operation_complete(i2c_master_t *ctx)
-{
-    i2c_op_t *op = ctx->app_data;
-    op->done = 1;
-}
-
 static const char* ack_str(i2c_res_t ack)
 {
     return (ack == I2C_ACK) ? "ack" : "nack";
@@ -49,7 +38,7 @@ static const char* ack_str(i2c_res_t ack)
 
 DECLARE_JOB(test, (void));
 
-DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, test) {
+void test() {
     // Have separate data arrays so that everything can be setup before starting
     uint8_t data_write_1[MAX_DATA_BYTES] = {0};
     uint8_t data_write_2[MAX_DATA_BYTES] = {0};
@@ -65,9 +54,6 @@ DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, test) {
 
     i2c_master_t i2c_ctx;
     i2c_master_t* i2c_ctx_ptr = &i2c_ctx;
-    i2c_op_t op = {
-            .done = 0,
-    };
 
     i2c_res_t res;
 
@@ -75,14 +61,10 @@ DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, test) {
             i2c_ctx_ptr,
             p_scl,
             p_sda,
-            SPEED, /* kbps */
-            MAX_DATA_BYTES,
-            &op,
-            i2c_operation_complete);
+            NULL,
+            SPEED); /* kbps */
 
     SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
-
-    interrupt_unmask_all();
 
     // Setup all data to be written
     data_write_1[0] = 0x90; data_write_1[1] = 0xfe;
@@ -91,40 +73,15 @@ DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, test) {
 
     // Execute all bus operations
     if (ENABLE_TX) {
-        res = i2c_master_write(i2c_ctx_ptr, 0x3c, data_write_1, 2, do_stop);
-        if (res == I2C_STARTED) {
-            while (!op.done);
-            op.done = 0;
-            acks[TEST_WRITE_1] = i2c_result_get(i2c_ctx_ptr, &n1);
-        }
+        acks[TEST_WRITE_1] = i2c_master_write(i2c_ctx_ptr, 0x3c, data_write_1, 2, NULL, do_stop);
     }
     if (ENABLE_RX) {
-        res = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_1, 2, do_stop);
-        if (res == I2C_STARTED) {
-            while (!op.done);
-            op.done = 0;
-            acks[TEST_READ_1] = i2c_result_get(i2c_ctx_ptr, NULL);
-        }
-        res = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_2, 1, do_stop);
-        if (res == I2C_STARTED) {
-            while (!op.done);
-            op.done = 0;
-            acks[TEST_READ_2] = i2c_result_get(i2c_ctx_ptr, NULL);
-        }
+        acks[TEST_READ_1] = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_1, 2, do_stop);
+        acks[TEST_READ_2] = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_2, 1, do_stop);
     }
     if (ENABLE_TX) {
-        res = i2c_master_write(i2c_ctx_ptr, 0x7b, data_write_2, 3, do_stop);
-        if (res == I2C_STARTED) {
-            while (!op.done);
-            op.done = 0;
-            acks[TEST_WRITE_2] = i2c_result_get(i2c_ctx_ptr, &n2);
-        }
-        res = i2c_master_write(i2c_ctx_ptr, 0x31, data_write_3, 1, do_stop);
-        if (res == I2C_STARTED) {
-            while (!op.done);
-            op.done = 0;
-            acks[TEST_WRITE_3] = i2c_result_get(i2c_ctx_ptr, &n3);
-        }
+        acks[TEST_WRITE_2] = i2c_master_write(i2c_ctx_ptr, 0x7b, data_write_2, 3, NULL, do_stop);
+        acks[TEST_WRITE_3] = i2c_master_write(i2c_ctx_ptr, 0x31, data_write_3, 1, NULL, do_stop);
     }
 
     // Print out results after all the data transactions have finished
@@ -153,7 +110,7 @@ void burn(void) {
 
 int main(void) {
     PAR_JOBS (
-        PJOB(INTERRUPT_PERMITTED(test),()),
+        PJOB(test, ()),
         PJOB(burn, ()),
         PJOB(burn, ()),
         PJOB(burn, ()),
