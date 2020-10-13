@@ -27,11 +27,11 @@ typedef enum {
 
 #define I2C_CALLBACK_ATTR __attribute__((fptrgroup("i2c_callback")))
 
-typedef struct i2c_master_struct i2c_master_t;
+typedef struct i2c_master_async_struct i2c_master_async_t;
 
-typedef void (*i2c_operation_complete_t)(i2c_master_t *ctx);
+typedef void (*i2c_master_async_operation_complete_t)(i2c_master_async_t *ctx);
 
-struct i2c_master_struct {
+struct i2c_master_async_struct {
     port_t p_scl;
     port_t p_sda;
     size_t max_transaction_size; /* size of buf */
@@ -59,41 +59,38 @@ struct i2c_master_struct {
     int stopped; /* init to 1 */
     i2c_res_t res; /* init to I2C_ACK? */
 
-    I2C_CALLBACK_ATTR i2c_operation_complete_t operation_complete;
+    I2C_CALLBACK_ATTR i2c_master_async_operation_complete_t operation_complete;
     void *app_data;
 };
 
-i2c_res_t i2c_master_write(
-        i2c_master_t *ctx,
+i2c_res_t i2c_master_async_write(
+        i2c_master_async_t *ctx,
         uint8_t device_addr,
         uint8_t *buf,
         size_t n,
         int send_stop_bit);
 
-i2c_res_t i2c_master_read(
-        i2c_master_t *ctx,
+i2c_res_t i2c_master_async_read(
+        i2c_master_async_t *ctx,
         uint8_t device_addr,
         uint8_t *buf,
         size_t n,
         int send_stop_bit);
 
-i2c_res_t i2c_master_stop_bit_send(
-        i2c_master_t *ctx);
+i2c_res_t i2c_master_async_stop_bit_send(
+        i2c_master_async_t *ctx);
 
-i2c_res_t i2c_result_get(
-        i2c_master_t *ctx,
+i2c_res_t i2c_master_async_result_get(
+        i2c_master_async_t *ctx,
         ssize_t *num_bytes_transferred);
 
-i2c_res_t i2c_master_stop_bit_send(
-        i2c_master_t *ctx);
-
-void i2c_master_init(
-        i2c_master_t *ctx,
+void i2c_master_async_init(
+        i2c_master_async_t *ctx,
         port_t p_scl,
         port_t p_sda,
         const unsigned kbits_per_second,
         const size_t max_transaction_size,
         void *app_data,
-        i2c_operation_complete_t op_complete);
+        i2c_master_async_operation_complete_t op_complete);
 
 #endif

@@ -87,7 +87,7 @@ static inline int adjust_fall(
 }
 
 __attribute__((always_inline))
-static inline uint32_t scl_isr(i2c_master_t *ctx) {
+static inline uint32_t scl_isr(i2c_master_async_t *ctx) {
     uint32_t now;
 
     (void) port_in(ctx->p_scl);
@@ -134,7 +134,7 @@ static inline uint32_t scl_isr(i2c_master_t *ctx) {
 }
 
 __attribute__((always_inline))
-static inline uint32_t timer_isr(i2c_master_t *ctx) {
+static inline uint32_t timer_isr(i2c_master_async_t *ctx) {
     uint32_t now;
     uint32_t event_time;
 
@@ -380,7 +380,7 @@ static inline uint32_t timer_isr(i2c_master_t *ctx) {
 
 DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_isr, data)
 {
-    i2c_master_t *ctx = data;
+    i2c_master_async_t *ctx = data;
     uint32_t now;
 
     while (ctx->waiting_for_clock_release || ctx->timer_enabled) {
@@ -406,8 +406,8 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_isr, data)
     }
 }
 
-static void i2c_start_transaction(
-        i2c_master_t *ctx,
+static void i2c_master_async_start_transaction(
+        i2c_master_async_t *ctx,
         uint8_t device_addr,
         uint8_t *buf,
         size_t n,
@@ -434,8 +434,8 @@ static void i2c_start_transaction(
     triggerable_enable_trigger(ctx->tmr);
 }
 
-i2c_res_t i2c_master_write(
-        i2c_master_t *ctx,
+i2c_res_t i2c_master_async_write(
+        i2c_master_async_t *ctx,
         uint8_t device_addr,
         uint8_t *buf,
         size_t n,
@@ -445,7 +445,7 @@ i2c_res_t i2c_master_write(
         ctx->data = 0;
         ctx->optype = WRITE;
 
-        i2c_start_transaction(ctx, device_addr, buf, n, send_stop_bit);
+        i2c_master_async_start_transaction(ctx, device_addr, buf, n, send_stop_bit);
 
         return I2C_STARTED;
     } else {
@@ -453,8 +453,8 @@ i2c_res_t i2c_master_write(
     }
 }
 
-i2c_res_t i2c_master_read(
-        i2c_master_t *ctx,
+i2c_res_t i2c_master_async_read(
+        i2c_master_async_t *ctx,
         uint8_t device_addr,
         uint8_t *buf,
         size_t n,
@@ -464,7 +464,7 @@ i2c_res_t i2c_master_read(
         ctx->data = 1;
         ctx->optype = READ;
 
-        i2c_start_transaction(ctx, device_addr, buf, n, send_stop_bit);
+        i2c_master_async_start_transaction(ctx, device_addr, buf, n, send_stop_bit);
 
         return I2C_STARTED;
     } else {
@@ -472,8 +472,8 @@ i2c_res_t i2c_master_read(
     }
 }
 
-i2c_res_t i2c_master_stop_bit_send(
-        i2c_master_t *ctx)
+i2c_res_t i2c_master_async_stop_bit_send(
+        i2c_master_async_t *ctx)
 {
     if (ctx->state == IDLE) {
         ctx->state = STOP_BIT_0;
@@ -488,9 +488,9 @@ i2c_res_t i2c_master_stop_bit_send(
     }
 }
 
-i2c_res_t i2c_result_get(
-        i2c_master_t *ctx,
-        size_t *num_bytes_transferred)
+i2c_res_t i2c_master_async_result_get(
+        i2c_master_async_t *ctx,
+        ssize_t *num_bytes_transferred)
 {
     if (num_bytes_transferred != NULL) {
         *num_bytes_transferred = ctx->bytes_sent;
@@ -501,16 +501,16 @@ i2c_res_t i2c_result_get(
 
 #define BIT_TIME(KBITS_PER_SEC) ((XS1_TIMER_MHZ * 1000) / KBITS_PER_SEC)
 
-void i2c_master_init(
-        i2c_master_t *ctx,
+void i2c_master_async_init(
+        i2c_master_async_t *ctx,
         port_t p_scl,
         port_t p_sda,
         const unsigned kbits_per_second,
         const size_t max_transaction_size,
         void *app_data,
-        i2c_operation_complete_t op_complete)
+        i2c_master_async_operation_complete_t op_complete)
 {
-    memset(ctx, 0, sizeof(i2c_master_t));
+    memset(ctx, 0, sizeof(i2c_master_async_t));
 
     port_enable(p_scl);
     port_enable(p_sda);
