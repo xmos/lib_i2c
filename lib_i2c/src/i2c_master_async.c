@@ -506,7 +506,6 @@ void i2c_master_async_init(
         port_t p_scl,
         port_t p_sda,
         const unsigned kbits_per_second,
-        const size_t max_transaction_size,
         void *app_data,
         i2c_master_async_operation_complete_t op_complete)
 {
@@ -523,7 +522,6 @@ void i2c_master_async_init(
 
     ctx->app_data = app_data;
     ctx->operation_complete = op_complete;
-    ctx->max_transaction_size = max_transaction_size;
     ctx->kbits_per_second = kbits_per_second;
     ctx->bit_time = BIT_TIME(kbits_per_second);
     ctx->half_bit_time = ctx->bit_time / 2;

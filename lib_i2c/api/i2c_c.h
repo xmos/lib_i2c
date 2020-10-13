@@ -25,6 +25,53 @@ typedef enum {
   I2C_REGOP_NOT_STARTED  ///< the operation could not start
 } i2c_regop_res_t;
 
+
+
+typedef struct i2c_master_struct i2c_master_t;
+
+struct i2c_master_struct {
+    port_t p_scl;
+    port_t p_sda;
+    hwtimer_t tmr;
+    unsigned kbits_per_second;
+
+    uint32_t bit_time;
+    uint32_t quarter_bit_time;
+    uint32_t half_bit_time;
+    uint32_t three_quarter_bit_time;
+    uint32_t low_period_ticks;
+    uint32_t bus_off_ticks;
+
+    uint32_t last_fall_time;
+    int stopped;
+};
+
+i2c_res_t i2c_master_write(
+        i2c_master_t *ctx,
+        uint8_t device,
+        uint8_t buf[],
+        size_t n,
+        size_t *num_bytes_sent,
+        int send_stop_bit);
+
+i2c_res_t i2c_master_read(
+        i2c_master_t *ctx,
+        uint8_t device,
+        uint8_t buf[],
+        size_t m,
+        int send_stop_bit);
+
+void i2c_master_stop_bit_send(
+        i2c_master_t *ctx);
+
+void i2c_master_init(
+        i2c_master_t *ctx,
+        port_t p_scl,
+        port_t p_sda,
+        hwtimer_t tmr,
+        const unsigned kbits_per_second);
+
+
 #define I2C_CALLBACK_ATTR __attribute__((fptrgroup("i2c_callback")))
 
 typedef struct i2c_master_async_struct i2c_master_async_t;
@@ -34,7 +81,6 @@ typedef void (*i2c_master_async_operation_complete_t)(i2c_master_async_t *ctx);
 struct i2c_master_async_struct {
     port_t p_scl;
     port_t p_sda;
-    size_t max_transaction_size; /* size of buf */
     unsigned kbits_per_second;
     uint32_t bit_time; /*= BIT_TIME(kbits_per_second);*/
     uint32_t half_bit_time;
@@ -89,7 +135,6 @@ void i2c_master_async_init(
         port_t p_scl,
         port_t p_sda,
         const unsigned kbits_per_second,
-        const size_t max_transaction_size,
         void *app_data,
         i2c_master_async_operation_complete_t op_complete);
 
