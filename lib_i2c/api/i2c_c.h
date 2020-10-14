@@ -282,4 +282,6 @@ i2c_res_t i2c_master_sp_write(
 void i2c_master_sp_stop_bit_send(
         i2c_master_sp_ctx_t *ctx);
 
+#include "i2c_c_reg.h"
+
 #endif
