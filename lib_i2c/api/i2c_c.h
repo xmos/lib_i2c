@@ -238,4 +238,48 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
                port_t p_sda,
                uint8_t device_addr);
 
+
+typedef struct i2c_master_sp_ctx {
+    port_t p_i2c;
+    uint32_t scl_bit_position;
+    uint32_t sda_bit_position;
+    uint32_t other_bits_mask;
+
+    uint32_t scl_high;
+    uint32_t sda_high;
+
+    hwtimer_t tmr;
+    uint32_t bit_time;
+    uint32_t low_period_ticks;
+    uint32_t bus_off_ticks;
+
+    uint32_t last_fall_time;
+    uint32_t stopped;
+} i2c_master_sp_ctx_t;
+
+void i2c_master_sp_init(i2c_master_sp_ctx_t* ctx,
+        port_t p_i2c,
+        hwtimer_t tmr,
+        const unsigned kbits_per_second,
+        uint32_t scl_bit_position,
+        uint32_t sda_bit_position,
+        uint32_t other_bits_mask);
+
+i2c_res_t i2c_master_sp_read(i2c_master_sp_ctx_t* ctx,
+        uint8_t device,
+        uint8_t buf[],
+        size_t m,
+        int send_stop_bit);
+
+i2c_res_t i2c_master_sp_write(
+        i2c_master_sp_ctx_t *ctx,
+        uint8_t device,
+        uint8_t buf[],
+        size_t n,
+        size_t *num_bytes_sent,
+        int send_stop_bit);
+
+void i2c_master_sp_stop_bit_send(
+        i2c_master_sp_ctx_t *ctx);
+
 #endif

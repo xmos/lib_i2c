@@ -29,6 +29,7 @@ def do_sp_test(stop, speed):
         tester.set_min_testlevel('nightly')
 
     sim_args = ['--weak-external-drive']
+    # sim_args = ['--weak-external-drive', '--vcd-tracing', '-o ./i2c_sp_test/trace.vcd -tile tile[0] -ports-detailed']
 
     xmostest.run_on_simulator(resources['xsim'], binary,
                               simthreads = [checker],
@@ -39,5 +40,5 @@ def do_sp_test(stop, speed):
 
 def runtest():
     for stop in ['stop', 'no_stop']:
-      for speed in [400, 100, 10]:
-          do_sp_test(stop, speed)
+        for speed in [400, 100, 10]:
+            do_sp_test(stop, speed)
