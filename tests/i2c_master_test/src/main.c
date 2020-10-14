@@ -71,15 +71,15 @@ void test() {
 
     // Execute all bus operations
     if (ENABLE_TX) {
-        acks[TEST_WRITE_1] = i2c_master_write(i2c_ctx_ptr, 0x3c, data_write_1, 2, NULL, do_stop);
+        acks[TEST_WRITE_1] = i2c_master_write(i2c_ctx_ptr, 0x3c, data_write_1, 2, &n1, do_stop);
     }
     if (ENABLE_RX) {
         acks[TEST_READ_1] = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_1, 2, do_stop);
         acks[TEST_READ_2] = i2c_master_read(i2c_ctx_ptr, 0x22, data_read_2, 1, do_stop);
     }
     if (ENABLE_TX) {
-        acks[TEST_WRITE_2] = i2c_master_write(i2c_ctx_ptr, 0x7b, data_write_2, 3, NULL, do_stop);
-        acks[TEST_WRITE_3] = i2c_master_write(i2c_ctx_ptr, 0x31, data_write_3, 1, NULL, do_stop);
+        acks[TEST_WRITE_2] = i2c_master_write(i2c_ctx_ptr, 0x7b, data_write_2, 3, &n2, do_stop);
+        acks[TEST_WRITE_3] = i2c_master_write(i2c_ctx_ptr, 0x31, data_write_3, 1, &n3, do_stop);
     }
 
     // Print out results after all the data transactions have finished
