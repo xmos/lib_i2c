@@ -16,44 +16,26 @@
 port_t p_scl = XS1_PORT_1A;
 port_t p_sda = XS1_PORT_1B;
 
-typedef struct {
-    volatile int done;
-} i2c_op_t;
-
-I2C_CALLBACK_ATTR
-static void i2c_operation_complete(i2c_master_t *ctx)
-{
-    i2c_op_t *op = ctx->app_data;
-    op->done = 1;
-}
-
 DECLARE_JOB(test, (void));
 
-DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, test) {
-    i2c_master_t i2c_ctx;
-    i2c_master_t* i2c_ctx_ptr = &i2c_ctx;
-    i2c_op_t op = {
-            .done = 0,
-    };
-
+void test() {
     uint8_t data[1] = {0x99};
     size_t numbytes;
+
+    i2c_master_t i2c_ctx;
+    i2c_master_t* i2c_ctx_ptr = &i2c_ctx;
 
     i2c_master_init(
             i2c_ctx_ptr,
             p_scl,
             p_sda,
-            400, /* kbps */
-            1,
-            &op,
-            i2c_operation_complete);
+            NULL,
+            400); /* kbps */
 
     SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
 
-    interrupt_unmask_all();
-
-    i2c_master_write(i2c_ctx_ptr, 0x33, data, 1, 0);
-    i2c_master_write(i2c_ctx_ptr, 0x33, data, 1, 1);
+    i2c_master_write(i2c_ctx_ptr, 0x33, data, 1, NULL, 0);
+    i2c_master_write(i2c_ctx_ptr, 0x33, data, 1, NULL, 1);
 
     exit(0);
 }
@@ -66,6 +48,15 @@ void burn(void) {
 }
 
 int main(void) {
-    INTERRUPT_PERMITTED(test)();
+    PAR_JOBS (
+        PJOB(test, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ()),
+        PJOB(burn, ())
+    );
     return 0;
 }
