@@ -6,14 +6,54 @@
 #include <xcore/port.h>
 #include <xcore/hwtimer.h>
 #include <xcore/triggerable.h>
-#include <xcore/interrupt.h>
-#include <xcore/interrupt_wrappers.h>
 #include "i2c_c.h"
 
 #define SETSR(c) asm volatile("setsr %0" : : "n"(c));
 
+/* Test 1b port SCL 1b port SDA */
+#if (PORT_SETUP == 0)
 port_t p_scl = XS1_PORT_1A;
 port_t p_sda = XS1_PORT_1B;
+
+uint32_t p_scl_bit_pos = 0;
+uint32_t p_sda_bit_pos = 0;
+#endif
+
+/* Test 8b port shared by SCL and SDA */
+#if (PORT_SETUP == 1)
+port_t p_scl = XS1_PORT_8A;
+port_t p_sda = XS1_PORT_8A;
+
+uint32_t p_scl_bit_pos = 1;
+uint32_t p_sda_bit_pos = 3;
+#endif
+
+/* Test 8b port SCL 8b port SDA */
+#if (PORT_SETUP == 2)
+port_t p_scl = XS1_PORT_8A;
+port_t p_sda = XS1_PORT_8B;
+
+uint32_t p_scl_bit_pos = 0;
+uint32_t p_sda_bit_pos = 0;
+#endif
+
+/* Test 1b port SCL with overlapping 8b port SDA */
+#if (PORT_SETUP == 3)
+port_t p_scl = XS1_PORT_1M;
+port_t p_sda = XS1_PORT_8D;
+
+uint32_t p_scl_bit_pos = 0;
+uint32_t p_sda_bit_pos = 1;
+#endif
+
+/* Test 8b port SCL with overlapping 1b port SDA */
+#if (PORT_SETUP == 4)
+port_t p_scl = XS1_PORT_8D;
+port_t p_sda = XS1_PORT_1M;
+
+uint32_t p_scl_bit_pos = 1;
+uint32_t p_sda_bit_pos = 0;
+#endif
 
 // Test the following pairs of operations:
 // write -> read
@@ -58,7 +98,11 @@ void test() {
     i2c_master_init(
             i2c_ctx_ptr,
             p_scl,
+            p_scl_bit_pos,
+            0,
             p_sda,
+            p_sda_bit_pos,
+            0,
             NULL,
             SPEED); /* kbps */
 
@@ -95,6 +139,8 @@ void test() {
         printf("xCORE got %s\n", ack_str(acks[TEST_READ_2]));
         printf("xCORE received: 0x%X\n", data_read_2[0]);
     }
+
+    i2c_master_shutdown(i2c_ctx_ptr);
 
     exit(0);
 }

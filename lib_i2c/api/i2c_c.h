@@ -25,13 +25,18 @@ typedef enum {
   I2C_REGOP_NOT_STARTED  ///< the operation could not start
 } i2c_regop_res_t;
 
-
-
 typedef struct i2c_master_struct i2c_master_t;
 
 struct i2c_master_struct {
     port_t p_scl;
+    uint32_t scl_bit_position;
+    uint32_t scl_other_bits_mask;
     port_t p_sda;
+    uint32_t sda_bit_position;
+    uint32_t sda_other_bits_mask;
+
+    uint32_t scl_high;
+    uint32_t sda_high;
     hwtimer_t tmr;
     unsigned kbits_per_second;
 
@@ -64,13 +69,19 @@ i2c_res_t i2c_master_read(
 void i2c_master_stop_bit_send(
         i2c_master_t *ctx);
 
+
 void i2c_master_init(
         i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda,
+        const port_t p_scl,
+        const uint32_t scl_bit_position,
+        const uint32_t scl_other_bits_mask,
+        const port_t p_sda,
+        const uint32_t sda_bit_position,
+        const uint32_t sda_other_bits_mask,
         hwtimer_t tmr,
         const unsigned kbits_per_second);
 
+void i2c_master_shutdown(i2c_master_t *ctx) ;
 
 #define I2C_CALLBACK_ATTR __attribute__((fptrgroup("i2c_callback")))
 
@@ -86,6 +97,9 @@ struct i2c_master_async_struct {
     uint32_t half_bit_time;
     uint32_t quarter_bit_time;
     uint32_t scl_low_time;
+
+    uint32_t scl_high;
+    uint32_t sda_high;
 
     uint8_t *buf; /* buffer provided by app */
     hwtimer_t tmr; /* not the shared one, but could be assigned the shared timer? */
@@ -237,50 +251,6 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
                port_t p_scl,
                port_t p_sda,
                uint8_t device_addr);
-
-
-typedef struct i2c_master_sp_ctx {
-    port_t p_i2c;
-    uint32_t scl_bit_position;
-    uint32_t sda_bit_position;
-    uint32_t other_bits_mask;
-
-    uint32_t scl_high;
-    uint32_t sda_high;
-
-    hwtimer_t tmr;
-    uint32_t bit_time;
-    uint32_t low_period_ticks;
-    uint32_t bus_off_ticks;
-
-    uint32_t last_fall_time;
-    uint32_t stopped;
-} i2c_master_sp_ctx_t;
-
-void i2c_master_sp_init(i2c_master_sp_ctx_t* ctx,
-        port_t p_i2c,
-        hwtimer_t tmr,
-        const unsigned kbits_per_second,
-        uint32_t scl_bit_position,
-        uint32_t sda_bit_position,
-        uint32_t other_bits_mask);
-
-i2c_res_t i2c_master_sp_read(i2c_master_sp_ctx_t* ctx,
-        uint8_t device,
-        uint8_t buf[],
-        size_t m,
-        int send_stop_bit);
-
-i2c_res_t i2c_master_sp_write(
-        i2c_master_sp_ctx_t *ctx,
-        uint8_t device,
-        uint8_t buf[],
-        size_t n,
-        size_t *num_bytes_sent,
-        int send_stop_bit);
-
-void i2c_master_sp_stop_bit_send(
-        i2c_master_sp_ctx_t *ctx);
 
 #include "i2c_c_reg.h"
 
