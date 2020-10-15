@@ -3,11 +3,10 @@ import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
 
-def do_master_test(speed, impl, stop):
+def do_master_test(speed, stop):
     resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_master_async_test/bin/%(impl)s_%(speed)s_%(stop)s/i2c_master_async_test_%(impl)s_%(speed)s_%(stop)s.xe' % {
-      'impl' : impl,
+    binary = 'i2c_master_async_test/bin/%(speed)s_%(stop)s/i2c_master_async_test_%(speed)s_%(stop)s.xe' % {
       'speed' : speed,
       'stop' : stop
     }
@@ -25,7 +24,7 @@ def do_master_test(speed, impl, stop):
     tester = xmostest.ComparisonTester(open('master_test_%s.expect' % stop),
                                      'lib_i2c', 'i2c_master_sim_tests',
                                      'async_basic_test',
-                                     {'speed' : speed, 'impl' : impl, 'stop' : stop},
+                                     {'speed' : speed, 'stop' : stop},
                                      regexp=True)
 
     if speed == 10:
@@ -39,7 +38,5 @@ def do_master_test(speed, impl, stop):
 
 def runtest():
   for stop in ['stop', 'no_stop']:
-    do_master_test(400, 'non_comb', stop)
-    for impl in ['comb', 'non_comb']:
-      for speed in [100, 10]:
-        do_master_test(speed, impl, stop)
+    for speed in [400, 100, 10]:
+        do_master_test(speed, stop)

@@ -19,7 +19,6 @@ APP_NAME =
 
 SPEEDS = 10 100 400
 STOPS = stop no_stop
-COMBS = comb non_comb
 
 COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
@@ -30,16 +29,15 @@ comb_val = 1
 non_comb_val = 0
 
 define create_flags
-XCC_FLAGS_$(1)_$(2)_$(3) = $(COMMON_FLAGS) -DSPEED=$(2) -DCOMB=$$($(1)_val) -DSTOP=$$($(3)_val)
+XCC_FLAGS_$(1)_$(2) = $(COMMON_FLAGS) -DSPEED=$(1) -DSTOP=$$($(2)_val)
 endef
 
 $(foreach speed,$(SPEEDS),\
-  $(foreach stop,$(STOPS),\
-    $(foreach comb,$(COMBS),\
-      $(eval $(call create_flags,$(comb),$(speed),$(stop))))))
+	$(foreach stop,$(STOPS),\
+		$(eval $(call create_flags,$(speed),$(stop)))))
 
 define create_flags_interfere
-XCC_FLAGS_interfere_$(1) = $(COMMON_FLAGS) -DSPEED=100 -DCOMB=1 -DSTOP=$$($(1)_val) -DINTERFERE
+XCC_FLAGS_interfere_$(1) = $(COMMON_FLAGS) -DSPEED=100 -DSTOP=$$($(1)_val) -DINTERFERE
 endef
 
 $(foreach stop,$(STOPS),\
