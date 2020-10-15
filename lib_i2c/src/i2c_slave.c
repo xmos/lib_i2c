@@ -3,25 +3,30 @@
 #include <stdint.h>
 #include <string.h>
 #include <xcore/triggerable.h>
+#include <xcore/hwtimer.h>
 #include <xcore/assert.h>
 #include "xclib.h"
 #include "i2c_c.h"
 
 enum i2c_slave_state {
-  WAITING_FOR_START_OR_STOP,
-  READING_ADDR,
-  ACK_ADDR,
-  ACK_WAIT_HIGH,
-  ACK_WAIT_LOW,
-  IGNORE_ACK,
-  MASTER_WRITE,
-  MASTER_READ
+    WAITING_FOR_START_OR_STOP,
+    READING_ADDR,
+    ACK_ADDR,
+    ACK_WAIT_HIGH,
+    ACK_WAIT_LOW,
+    IGNORE_ACK,
+    MASTER_WRITE,
+    MASTER_READ
 };
 
 static inline void ensure_setup_time()
 {
-  // The I2C spec requires a 100ns setup time
-  delay_ticks(10);
+    // The I2C spec requires a 100ns setup time
+    hwtimer_t tmr = hwtimer_alloc();
+    {
+        hwtimer_delay(tmr, 10);
+    }
+    hwtimer_free(tmr);
 }
 
 void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
