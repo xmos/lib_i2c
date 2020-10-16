@@ -37,6 +37,6 @@ def do_master_test(speed, stop):
                               tester = tester)
 
 def runtest():
-  for stop in ['stop', 'no_stop']:
-    for speed in [400, 100, 10]:
-        do_master_test(speed, stop)
+    for stop in ['stop', 'no_stop']:
+        for speed in [400, 100, 10]:
+            do_master_test(speed, stop)

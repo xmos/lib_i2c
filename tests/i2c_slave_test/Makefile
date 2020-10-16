@@ -27,12 +27,7 @@ XCC_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
 # The USED_MODULES variable lists other module used by the application.
 
-USED_MODULES = lib_i2c lib_logging
-
-# Added for testing with Tools 15.0.2.  Without including dependency includes
-# building with xmake fails.
-INCLUDE_DIRS = ../../../lib_xassert/lib_xassert/api \
-               ../../../lib_logging/lib_logging/api
+USED_MODULES = lib_i2c
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

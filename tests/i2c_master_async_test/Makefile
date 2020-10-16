@@ -49,11 +49,6 @@ TARGET = XCORE-AI-EXPLORER
 
 USED_MODULES = lib_i2c
 
-# Added for testing with Tools 15.0.2.  Without including dependency includes
-# building with xmake fails.
-INCLUDE_DIRS = ../../../lib_xassert/lib_xassert/api \
-               ../../../lib_logging/lib_logging/api
-
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
 # for compiling XMOS applications. You should not need to edit below here.
