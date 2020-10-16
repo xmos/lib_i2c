@@ -12,9 +12,8 @@
 
 enum i2c_async_master_state_t {
     IDLE = 0,
-    REPEATED_START_CLOCK_LOW,
+    REPEATED_START_CLOCK_HIGH,
     REPEATED_START_WAIT_FOR_CLOCK_HIGH,
-    REPEATED_START_HOLD_CLOCK_HIGH,
     START_BIT_0,
     START_BIT_1,
     WRITE_0,
@@ -46,6 +45,7 @@ enum ack_t {
     NACKED = 1,
 };
 
+#if 0
 /*  Adjust for time slip.
  *
  *  All timings of the state machine in i2c_master_async_comb are made
@@ -64,7 +64,7 @@ static inline void adjust_for_slip(
     // This value is the minimum number of timer ticks we estimate we can
     // get to a new event to from now.
     const int SLIP_THRESHOLD = 100;
-    if (*event_time - now < SLIP_THRESHOLD) {
+    if ((int) *event_time - (int) now < SLIP_THRESHOLD) {
         int new_event_time = now + SLIP_THRESHOLD;
         if (fall_time != NULL) {
             *fall_time += new_event_time - *event_time;
@@ -72,6 +72,7 @@ static inline void adjust_for_slip(
         *event_time = new_event_time;
     }
 }
+#endif
 
 __attribute__((always_inline))
 static inline int adjust_fall(
@@ -98,7 +99,7 @@ static inline uint32_t scl_isr(i2c_master_async_t *ctx) {
     case WRITE_ACK_0:
     case READ_ACK_0:
     case STOP_BIT_0:
-    case REPEATED_START_HOLD_CLOCK_HIGH:
+    case DONE_NO_STOP:
     case READ_0:
         ctx->fall_time += ctx->bit_time;
         ctx->event_time = ctx->fall_time;
@@ -116,6 +117,10 @@ static inline uint32_t scl_isr(i2c_master_async_t *ctx) {
         ctx->fall_time += ctx->bit_time;
         ctx->event_time = ctx->fall_time - ctx->quarter_bit_time;
         ctx->state = READ_2;
+        break;
+    case REPEATED_START_WAIT_FOR_CLOCK_HIGH:
+        ctx->event_time = now;
+        ctx->state = START_BIT_0;
         break;
     default:
         xassert(0);
@@ -142,22 +147,11 @@ static inline uint32_t timer_isr(i2c_master_async_t *ctx) {
     event_time = ctx->event_time;
 
     switch (ctx->state) {
-    case REPEATED_START_CLOCK_LOW:
-        // The operation is finished, but no stop bit is being written
-        port_out(ctx->p_scl, 0);
-        event_time = now + ctx->scl_low_time;
-        port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
-        ctx->state = REPEATED_START_WAIT_FOR_CLOCK_HIGH;
-        break;
-    case REPEATED_START_WAIT_FOR_CLOCK_HIGH:
+    case REPEATED_START_CLOCK_HIGH:
         (void) port_in(ctx->p_scl);
         ctx->timer_enabled = 0;
         ctx->waiting_for_clock_release = 1;
-        ctx->state = REPEATED_START_HOLD_CLOCK_HIGH;
-        break;
-    case REPEATED_START_HOLD_CLOCK_HIGH:
-        event_time = now + ctx->half_bit_time;
-        ctx->state = START_BIT_0;
+        ctx->state = REPEATED_START_WAIT_FOR_CLOCK_HIGH;
         break;
     case START_BIT_0:
         port_out(ctx->p_sda, 0);
@@ -174,7 +168,7 @@ static inline uint32_t timer_isr(i2c_master_async_t *ctx) {
         ctx->data <<= 1;
         ctx->bitnum++;
         ctx->state = WRITE_1;
-        event_time = now + ctx->scl_low_time;
+        event_time = ctx->fall_time + ctx->scl_low_time;
         port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         break;
     case WRITE_1:
@@ -191,7 +185,7 @@ static inline uint32_t timer_isr(i2c_master_async_t *ctx) {
         port_out(ctx->p_scl, 0);
         (void) port_in(ctx->p_sda);
         ctx->fall_time = adjust_fall(event_time, now, ctx->fall_time);
-        event_time = now + ctx->scl_low_time;
+        event_time = ctx->fall_time + ctx->scl_low_time;
         port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         ctx->state = WRITE_ACK_1;
         break;
@@ -267,7 +261,7 @@ static inline uint32_t timer_isr(i2c_master_async_t *ctx) {
         ctx->fall_time = adjust_fall(event_time, now, ctx->fall_time);
         ctx->bitnum++;
         ctx->state = READ_1;
-        event_time = now + ctx->scl_low_time;
+        event_time = ctx->fall_time + ctx->scl_low_time;
         port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         break;
     case READ_1:
@@ -299,7 +293,7 @@ static inline uint32_t timer_isr(i2c_master_async_t *ctx) {
         }
         ctx->fall_time = adjust_fall(event_time, now, ctx->fall_time);
         ctx->state = READ_ACK_1;
-        event_time = now + ctx->scl_low_time;
+        event_time = ctx->fall_time + ctx->scl_low_time;
         port_set_trigger_time(ctx->p_scl, port_get_trigger_time(ctx->p_scl) + ctx->scl_low_time);
         break;
     case READ_ACK_1:
@@ -337,13 +331,15 @@ static inline uint32_t timer_isr(i2c_master_async_t *ctx) {
         break;
     case STOP_BIT_3:
         (void) port_in(ctx->p_sda);
-        event_time = now + ctx->quarter_bit_time;
+        event_time = now + ctx->scl_low_time;
         ctx->state = STOP_BIT_4;
 
         // Know that the next transaction can start from the stopped state
         ctx->stopped = 1;
         break;
     case DONE_NO_STOP:
+        port_out(ctx->p_scl, 0);
+        ctx->fall_time = now;
         // Know that the next transaction needs to create a repeated start
         ctx->stopped = 0;
         // Fallthrough to STOP_BIT_4 code
@@ -391,17 +387,34 @@ DEFINE_INTERRUPT_CALLBACK(i2c_isr_grp, i2c_isr, data)
         }
 
         if (ctx->timer_enabled) {
-            adjust_for_slip(now, &ctx->event_time, &ctx->fall_time);
-            if (ctx->event_time - now >= 200) {
+            /*
+             * If the next interrupt is scheduled to be at least 100
+             * ticks away from the start of this one, then we should
+             * be able to make it. If it is scheduled to be sooner,
+             * then stay in the ISR.
+             */
+            if ((int) ctx->event_time - (int) now >= 100) {
+                /*
+                 * Not using adjust for slip right now. Rather than
+                 * re-schedule the event, The ISR is just not exited if the
+                 * next event is too soon.
+                 *
+                 * This makes 400 kbps work, as the slip adjustment as it
+                 * is now prevents it from achieving 400 kbps even under
+                 * ideal conditions.
+                 *
+                 * TODO: This should be revisited.
+                 */
+                //adjust_for_slip(now, &ctx->event_time, &ctx->fall_time);
                 break;
             }
         } else {
-//            if (port_peek(ctx->p_scl) == 0) {
-//                /*
-//                 * If SCL isn't high yet then exit the ISR and wait for an interrupt.
-//                 */
-//                break;
-//            }
+            if (port_peek(ctx->p_scl) == 0) {
+                /*
+                 * If SCL isn't high yet then exit the ISR and wait for an interrupt.
+                 */
+                break;
+            }
         }
     }
 }
@@ -423,13 +436,14 @@ static void i2c_master_async_start_transaction(
     ctx->bytes_sent = -1;
 
     if (!ctx->stopped) {
-        ctx->state = REPEATED_START_CLOCK_LOW;
+        ctx->state = REPEATED_START_CLOCK_HIGH;
+        ctx->event_time = ctx->fall_time + ctx->scl_low_time;
     } else {
         ctx->state = START_BIT_0;
+        ctx->event_time = hwtimer_get_time(ctx->tmr);
     }
 
     ctx->timer_enabled = 1;
-    ctx->event_time = hwtimer_get_time(ctx->tmr);
     hwtimer_set_trigger_time(ctx->tmr, ctx->event_time);
     triggerable_enable_trigger(ctx->tmr);
 }
@@ -509,6 +523,8 @@ void i2c_master_async_init(
         void *app_data,
         i2c_master_async_operation_complete_t op_complete)
 {
+    xassert(kbits_per_second <= 400);
+
     memset(ctx, 0, sizeof(i2c_master_async_t));
 
     port_enable(p_scl);
@@ -526,7 +542,12 @@ void i2c_master_async_init(
     ctx->bit_time = BIT_TIME(kbits_per_second);
     ctx->half_bit_time = ctx->bit_time / 2;
     ctx->quarter_bit_time = ctx->bit_time / 4;
-    ctx->scl_low_time = ctx->half_bit_time + ctx->bit_time / 32;
+
+    /*
+     * The minimum SCL low time at 100 kbps is 4.7 microseconds.
+     * The minimum SCL low time at 400 kbps is 1.3 microseconds.
+     */
+    ctx->scl_low_time = kbits_per_second <= 100 ? 471 : 131;
 
     ctx->stopped = 1;
     ctx->res = I2C_ACK;

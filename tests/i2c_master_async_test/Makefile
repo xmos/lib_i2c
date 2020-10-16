@@ -47,7 +47,7 @@ TARGET = XCORE-AI-EXPLORER
 
 # The USED_MODULES variable lists other module used by the application.
 
-USED_MODULES = lib_i2c lib_logging
+USED_MODULES = lib_i2c
 
 # Added for testing with Tools 15.0.2.  Without including dependency includes
 # building with xmake fails.

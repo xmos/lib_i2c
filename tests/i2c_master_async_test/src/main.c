@@ -49,16 +49,16 @@ static void interference() {
     static uint32_t timeout;
     uint32_t now = get_reference_time();
 
-    interrupt_mask_all();
-    {
-        if (now >= timeout) {
+    if (now >= timeout) {
+        interrupt_mask_all();
+        {
             int delay = rand() >> 20;
             while ((get_reference_time() - now) < delay);
             timeout = get_reference_time();
             timeout += rand() >> 20;
         }
+        interrupt_unmask_all();
     }
-    interrupt_unmask_all();
 #endif
 }
 
@@ -75,7 +75,7 @@ DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, i2c_master_async_test,
     size_t n2 = -1;
     size_t n3 = -1;
     i2c_res_t res;
-    i2c_op_t *op = &i2c_ctx->app_data;
+    i2c_op_t *op = i2c_ctx->app_data;
 
     const int do_stop = STOP ? 1 : 0;
 

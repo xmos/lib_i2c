@@ -7,7 +7,6 @@
 #include <xcore/assert.h>
 #include "xclib.h"
 #include "i2c_c.h"
-#include "debug_print.h"
 #define SDA_LOW     0
 #define SCL_LOW     0
 
