@@ -43,8 +43,8 @@ void test() {
 
     i2c_master_init(
             i2c_ctx_ptr,
-            p_scl,
-            p_sda,
+            p_scl, 0, 0,
+            p_sda, 0, 0,
             NULL,
             400); /* kbps */
 
