@@ -128,7 +128,7 @@ static void high_pulse_drive(
  *  reference and bit_time period supplied.
  */
 __attribute__((always_inline))
-static inline int high_pulse_sample(
+static inline uint32_t high_pulse_sample(
         const i2c_master_t *ctx,
         uint32_t *fall_time) {
     const uint32_t SCL_HIGH = ctx->scl_high;
@@ -248,13 +248,13 @@ static void stop_bit(
 /** Transmit 8 bits of data, then read the ack back from the slave and return
  *  that value.
  */
-static int tx8(
+static uint32_t tx8(
         const i2c_master_t *ctx,
         uint32_t data,
         uint32_t *fall_time) {
     // Data is transmitted MSB first
     data = bitrev(data) >> 24;
-    for (int i = 8; i != 0; i--) {
+    for (size_t i = 8; i != 0; i--) {
         high_pulse_drive(ctx, data & 1, fall_time);
         data >>= 1;
     }
@@ -282,14 +282,14 @@ i2c_res_t i2c_master_read(
 
     start_bit(ctx, &fall_time);
 
-    int ack = tx8(ctx, (device << 1) | 1, &fall_time);
+    uint32_t ack = tx8(ctx, (device << 1) | 1, &fall_time);
     result = (ack == 0) ? I2C_ACK : I2C_NACK;
 
     if (result == I2C_ACK) {
-        for (int j = 0; j < m; j++) {
+        for (size_t j = 0; j < m; j++) {
             unsigned char data = 0;
             for (int i = 8; i != 0; i--) {
-                int temp = high_pulse_sample(ctx, &fall_time);
+                uint32_t temp = high_pulse_sample(ctx, &fall_time);
                 data = (data << 1) | temp;
             }
             buf[j] = data;
@@ -345,7 +345,7 @@ i2c_res_t i2c_master_write(
     uint32_t fall_time = ctx->last_fall_time;
 
     start_bit(ctx, &fall_time);
-    int ack = tx8(ctx, (device << 1) | 0, &fall_time);
+    uint32_t ack = tx8(ctx, (device << 1) | 0, &fall_time);
 
     size_t j = 0;
     for (; j < n && ack == 0; j++) {
