@@ -142,7 +142,7 @@ i2c_res_t i2c_master_async_stop_bit_send(
 
 i2c_res_t i2c_master_async_result_get(
         i2c_master_async_t *ctx,
-        ssize_t *num_bytes_transferred);
+        size_t *num_bytes_transferred);
 
 void i2c_master_async_init(
         i2c_master_async_t *ctx,

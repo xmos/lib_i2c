@@ -85,10 +85,10 @@ void test() {
     uint8_t data_write_3[MAX_DATA_BYTES] = {0};
     uint8_t data_read_1[MAX_DATA_BYTES] = {0};
     uint8_t data_read_2[MAX_DATA_BYTES] = {0};
-    int acks[NUM_TESTS] = {0};
-    ssize_t n1 = -1;
-    ssize_t n2 = -1;
-    ssize_t n3 = -1;
+    i2c_res_t acks[NUM_TESTS] = {0};
+    size_t n1 = 0;
+    size_t n2 = 0;
+    size_t n3 = 0;
 
     const int do_stop = STOP ? 1 : 0;
 
@@ -97,13 +97,9 @@ void test() {
 
     i2c_master_init(
             i2c_ctx_ptr,
-            p_scl,
-            p_scl_bit_pos,
+            p_scl, p_scl_bit_pos, 0,
+            p_sda, p_sda_bit_pos, 0,
             0,
-            p_sda,
-            p_sda_bit_pos,
-            0,
-            NULL,
             SPEED); /* kbps */
 
     SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);

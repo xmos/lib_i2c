@@ -20,8 +20,6 @@ DECLARE_JOB(test, (void));
 
 void test() {
     uint8_t data[1] = {0x99};
-    size_t numbytes;
-
     i2c_master_t i2c_ctx;
     i2c_master_t* i2c_ctx_ptr = &i2c_ctx;
 
@@ -29,7 +27,7 @@ void test() {
             i2c_ctx_ptr,
             p_scl, 0, 0,
             p_sda, 0, 0,
-            NULL,
+            0,
             400); /* kbps */
 
     SETSR(XS1_SR_QUEUE_MASK | XS1_SR_FAST_MASK);
@@ -37,6 +35,7 @@ void test() {
     i2c_master_write(i2c_ctx_ptr, 0x33, data, 1, NULL, 0);
     i2c_master_write(i2c_ctx_ptr, 0x33, data, 1, NULL, 1);
 
+    i2c_master_shutdown(i2c_ctx_ptr) ;
     exit(0);
 }
 

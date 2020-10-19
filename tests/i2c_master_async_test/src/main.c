@@ -70,10 +70,10 @@ DEFINE_INTERRUPT_PERMITTED(i2c_isr_grp, void, i2c_master_async_test,
     uint8_t data_write_3[MAX_DATA_BYTES] = {0};
     uint8_t data_read_1[MAX_DATA_BYTES] = {0};
     uint8_t data_read_2[MAX_DATA_BYTES] = {0};
-    int acks[NUM_TESTS] = {0};
-    size_t n1 = -1;
-    size_t n2 = -1;
-    size_t n3 = -1;
+    i2c_res_t acks[NUM_TESTS] = {0};
+    size_t n1 = 0;
+    size_t n2 = 0;
+    size_t n3 = 0;
     i2c_res_t res;
     i2c_op_t *op = i2c_ctx->app_data;
 

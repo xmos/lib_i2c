@@ -59,7 +59,7 @@ static inline uint32_t compute_bus_off_ticks(
  *  need to be adjusted
  */
 static void wait_for_clock_high(
-        i2c_master_t* ctx,
+        const i2c_master_t* ctx,
         uint32_t* fall_time,
         uint32_t delay) {
     const uint32_t SCL_HIGH = ctx->scl_high;
@@ -87,7 +87,7 @@ static void wait_for_clock_high(
 }
 
 static void high_pulse_drive(
-        i2c_master_t* ctx,
+        const i2c_master_t* ctx,
         int sdaValue,
         uint32_t* fall_time) {
     const uint32_t SCL_HIGH = ctx->scl_high;
@@ -97,7 +97,6 @@ static void high_pulse_drive(
     const uint32_t bit_time = ctx->bit_time;
     const uint32_t three_quarter_bit_time = ctx->three_quarter_bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
-    const uint32_t bus_off_ticks = ctx->bus_off_ticks;
     const uint32_t scl_other_bits_mask = ctx->scl_other_bits_mask;
     const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
     hwtimer_t tmr = ctx->tmr;
@@ -140,7 +139,6 @@ static inline int high_pulse_sample(
     const uint32_t bit_time = ctx->bit_time;
     const uint32_t three_quarter_bit_time = ctx->three_quarter_bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
-    const uint32_t bus_off_ticks = ctx->bus_off_ticks;
     const uint32_t scl_other_bits_mask = ctx->scl_other_bits_mask;
     const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
 
@@ -276,7 +274,6 @@ i2c_res_t i2c_master_read(
     const port_t p_sda = ctx->p_sda;
     const hwtimer_t tmr = ctx->tmr;
     const uint32_t bit_time = ctx->bit_time;
-    const uint32_t quarter_bit_time = ctx->quarter_bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
     const uint32_t three_quarter_bit_time = ctx->three_quarter_bit_time;
     const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
@@ -350,7 +347,7 @@ i2c_res_t i2c_master_write(
     start_bit(ctx, &fall_time);
     int ack = tx8(ctx, (device << 1) | 0, &fall_time);
 
-    int j = 0;
+    size_t j = 0;
     for (; j < n && ack == 0; j++) {
         ack = tx8(ctx, buf[j], &fall_time);
     }
@@ -431,7 +428,9 @@ void i2c_master_init(
         port_out(p_scl, ctx->scl_high | ctx->sda_high | ctx->scl_other_bits_mask);
     } else {
         port_enable(p_sda);
-        port_write_control_word(p_sda, XS1_SETC_DRIVE_PULL_UP); // todo only if multibit
+        port_write_control_word(p_sda, XS1_SETC_DRIVE_PULL_UP);
+        port_out(p_scl, ctx->scl_high | ctx->scl_other_bits_mask);
+        port_out(p_sda, ctx->sda_high | ctx->sda_other_bits_mask);
     }
 }
 

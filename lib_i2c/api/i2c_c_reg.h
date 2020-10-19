@@ -2,6 +2,7 @@
 #ifndef _i2c_c_reg_h_
 #define _i2c_c_reg_h_
 
+#include <string.h>
 #include "i2c_c.h"
 
 /** Read an 8-bit register on a slave device.
@@ -30,9 +31,8 @@ inline uint8_t read_reg(
         uint8_t reg,
         i2c_regop_res_t *result) {
     uint8_t buf[1] = {reg};
-    ssize_t bytes_sent = 0;
+    size_t bytes_sent = 0;
     i2c_res_t res;
-    i2c_regop_res_t reg_res;
 
     res = i2c_master_write(ctx, device_addr, buf, 1, &bytes_sent, 0);
     if (bytes_sent != 1) {
@@ -77,9 +77,8 @@ inline uint8_t read_reg8_addr16(
         uint16_t reg,
         i2c_regop_res_t *result) {
     uint8_t buf[2] = {(reg >> 8) & 0xFF, reg & 0xFF};
-    ssize_t bytes_sent = 0;
+    size_t bytes_sent = 0;
     i2c_res_t res;
-    i2c_regop_res_t reg_res;
 
     res = i2c_master_write(ctx, device_addr, buf, 2, &bytes_sent, 0);
     if (bytes_sent != 2) {
@@ -123,9 +122,8 @@ inline uint16_t read_reg16_addr8(
         uint8_t reg,
         i2c_regop_res_t *result) {
     uint8_t buf[2] = {reg, 0x00};
-    ssize_t bytes_sent = 0;
+    size_t bytes_sent = 0;
     i2c_res_t res;
-    i2c_regop_res_t reg_res;
 
     res = i2c_master_write(ctx, device_addr, buf, 1, &bytes_sent, 0);
     if (bytes_sent != 1) {
@@ -170,9 +168,8 @@ inline uint16_t read_reg16(
         uint16_t reg,
         i2c_regop_res_t *result) {
     uint8_t buf[2] = {(reg >> 8) & 0xFF, reg & 0xFF};
-    ssize_t bytes_sent = 0;
+    size_t bytes_sent = 0;
     i2c_res_t res;
-    i2c_regop_res_t reg_res;
 
     res = i2c_master_write(ctx, device_addr, buf, 2, &bytes_sent, 0);
     if (bytes_sent != 2) {
@@ -208,7 +205,7 @@ inline i2c_regop_res_t write_reg(
         uint8_t reg,
         uint8_t data) {
     uint8_t buf[2] = {reg, data};
-    ssize_t bytes_sent = 0;
+    size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
 
     i2c_master_write(ctx, device_addr, buf, 2, &bytes_sent, 1);
@@ -241,7 +238,7 @@ inline i2c_regop_res_t write_reg8_addr16(
         uint16_t reg,
         uint8_t data) {
     uint8_t buf[3] = {(reg >> 8) & 0xFF, reg & 0xFF, data};
-    ssize_t bytes_sent = 0;
+    size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
 
     i2c_master_write(ctx, device_addr, buf, 3, &bytes_sent, 1);
@@ -277,8 +274,7 @@ inline i2c_regop_res_t write_reg16_addr8(
         uint8_t reg,
         uint16_t data) {
     uint8_t buf[3] = {reg, (data >> 8) & 0xFF, data & 0xFF};
-    ssize_t bytes_sent = 0;
-    i2c_res_t res;
+    size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
 
     i2c_master_write(ctx, device_addr, buf, 3, &bytes_sent, 1);
@@ -316,7 +312,7 @@ inline i2c_regop_res_t write_reg16(
         uint16_t reg,
         uint16_t data) {
     uint8_t buf[4] = {(reg >> 8) & 0xFF, reg & 0xFF, (data >> 8) & 0xFF, data & 0xFF};
-    ssize_t bytes_sent = 0;
+    size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
 
     i2c_master_write(ctx, device_addr, buf, 4, &bytes_sent, 1);
