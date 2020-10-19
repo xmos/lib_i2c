@@ -19,13 +19,6 @@ def do_test(stop, port_setup):
                 ["tile[0]:XS1_PORT_1M", "tile[0]:XS1_PORT_8D.1"],   # Test 1b port SCL with overlapping 8b port SDA
                 ["tile[0]:XS1_PORT_8D.1", "tile[0]:XS1_PORT_1M"]]   # Test 8b port SCL with overlapping 1b port SDA
 
-
-    # speed = 400
-    # binary = 'i2c_master_test/bin/rx_tx_%(speed)s_%(stop)s_0/i2c_master_test_rx_tx_%(speed)s_%(stop)s_0.xe' % {
-    #   'speed' : speed,
-    #   'stop' : stop,
-    # }
-
     checker = I2CMasterChecker(port_map[port_setup][0],
                                port_map[port_setup][1],
                                tx_data = [0x99, 0x3A, 0xff],
