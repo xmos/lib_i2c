@@ -7,7 +7,7 @@
 #include <xcore/hwtimer.h>
 #include <xcore/assert.h>
 
-#include "i2c_c.h"
+#include "i2c.h"
 
 #define SDA_LOW     0
 #define SCL_LOW     0

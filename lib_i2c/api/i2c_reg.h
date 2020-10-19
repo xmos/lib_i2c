@@ -3,7 +3,7 @@
 #define _i2c_c_reg_h_
 
 #include <string.h>
-#include "i2c_c.h"
+#include "i2c.h"
 
 /** Read an 8-bit register on a slave device.
  *

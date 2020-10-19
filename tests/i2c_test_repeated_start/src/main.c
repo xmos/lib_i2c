@@ -9,7 +9,7 @@
 #include <xcore/triggerable.h>
 #include <xcore/interrupt.h>
 #include <xcore/interrupt_wrappers.h>
-#include "i2c_c.h"
+#include "i2c.h"
 
 #define SETSR(c) asm volatile("setsr %0" : : "n"(c));
 

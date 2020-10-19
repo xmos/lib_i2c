@@ -8,7 +8,7 @@
 #include <xcore/triggerable.h>
 #include <xcore/assert.h>
 
-#include "i2c_c.h"
+#include "i2c.h"
 
 enum i2c_async_master_state_t {
     IDLE = 0,

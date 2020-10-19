@@ -10,7 +10,7 @@
 #include <xcore/port.h>
 #include <xcore/hwtimer.h>
 #include <xcore/triggerable.h>
-#include "i2c_c.h"
+#include "i2c.h"
 
 DECLARE_JOB(dummy_thread, (void));
 DECLARE_JOB(my_application, (i2c_master_t*, uint8_t));

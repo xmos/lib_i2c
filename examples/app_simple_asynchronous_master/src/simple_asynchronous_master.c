@@ -13,7 +13,7 @@
  #include <xcore/triggerable.h>
  #include <xcore/interrupt_wrappers.h>
  #include <xcore/interrupt.h>
- #include "i2c_c.h"
+ #include "i2c.h"
 
 DECLARE_INTERRUPT_PERMITTED(void, my_application, i2c_master_async_t *i2c_ctx, uint8_t target_device_addr);
 // void my_application(client i2c_master_async_if i2c, uint8_t target_device_addr);

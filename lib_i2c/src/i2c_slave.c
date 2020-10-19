@@ -6,7 +6,7 @@
 #include <xcore/hwtimer.h>
 #include <xcore/assert.h>
 #include "xclib.h"
-#include "i2c_c.h"
+#include "i2c.h"
 
 enum i2c_slave_state {
     WAITING_FOR_START_OR_STOP,

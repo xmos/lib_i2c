@@ -252,6 +252,6 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
                port_t p_sda,
                uint8_t device_addr);
 
-#include "i2c_c_reg.h"
+#include "i2c_reg.h"
 
 #endif

@@ -6,7 +6,7 @@
 #include <xcore/port.h>
 #include <xcore/hwtimer.h>
 #include <xcore/triggerable.h>
-#include "i2c_c.h"
+#include "i2c.h"
 
 #define SETSR(c) asm volatile("setsr %0" : : "n"(c));
 
