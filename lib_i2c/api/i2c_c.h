@@ -29,14 +29,14 @@ typedef struct i2c_master_struct i2c_master_t;
 
 struct i2c_master_struct {
     port_t p_scl;
-    uint32_t scl_bit_position;
-    uint32_t scl_other_bits_mask;
+    uint32_t scl_mask;
     port_t p_sda;
-    uint32_t sda_bit_position;
-    uint32_t sda_other_bits_mask;
+    uint32_t sda_mask;
 
     uint32_t scl_high;
     uint32_t sda_high;
+    uint32_t scl_low;
+    uint32_t sda_low;
     hwtimer_t tmr;
     unsigned kbits_per_second;
 

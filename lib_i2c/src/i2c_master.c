@@ -61,18 +61,16 @@ static inline uint32_t compute_bus_off_ticks(
 static void wait_for_clock_high(
         const i2c_master_t* ctx,
         uint32_t* fall_time,
-        uint32_t delay) {
-    const uint32_t SCL_HIGH = ctx->scl_high;
+        uint32_t delay)
+{
+    const uint32_t scl_mask = ctx->scl_mask;
     const port_t p_scl = ctx->p_scl;
     uint32_t now;
     uint32_t val;
     hwtimer_t tmr = ctx->tmr;
 
-    asm volatile ("nop" ::);
-    val = port_peek(p_scl);
-    while (!(val & SCL_HIGH)) {
-        val = port_peek(p_scl);
-    }
+    asm volatile ("nop" ::); /* This nop skips over an erroneous clock pulse in the simulator tests. */
+    while ((port_peek(p_scl) & scl_mask) == 0);
 
     now = hwtimer_wait_until(tmr, *fall_time + delay);
 
@@ -88,39 +86,36 @@ static void wait_for_clock_high(
 
 static void high_pulse_drive(
         const i2c_master_t* ctx,
-        int sdaValue,
-        uint32_t* fall_time) {
-    const uint32_t SCL_HIGH = ctx->scl_high;
-    const uint32_t SDA_HIGH = ctx->sda_high;
+        int sda_value,
+        uint32_t* fall_time)
+{
+    const uint32_t sda_low = ctx->sda_low;
+    const uint32_t sda_high = ctx->sda_high;
     const port_t p_sda = ctx->p_sda;
     const port_t p_scl = ctx->p_scl;
     const uint32_t bit_time = ctx->bit_time;
     const uint32_t three_quarter_bit_time = ctx->three_quarter_bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
-    const uint32_t scl_other_bits_mask = ctx->scl_other_bits_mask;
-    const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
+    uint32_t scl_low = ctx->scl_low;
+    uint32_t scl_high = ctx->scl_high;
     hwtimer_t tmr = ctx->tmr;
 
-    sdaValue = sdaValue ? SDA_HIGH : SDA_LOW;
+    sda_value = sda_value ? sda_high : sda_low;
 
     if (p_scl == p_sda) {
-        port_out(p_scl, SCL_LOW  | sdaValue | scl_other_bits_mask);
-        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-        port_out(p_scl, SCL_HIGH | sdaValue | scl_other_bits_mask);
-        wait_for_clock_high(ctx, fall_time, three_quarter_bit_time);
-        *fall_time += bit_time;
-        (void) hwtimer_wait_until(tmr, *fall_time);
-        port_out(p_scl, SCL_LOW  | sdaValue | scl_other_bits_mask);
-    } else {
-        port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
-        port_out(p_sda, sdaValue | sda_other_bits_mask);
-        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-        port_out(p_scl, SCL_HIGH | scl_other_bits_mask);
-        wait_for_clock_high(ctx, fall_time, three_quarter_bit_time);
-        *fall_time += bit_time;
-        (void) hwtimer_wait_until(tmr, *fall_time);
-        port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
+        scl_low |= sda_value;
+        scl_high |= sda_value;
+        sda_value = scl_low;
     }
+
+    port_out(p_sda, sda_value);
+    port_out(p_scl, scl_low);
+    (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
+    port_out(p_scl, scl_high);
+    wait_for_clock_high(ctx, fall_time, three_quarter_bit_time);
+    *fall_time += bit_time;
+    (void) hwtimer_wait_until(tmr, *fall_time);
+    port_out(p_scl, scl_low);
 }
 
 /** 'Pulse' the clock line high and in the middle of the high period
@@ -130,40 +125,36 @@ static void high_pulse_drive(
 __attribute__((always_inline))
 static inline uint32_t high_pulse_sample(
         const i2c_master_t *ctx,
-        uint32_t *fall_time) {
-    const uint32_t SCL_HIGH = ctx->scl_high;
-    const uint32_t SDA_HIGH = ctx->sda_high;
+        uint32_t *fall_time)
+{
+    const uint32_t sda_mask = ctx->sda_mask;
     const port_t p_sda = ctx->p_sda;
     const port_t p_scl = ctx->p_scl;
     const hwtimer_t tmr = ctx->tmr;
     const uint32_t bit_time = ctx->bit_time;
     const uint32_t three_quarter_bit_time = ctx->three_quarter_bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
-    const uint32_t scl_other_bits_mask = ctx->scl_other_bits_mask;
-    const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
+    uint32_t scl_low = ctx->scl_low;
+    uint32_t scl_high = ctx->scl_high;
+    uint32_t sda_high = ctx->sda_high;
 
     uint32_t sample_value = 0;
 
     if (p_scl == p_sda) {
-        port_out(p_scl, SCL_LOW  | SDA_HIGH | scl_other_bits_mask);
-        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-        port_out(p_scl, SCL_HIGH | SDA_HIGH | scl_other_bits_mask);
-        wait_for_clock_high(ctx, fall_time, three_quarter_bit_time);
-        sample_value = (port_peek(p_scl) & SDA_HIGH) ? 1 : 0;
-        *fall_time += bit_time;
-        (void) hwtimer_wait_until(tmr, *fall_time);
-        port_out(p_scl, SCL_LOW  | SDA_HIGH | scl_other_bits_mask);
-    } else {
-        port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
-        port_out(p_sda, SDA_HIGH | sda_other_bits_mask);
-        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-        port_out(p_scl, SCL_HIGH | scl_other_bits_mask);
-        wait_for_clock_high(ctx, fall_time, three_quarter_bit_time);
-        sample_value = (port_peek(p_sda) & SDA_HIGH) ? 1 : 0;
-        *fall_time += bit_time;
-        (void) hwtimer_wait_until(tmr, *fall_time);
-        port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
+        scl_low |= sda_high;
+        scl_high |= sda_high;
+        sda_high = scl_low;
     }
+
+    port_out(p_sda, sda_high);
+    port_out(p_scl, scl_low);
+    (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
+    port_out(p_scl, scl_high);
+    wait_for_clock_high(ctx, fall_time, three_quarter_bit_time);
+    sample_value = (port_peek(p_sda) & sda_mask) ? 1 : 0;
+    *fall_time += bit_time;
+    (void) hwtimer_wait_until(tmr, *fall_time);
+    port_out(p_scl, scl_low);
 
     return sample_value;
 }
@@ -173,39 +164,44 @@ static inline uint32_t high_pulse_sample(
  */
 static void start_bit(
         const i2c_master_t *ctx,
-        uint32_t *fall_time) {
-    const uint32_t SCL_HIGH = ctx->scl_high;
-    const uint32_t SDA_HIGH = ctx->sda_high;
+        uint32_t *fall_time)
+{
     const port_t p_sda = ctx->p_sda;
     const port_t p_scl = ctx->p_scl;
     const hwtimer_t tmr = ctx->tmr;
     const uint32_t half_bit_time = ctx->half_bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
     const uint32_t bus_off_ticks = ctx->bus_off_ticks;
-    const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
-    const uint32_t scl_other_bits_mask = ctx->scl_other_bits_mask;
+    uint32_t scl_low = ctx->scl_low;
+    uint32_t scl_high = ctx->scl_high;
+    uint32_t sda_low = ctx->sda_low;
+    uint32_t sda_high = ctx->sda_high;
 
     if (!ctx->stopped) {
-        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
+
         if (p_scl == p_sda) {
-            port_out(p_scl, SCL_HIGH | SDA_HIGH | scl_other_bits_mask);
-        } else {
-            port_out(p_scl, SCL_HIGH | scl_other_bits_mask);
-            port_out(p_sda, SDA_HIGH | sda_other_bits_mask);
+            scl_high |= sda_high;
+            sda_high = scl_high;
         }
+
+        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
+
+        port_out(p_scl, scl_high);
+        port_out(p_sda, sda_high);
         wait_for_clock_high(ctx, fall_time, bus_off_ticks);
     }
 
     if (p_scl == p_sda) {
-        port_out(p_scl, SCL_HIGH | SDA_LOW | scl_other_bits_mask);
-        hwtimer_delay(tmr, half_bit_time);
-        port_out(p_scl, SCL_LOW  | SDA_LOW | scl_other_bits_mask);
-    } else {
-        port_out(p_scl, SCL_HIGH | scl_other_bits_mask);
-        port_out(p_sda, SDA_LOW  | sda_other_bits_mask);
-        hwtimer_delay(tmr, half_bit_time);
-        port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
+        scl_low |= sda_low;
+        sda_low |= ctx->scl_high;
+        scl_high = sda_low;
     }
+
+    port_out(p_sda, sda_low);
+    port_out(p_scl, scl_high);
+    hwtimer_delay(tmr, half_bit_time);
+    port_out(p_scl, scl_low);
+
     *fall_time = hwtimer_get_time(tmr);
 }
 
@@ -213,36 +209,33 @@ static void start_bit(
  */
 static void stop_bit(
         const i2c_master_t *ctx,
-        uint32_t *fall_time) {
-    const uint32_t SCL_HIGH = ctx->scl_high;
-    const uint32_t SDA_HIGH = ctx->sda_high;
+        uint32_t *fall_time)
+{
     const port_t p_scl = ctx->p_scl;
     const port_t p_sda = ctx->p_sda;
     const hwtimer_t tmr = ctx->tmr;
     const uint32_t bit_time = ctx->bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
     const uint32_t bus_off_ticks = ctx->bus_off_ticks;
-    const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
-    const uint32_t scl_other_bits_mask = ctx->scl_other_bits_mask;
+    uint32_t scl_low = ctx->scl_low;
+    uint32_t scl_high = ctx->scl_high;
+    uint32_t sda_low = ctx->sda_low;
+    uint32_t sda_high = ctx->sda_high;
 
     if (p_scl == p_sda) {
-        port_out(p_scl, SCL_LOW  | SDA_LOW  | scl_other_bits_mask);
-        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-        port_out(p_scl, SCL_HIGH | SDA_LOW  | scl_other_bits_mask);
-        wait_for_clock_high(ctx, fall_time, bit_time);
-        port_out(p_scl, SCL_HIGH | SDA_HIGH | scl_other_bits_mask);
-        hwtimer_delay(tmr, bus_off_ticks);
-    } else {
-        port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
-        port_out(p_sda, SDA_LOW  | sda_other_bits_mask);
-        (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
-        port_out(p_scl, SCL_HIGH | scl_other_bits_mask);
-        // port_out(p_sda, SDA_LOW  | sda_other_bits_mask);
-        wait_for_clock_high(ctx, fall_time, bit_time);
-        port_out(p_scl, SCL_HIGH | scl_other_bits_mask);
-        port_out(p_sda, SDA_HIGH | sda_other_bits_mask);
-        hwtimer_delay(tmr, bus_off_ticks);
+        sda_high |= scl_high;
+        scl_high |= sda_low;
+        sda_low |= scl_low;
+        scl_low = sda_low;
     }
+
+    port_out(p_sda, sda_low);
+    port_out(p_scl, scl_low);
+    (void) hwtimer_wait_until(tmr, *fall_time + low_period_ticks);
+    port_out(p_scl, scl_high);
+    wait_for_clock_high(ctx, fall_time, bit_time);
+    port_out(p_sda, sda_high);
+    hwtimer_delay(tmr, bus_off_ticks);
 }
 
 /** Transmit 8 bits of data, then read the ack back from the slave and return
@@ -251,7 +244,8 @@ static void stop_bit(
 static uint32_t tx8(
         const i2c_master_t *ctx,
         uint32_t data,
-        uint32_t *fall_time) {
+        uint32_t *fall_time)
+{
     // Data is transmitted MSB first
     data = bitrev(data) >> 24;
     for (size_t i = 8; i != 0; i--) {
@@ -266,24 +260,30 @@ i2c_res_t i2c_master_read(
         uint8_t device,
         uint8_t buf[],
         size_t m,
-        int send_stop_bit) {
+        int send_stop_bit)
+{
     i2c_res_t result;
-    const uint32_t SCL_HIGH = ctx->scl_high;
-    const uint32_t SDA_HIGH = ctx->sda_high;
     const port_t p_scl = ctx->p_scl;
     const port_t p_sda = ctx->p_sda;
     const hwtimer_t tmr = ctx->tmr;
     const uint32_t bit_time = ctx->bit_time;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
     const uint32_t three_quarter_bit_time = ctx->three_quarter_bit_time;
-    const uint32_t sda_other_bits_mask = ctx->sda_other_bits_mask;
-    const uint32_t scl_other_bits_mask = ctx->scl_other_bits_mask;
+    uint32_t scl_low = ctx->scl_low;
+    uint32_t scl_high = ctx->scl_high;
+    uint32_t sda_low = ctx->sda_low;
+    uint32_t sda_high = ctx->sda_high;
     uint32_t fall_time = ctx->last_fall_time;
 
     start_bit(ctx, &fall_time);
 
     uint32_t ack = tx8(ctx, (device << 1) | 1, &fall_time);
     result = (ack == 0) ? I2C_ACK : I2C_NACK;
+
+    if (p_scl == p_sda) {
+        scl_low |= sda_high;
+        sda_high |= scl_high;
+    }
 
     if (result == I2C_ACK) {
         for (size_t j = 0; j < m; j++) {
@@ -294,30 +294,26 @@ i2c_res_t i2c_master_read(
             }
             buf[j] = data;
 
-            uint32_t sda = SDA_LOW;
+            uint32_t sda;
             if (j == m-1) {
-              sda = SDA_HIGH;
+              sda = ctx->sda_high;
+            } else {
+              sda = ctx->sda_low;
             }
 
             if (p_scl == p_sda) {
-                port_out(p_scl, SCL_LOW  | sda | scl_other_bits_mask);
-                (void) hwtimer_wait_until(tmr, fall_time + low_period_ticks);
-                port_out(p_scl, SCL_HIGH | sda | scl_other_bits_mask);
-                wait_for_clock_high(ctx, &fall_time, three_quarter_bit_time);
-                fall_time += bit_time;
-                (void) hwtimer_wait_until(tmr, fall_time);
-                port_out(p_scl, SCL_LOW  | SDA_HIGH | scl_other_bits_mask);
-            } else {
-                port_out(p_sda, sda      | sda_other_bits_mask);
-                port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
-                (void) hwtimer_wait_until(tmr, fall_time + low_period_ticks);
-                port_out(p_scl, SCL_HIGH | scl_other_bits_mask);
-                wait_for_clock_high(ctx, &fall_time, three_quarter_bit_time);
-                fall_time += bit_time;
-                (void) hwtimer_wait_until(tmr, fall_time);
-                port_out(p_sda, SDA_HIGH | sda_other_bits_mask);
-                port_out(p_scl, SCL_LOW  | scl_other_bits_mask);
+                sda |= ctx->scl_low;
+                scl_high = ctx->scl_high | sda;
             }
+
+            port_out(p_sda, sda);
+            (void) hwtimer_wait_until(tmr, fall_time + low_period_ticks);
+            port_out(p_scl, scl_high);
+            wait_for_clock_high(ctx, &fall_time, three_quarter_bit_time);
+            fall_time += bit_time;
+            (void) hwtimer_wait_until(tmr, fall_time);
+            port_out(p_sda, sda_high);
+            port_out(p_scl, scl_low);
         }
     }
 
@@ -340,7 +336,8 @@ i2c_res_t i2c_master_write(
         uint8_t buf[],
         size_t n,
         size_t *num_bytes_sent,
-        int send_stop_bit) {
+        int send_stop_bit)
+{
     i2c_res_t result;
     uint32_t fall_time = ctx->last_fall_time;
 
@@ -372,7 +369,8 @@ i2c_res_t i2c_master_write(
 }
 
 void i2c_master_stop_bit_send(
-        i2c_master_t *ctx) {
+        i2c_master_t *ctx)
+{
     uint32_t fall_time = ctx->last_fall_time;
     stop_bit(ctx, &fall_time);
     ctx->stopped = 1;
@@ -390,7 +388,8 @@ void i2c_master_init(
         const uint32_t sda_bit_position,
         const uint32_t sda_other_bits_mask,
         hwtimer_t tmr,
-        const unsigned kbits_per_second) {
+        const unsigned kbits_per_second)
+{
     memset(ctx, 0, sizeof(i2c_master_t));
 
     if (tmr != 0) {
@@ -402,13 +401,13 @@ void i2c_master_init(
 
     ctx->p_scl = p_scl;
     ctx->p_sda = p_sda;
-    ctx->scl_bit_position = scl_bit_position;
-    ctx->scl_other_bits_mask = scl_other_bits_mask;
-    ctx->sda_bit_position = sda_bit_position;
-    ctx->sda_other_bits_mask = sda_other_bits_mask;
 
-    ctx->scl_high = BIT_MASK(ctx->scl_bit_position);
-    ctx->sda_high = BIT_MASK(ctx->sda_bit_position);
+    ctx->scl_mask = BIT_MASK(scl_bit_position);
+    ctx->sda_mask = BIT_MASK(sda_bit_position);
+    ctx->scl_high = ctx->scl_mask | scl_other_bits_mask;
+    ctx->sda_high = ctx->sda_mask | sda_other_bits_mask;
+    ctx->scl_low = scl_other_bits_mask;
+    ctx->sda_low = sda_other_bits_mask;
 
     ctx->kbits_per_second = kbits_per_second;
     ctx->bit_time = BIT_TIME(kbits_per_second);
@@ -425,17 +424,18 @@ void i2c_master_init(
     port_write_control_word(p_scl, XS1_SETC_DRIVE_PULL_UP);
 
     if (p_scl == p_sda) {
-        port_out(p_scl, ctx->scl_high | ctx->sda_high | ctx->scl_other_bits_mask);
+        port_out(p_scl, ctx->scl_high | ctx->sda_high);
     } else {
         port_enable(p_sda);
         port_write_control_word(p_sda, XS1_SETC_DRIVE_PULL_UP);
-        port_out(p_scl, ctx->scl_high | ctx->scl_other_bits_mask);
-        port_out(p_sda, ctx->sda_high | ctx->sda_other_bits_mask);
+        port_out(p_scl, ctx->scl_high);
+        port_out(p_sda, ctx->sda_high);
     }
 }
 
 void i2c_master_shutdown(
-        i2c_master_t *ctx) {
+        i2c_master_t *ctx)
+{
     if (ctx->tmr != 0) {
         hwtimer_free(ctx->tmr);
     }
