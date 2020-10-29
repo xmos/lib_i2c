@@ -26,16 +26,19 @@ int ack_sequence[7] = {I2C_SLAVE_ACK, I2C_SLAVE_ACK, I2C_SLAVE_NACK,
                        I2C_SLAVE_NACK,
                        I2C_SLAVE_ACK, I2C_SLAVE_NACK};
 
+I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_ack_read_req(void *app_data) {
     printstr("xCORE got start of read transaction\n");
     return I2C_SLAVE_ACK;
 }
 
+I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_ack_write_req(void *app_data) {
     printstr("xCORE got start of write transaction\n");
     return I2C_SLAVE_ACK;
 }
 
+I2C_CALLBACK_ATTR
 uint8_t i2c_master_req_data(void *app_data) {
     int data = test_data[i];
     printf("xCORE sending: 0x%X\n", data);
@@ -46,6 +49,7 @@ uint8_t i2c_master_req_data(void *app_data) {
     return data;
 }
 
+I2C_CALLBACK_ATTR
 i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
     printf("xCORE got data: 0x%X\n", data);
     if (data == 0xff) {
@@ -54,12 +58,14 @@ i2c_slave_ack_t i2c_master_sent_data(void *app_data, uint8_t data) {
     return ack_sequence[ack_index++];
 }
 
+I2C_CALLBACK_ATTR
 void i2c_stop_bit(void *app_data) {
     // The stop_bit function is timing critical. Needs to use printstr to meet
     // timing and detect the start bit
     printstr("xCORE got stop bit\n");
 }
 
+I2C_CALLBACK_ATTR
 int i2c_shutdown(void *app_data) {
     return 0;
 }
