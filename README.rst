@@ -32,7 +32,7 @@ Features
 Software version and dependencies
 .................................
 
-For a list of direct dependencies, look for DEPENDENT_MODULES in lib_xxx/module_build_info.
+For a list of direct dependencies, look for DEPENDENT_MODULES in lib_i2c/module_build_info.
 
 Related application notes
 .........................
