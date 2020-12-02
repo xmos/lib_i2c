@@ -48,6 +48,7 @@ struct i2c_master_struct {
     uint32_t bus_off_ticks;
 
     uint32_t last_fall_time;
+    int interrupt_state;
     int stopped;
 };
 
