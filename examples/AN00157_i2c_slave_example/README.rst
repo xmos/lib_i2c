@@ -6,8 +6,8 @@ How to use the I2C slave library
 Summary
 -------
 
-Required tools and libraries
-............................
+Software dependencies
+.....................
 
 For a list of direct dependencies, look for USED_MODULES in the Makefile.
 
