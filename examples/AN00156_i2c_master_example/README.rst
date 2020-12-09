@@ -1,9 +1,5 @@
-.. |I2C| replace:: I\ :sup:`2`\ C
-
 How to use the I2C master library
 =================================
-
-.. version:: 1.0.3
 
 Summary
 -------
@@ -11,7 +7,8 @@ Summary
 Required tools and libraries
 ............................
 
-.. appdeps::
+For a list of direct dependencies, look for USED_MODULES in the Makefile.
+
 
 Required hardware
 .................
