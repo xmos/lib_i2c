@@ -1,4 +1,4 @@
-.. |I2C| replace:: I\ :sup:`2`\ C
+.. include:: ../../README.rst
 
 |newpage|
 
