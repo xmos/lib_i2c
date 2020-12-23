@@ -20,11 +20,18 @@ APP_NAME =
 COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 XCC_FLAGS_xs1 = $(COMMON_FLAGS)
 XCC_FLAGS_xs2 = $(COMMON_FLAGS)
+XCC_FLAGS_xcoreai = $(COMMON_FLAGS)
+
+# The TARGET variable determines what target system the application is
+# compiled for. It either refers to an XN file in the source directories
+# or a valid argument for the --target option when compiling.
 
 ifeq ($(findstring xs1, $(CONFIG)), xs1)
   TARGET = SLICEKIT-L16
-else
+else ifeq ($(findstring xs2, $(CONFIG)), xs2)
   TARGET = XCORE-200-EXPLORER
+else ifeq ($(findstring xcoreai, $(CONFIG)), xcoreai)
+  TARGET = XCORE-AI-EXPLORER
 endif
 
 # The USED_MODULES variable lists other module used by the application.
