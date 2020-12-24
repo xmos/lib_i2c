@@ -12,7 +12,7 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-ARCHS = xs1 xs2
+ARCHS = xs1 xs2 xcoreai
 SPEEDS = 10 100 400
 STOPS = stop no_stop
 

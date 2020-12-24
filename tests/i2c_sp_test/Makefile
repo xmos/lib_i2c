@@ -17,21 +17,23 @@ COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 # The TARGET variable determines what target system the application is
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
+ARCHS = xs2 xcoreai
+SPEEDS = 10 100 400
+STOPS = stop no_stop
 
-XCC_FLAGS_400_stop_xs2        = $(COMMON_FLAGS) -DSPEED=400 -DSTOP=1
-XCC_FLAGS_400_stop_xcoreai    = $(COMMON_FLAGS) -DSPEED=400 -DSTOP=1
-XCC_FLAGS_400_no_stop_xs2     = $(COMMON_FLAGS) -DSPEED=400 -DSTOP=0
-XCC_FLAGS_400_no_stop_xcoreai = $(COMMON_FLAGS) -DSPEED=400 -DSTOP=0
-XCC_FLAGS_100_stop_xs2        = $(COMMON_FLAGS) -DSPEED=100 -DSTOP=1
-XCC_FLAGS_100_stop_xcoreai    = $(COMMON_FLAGS) -DSPEED=100 -DSTOP=1
-XCC_FLAGS_100_no_stop_xs2     = $(COMMON_FLAGS) -DSPEED=100 -DSTOP=0
-XCC_FLAGS_100_no_stop_xcoreai = $(COMMON_FLAGS) -DSPEED=100 -DSTOP=0
-XCC_FLAGS_10_stop_xs2         = $(COMMON_FLAGS) -DSPEED=10 -DSTOP=1
-XCC_FLAGS_10_stop_xcoreai     = $(COMMON_FLAGS) -DSPEED=10 -DSTOP=1
-XCC_FLAGS_10_no_stop_xs2      = $(COMMON_FLAGS) -DSPEED=10 -DSTOP=0
-XCC_FLAGS_10_no_stop_xcoreai  = $(COMMON_FLAGS) -DSPEED=10 -DSTOP=0
+COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
-XCC_FLAGS_tx_only_no_stop_xcoreai   = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=0 -DSPEED=400 -DSTOP=0
+stop_val = 1
+no_stop_val = 0
+
+define create_flags
+XCC_FLAGS_$(1)_$(2)_$(3) = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=$(1) -DSTOP=$$($(2)_val)
+endef
+
+$(foreach arch,$(ARCHS),\
+  $(foreach speed,$(SPEEDS),\
+    $(foreach stop,$(STOPS),\
+        $(eval $(call create_flags,$(speed),$(stop),$(arch))))))
 
 ifeq ($(findstring xs2, $(CONFIG)), xs2)
   TARGET = XCORE-200-EXPLORER
