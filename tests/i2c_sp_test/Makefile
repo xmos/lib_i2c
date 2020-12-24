@@ -14,7 +14,13 @@ APP_NAME =
 
 COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
-ARCHS = xs2 xcoreai
+XCOREAI ?= 0
+ifeq ($(XCOREAI),0)
+  ARCHS = xs2
+else
+  ARCHS = xs2 xcoreai
+endif
+
 SPEEDS = 10 100 400
 STOPS = stop no_stop
 
@@ -35,7 +41,7 @@ $(foreach arch,$(ARCHS),\
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
 
-ifeq ($(findstring xs2, $(CONFIG)), xs2)
+ifeq  ($(findstring xs2, $(CONFIG)), xs2)
   TARGET = XCORE-200-EXPLORER
 else ifeq ($(findstring xcoreai, $(CONFIG)), xcoreai)
   TARGET = XCORE-AI-EXPLORER
