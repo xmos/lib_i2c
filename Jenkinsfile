@@ -53,6 +53,11 @@ pipeline {
         }
       }
     }
+    post {
+      cleanup {
+        xcoreCleanSandbox()
+      }
+    }
   }
   post {
     success {
