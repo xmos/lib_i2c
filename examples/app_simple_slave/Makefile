@@ -7,7 +7,7 @@ ifeq ($(XCOREAI),0)
 TARGET = XCORE-200-EXPLORER
 else
 TARGET = XCORE-AI-EXPLORER
-endif:
+endif
 
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to
