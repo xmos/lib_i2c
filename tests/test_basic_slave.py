@@ -1,11 +1,11 @@
 # Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
-#import xmostest
+import xmostest
 from i2c_slave_checker import I2CSlaveChecker
 import os
 
 
 def do_slave_test(speed, level):
-    #resources = xmostest.request_resource("xsim")
+    resources = xmostest.request_resource("xsim")
 
     binary = 'i2c_slave_test/bin/xs1/i2c_slave_test.xe'
 
@@ -20,18 +20,18 @@ def do_slave_test(speed, level):
                                ("w", 0x3c, [0x22, 0xff])],
                                speed = speed)
 
-    #tester = xmostest.ComparisonTester(open('basic_slave_test.expect'),
-    #                                 'lib_i2c', 'i2c_slave_sim_tests',
-    #                                 'basic_test', {'speed':speed},
-    #                                 regexp=True)
+    tester = xmostest.ComparisonTester(open('basic_slave_test.expect'),
+                                     'lib_i2c', 'i2c_slave_sim_tests',
+                                     'basic_test', {'speed':speed},
+                                     regexp=True)
 
     tester.set_min_testlevel(level)
 
-    #xmostest.run_on_simulator(resources['xsim'], binary,
-    #                         simthreads = [checker],
-    #                          simargs=['--weak-external-drive'],
-    #                          suppress_multidrive_messages = True,
-    #                          tester = tester)
+    xmostest.run_on_simulator(resources['xsim'], binary,
+                             simthreads = [checker],
+                              simargs=['--weak-external-drive'],
+                              suppress_multidrive_messages = True,
+                              tester = tester)
 
 def runtest():
     do_slave_test(400, 'smoke')
