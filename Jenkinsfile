@@ -52,10 +52,10 @@ pipeline {
           }
         }
       }
-    }
-    post {
-      cleanup {
-        xcoreCleanSandbox()
+      post {
+        cleanup {
+          xcoreCleanSandbox()
+        }
       }
     }
   }
