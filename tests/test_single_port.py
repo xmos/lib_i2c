@@ -6,7 +6,7 @@ import os
 def do_sp_test(stop, speed):
     resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_sp_test/bin/%(speed)d_%(stop)s_xs2.xe' % {
+    binary = 'i2c_sp_test/bin/%(speed)d_%(stop)s_xs2/i2c_sp_test_(speed)d_%(stop)s_xs2.xe' % {
       'speed' : speed,
       'stop'  : stop
     }

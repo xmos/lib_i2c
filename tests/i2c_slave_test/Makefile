@@ -5,14 +5,12 @@ XCOREAI ?= 0
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
 ifeq ($(XCOREAI),0)
-XCC_FLAGS_xs1 = $(BUILD_FLAGS)
-TARGET = SLICEKIT-L16
+  XCC_FLAGS_xs1 = $(BUILD_FLAGS)
+  TARGET = SLICEKIT-L16
 else
-XCC_FLAGS_xcoreai = $(BUILD_FLAGS)
-TARGET = XCORE-AI-EXPLORER
+  XCC_FLAGS_xcoreai = $(BUILD_FLAGS)
+  TARGET = XCORE-AI-EXPLORER
 endif
-
-
 
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to
