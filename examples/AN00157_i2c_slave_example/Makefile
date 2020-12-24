@@ -6,22 +6,20 @@
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-XCC_COMMON = -O2 -g -DDEBUG_PRINT_ENABLE=1 -report
+BUILD_FLAGS = -O2 -g -DDEBUG_PRINT_ENABLE=1 -report
 
-XCC_FLAGS_xs1 = $(COMMON_FLAGS)
-XCC_FLAGS_xs2 = $(COMMON_FLAGS)
-XCC_FLAGS_xcoreai = $(COMMON_FLAGS)
-
+XCOREAI ?= 0
 # The TARGET variable determines what target system the application is
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
-ifeq ($(findstring xs1, $(CONFIG)), xs1)
-  TARGET = SLICEKIT-L16
-else ifeq ($(findstring xs2, $(CONFIG)), xs2)
-  TARGET = XCORE-200-EXPLORER
-else ifeq ($(findstring xcoreai, $(CONFIG)), xcoreai)
-  TARGET = XCORE-AI-EXPLORER
+ifeq ($(XCOREAI),0)
+XCC_FLAGS_xs1 = $(BUILD_FLAGS)
+TARGET = SLICEKIT-L16
+else
+XCC_FLAGS_xcoreai = $(BUILD_FLAGS)
+TARGET = XCORE-AI-EXPLORER
 endif
+
 
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to

@@ -14,26 +14,26 @@ APP_NAME =
 
 COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
-# The TARGET variable determines what target system the application is
-# compiled for. It either refers to an XN file in the source directories
-# or a valid argument for the --target option when compiling.
 ARCHS = xs2 xcoreai
 SPEEDS = 10 100 400
 STOPS = stop no_stop
 
-COMMON_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
 stop_val = 1
 no_stop_val = 0
 
 define create_flags
-XCC_FLAGS_$(1)_$(2)_$(3) = $(COMMON_FLAGS) -DENABLE_TX=1 -DENABLE_RX=1 -DSPEED=$(1) -DSTOP=$$($(2)_val)
+XCC_FLAGS_$(1)_$(2)_$(3) = $(COMMON_FLAGS) -DSPEED=$(1) -DSTOP=$$($(2)_val)
 endef
 
 $(foreach arch,$(ARCHS),\
   $(foreach speed,$(SPEEDS),\
     $(foreach stop,$(STOPS),\
         $(eval $(call create_flags,$(speed),$(stop),$(arch))))))
+
+# The TARGET variable determines what target system the application is
+# compiled for. It either refers to an XN file in the source directories
+# or a valid argument for the --target option when compiling.
 
 ifeq ($(findstring xs2, $(CONFIG)), xs2)
   TARGET = XCORE-200-EXPLORER

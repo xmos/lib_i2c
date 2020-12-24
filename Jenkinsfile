@@ -1,43 +1,56 @@
-@Library('xmos_jenkins_shared_library@v0.14.2') _
+@Library('xmos_jenkins_shared_library@v0.15.1') _
 
 getApproval()
 
 pipeline {
-  agent {
-    label 'x86_64&&brew&&macOS'
-  }
-  environment {
-    REPO = 'lib_i2c'
-    VIEW = "${env.JOB_NAME.contains('PR-') ? REPO+'_'+env.CHANGE_TARGET : REPO+'_'+env.BRANCH_NAME}"
-  }
-  options {
-    skipDefaultCheckout()
-  }
+  agent none
+  //Tools for AI verif stage. Tools for standard stage in view file
+  parameters {
+     string(
+       name: 'TOOLS_VERSION',
+       defaultValue: '15.0.2',
+       description: 'The tools version to build with (check /projects/tools/ReleasesTools/)'
+     )
+   }
   stages {
-    stage('Get view') {
-      steps {
-        xcorePrepareSandbox("${VIEW}", "${REPO}")
+    stage('Standard build and XS2 tests') {
+      agent {
+        label 'x86_64&&brew&&macOS'
       }
-    }
-    stage('Library checks') {
-      steps {
-        xcoreLibraryChecks("${REPO}")
+      environment {
+        REPO = 'lib_i2c'
+        VIEW = getViewName(REPO)
       }
-    }
-    stage('xCORE builds') {
-      steps {
-        dir("${REPO}") {
-          xcoreAllAppsBuild('examples')
-          xcoreAllAppNotesBuild('examples')
-          dir("${REPO}") {
-            runXdoc('doc')
+      options {
+        skipDefaultCheckout()
+      }
+      stages {
+        stage('Get view') {
+          steps {
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
           }
         }
-      }
-    }
-    stage('Tests') {
-      steps {
-        runXmostest("${REPO}", 'tests')
+        stage('Library checks') {
+          steps {
+             xcoreLibraryChecks("${REPO}")
+          }
+        }
+        stage('xCORE builds') {
+          steps {
+            dir("${REPO}") {
+              xcoreAllAppsBuild('examples')
+              xcoreAllAppNotesBuild('examples')
+              dir("${REPO}") {
+                runXdoc('doc')
+              }
+            }
+          }
+        }
+        stage('Tests') {
+          steps {
+            runXmostest("${REPO}", 'tests')
+          }
+        }
       }
     }
   }
