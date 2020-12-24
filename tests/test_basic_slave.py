@@ -28,7 +28,7 @@ def do_slave_test(speed, level):
     tester.set_min_testlevel(level)
 
     xmostest.run_on_simulator(resources['xsim'], binary,
-                             simthreads = [checker],
+                              simthreads = [checker],
                               simargs=['--weak-external-drive'],
                               suppress_multidrive_messages = True,
                               tester = tester)
