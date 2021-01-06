@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.15.1') _
+@Library('xmos_jenkins_shared_library@feature/support_xcoreai') _
 
 getApproval()
 
