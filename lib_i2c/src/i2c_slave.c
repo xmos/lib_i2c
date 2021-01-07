@@ -1,4 +1,4 @@
-// Copyright (c) 2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2021, XMOS Ltd, All rights reserved
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -304,4 +304,7 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
             continue;
         }
     }
+
+    port_disable(p_scl);
+    port_disable(p_sda);
 }

@@ -1,9 +1,19 @@
-// Copyright (c) 2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2021, XMOS Ltd, All rights reserved
 #ifndef _i2c_c_reg_h_
 #define _i2c_c_reg_h_
 
 #include <string.h>
 #include "i2c.h"
+
+/**
+ * This type is used by the supplementary I2C register read/write functions to
+ * report back on whether the operation was a success or not.
+ */
+typedef enum {
+  I2C_REGOP_SUCCESS,     /**< the operation was successful */
+  I2C_REGOP_DEVICE_NACK, /**< the operation was NACKed when sending the device address, so either the device is missing or busy */
+  I2C_REGOP_INCOMPLETE,  /**< the operation was NACKed halfway through by the slave */
+} i2c_regop_res_t;
 
 /** Read an 8-bit register on a slave device.
  *

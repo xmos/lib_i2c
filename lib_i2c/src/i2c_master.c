@@ -1,4 +1,4 @@
-// Copyright (c) 2011-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2021, XMOS Ltd, All rights reserved
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
@@ -315,9 +315,9 @@ static uint32_t tx8(
 
 i2c_res_t i2c_master_read(
         i2c_master_t *ctx,
-        uint8_t device,
+        uint8_t device_addr,
         uint8_t buf[],
-        size_t m,
+        size_t n,
         int send_stop_bit)
 {
     i2c_res_t result;
@@ -337,7 +337,7 @@ i2c_res_t i2c_master_read(
 
     start_bit(ctx, &fall_time);
 
-    uint32_t ack = tx8(ctx, (device << 1) | 1, &fall_time);
+    uint32_t ack = tx8(ctx, (device_addr << 1) | 1, &fall_time);
     result = (ack == 0) ? I2C_ACK : I2C_NACK;
 
     if (p_scl == p_sda) {
@@ -346,7 +346,7 @@ i2c_res_t i2c_master_read(
     }
 
     if (result == I2C_ACK) {
-        for (size_t j = 0; j < m; j++) {
+        for (size_t j = 0; j < n; j++) {
             unsigned char data = 0;
             for (int i = 8; i != 0; i--) {
                 uint32_t temp = high_pulse_sample(ctx, &fall_time);
@@ -355,7 +355,7 @@ i2c_res_t i2c_master_read(
             buf[j] = data;
 
             uint32_t sda;
-            if (j == m-1) {
+            if (j == n-1) {
               sda = ctx->sda_high;
             } else {
               sda = ctx->sda_low;
@@ -394,7 +394,7 @@ i2c_res_t i2c_master_read(
 
 i2c_res_t i2c_master_write(
         i2c_master_t *ctx,
-        uint8_t device,
+        uint8_t device_addr,
         uint8_t buf[],
         size_t n,
         size_t *num_bytes_sent,
@@ -407,7 +407,7 @@ i2c_res_t i2c_master_write(
     interrupt_disable();
 
     start_bit(ctx, &fall_time);
-    uint32_t ack = tx8(ctx, (device << 1) | 0, &fall_time);
+    uint32_t ack = tx8(ctx, (device_addr << 1) | 0, &fall_time);
 
     size_t j = 0;
     for (; j < n && ack == 0; j++) {
@@ -471,6 +471,7 @@ void i2c_master_init(
     } else {
         ctx->tmr = hwtimer_alloc();
         xassert(ctx->tmr != 0);
+        ctx->tmr_allocated = 1;
     }
 
     ctx->p_scl = p_scl;
@@ -510,7 +511,17 @@ void i2c_master_init(
 void i2c_master_shutdown(
         i2c_master_t *ctx)
 {
-    if (ctx->tmr != 0) {
+    if (ctx->tmr_allocated) {
         hwtimer_free(ctx->tmr);
+        ctx->tmr_allocated = 0;
     }
+
+    if (ctx->p_sda != 0) {
+        port_disable(ctx->p_sda);
+    }
+    if (ctx->p_scl != 0 && ctx->p_scl != ctx->p_sda) {
+        port_disable(ctx->p_scl);
+    }
+    ctx->p_sda = 0;
+    ctx->p_scl = 0;
 }

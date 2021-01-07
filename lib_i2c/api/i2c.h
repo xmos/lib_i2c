@@ -1,4 +1,4 @@
-// Copyright (c) 2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2021, XMOS Ltd, All rights reserved
 #ifndef _i2c_c_h_
 #define _i2c_c_h_
 
@@ -7,26 +7,26 @@
 #include <xcore/clock.h>
 #include <xcore/hwtimer.h>
 
-typedef enum {
-  I2C_NACK,        ///< the slave has NACKed the last byte
-  I2C_ACK,         ///< the slave has ACKed the last byte
-  I2C_STARTED,     ///< the requested I2C transaction has started
-  I2C_NOT_STARTED  ///< the requested I2C transaction could not start
-} i2c_res_t;
-
-/** This type is used by the supplementary I2C register read/write functions to
- *  report back on whether the operation was a success or not.
+/**
+ * Status codes for I2C master operations
  */
 typedef enum {
-  I2C_REGOP_SUCCESS,     ///< the operation was successful
-  I2C_REGOP_DEVICE_NACK, ///< the operation was NACKed when sending the device address, so either the device is missing or busy
-  I2C_REGOP_INCOMPLETE,  ///< the operation was NACKed halfway through by the slave
-  I2C_REGOP_STARTED,     ///< the operation was started
-  I2C_REGOP_NOT_STARTED  ///< the operation could not start
-} i2c_regop_res_t;
+  I2C_NACK,        /**< the slave has NACKed the last byte */
+  I2C_ACK,         /**< the slave has ACKed the last byte */
+  I2C_STARTED,     /**< the requested I2C transaction has started */
+  I2C_NOT_STARTED  /**< the requested I2C transaction could not start */
+} i2c_res_t;
 
+/**
+ * Type representing an I2C master context
+ */
 typedef struct i2c_master_struct i2c_master_t;
 
+/**
+ * Struct to hold an I2C master context.
+ *
+ * The members in this struct should not be accessed directly.
+ */
 struct i2c_master_struct {
     port_t p_scl;
     uint32_t scl_mask;
@@ -38,6 +38,7 @@ struct i2c_master_struct {
     uint32_t scl_low;
     uint32_t sda_low;
     hwtimer_t tmr;
+    int tmr_allocated;
     unsigned kbits_per_second;
 
     uint32_t bit_time;
@@ -52,25 +53,95 @@ struct i2c_master_struct {
     int stopped;
 };
 
+/**
+ * Writes data to an I2C bus as a master.
+ *
+ * \param ctx             the I2C master context to use
+ * \param device_addr     the address of the slave device to write to.
+ * \param buf             the buffer containing data to write.
+ * \param n               the number of bytes to write.
+ * \param num_bytes_sent  the function will set this value to the
+ *                        number of bytes actually sent. On success, this
+ *                        will be equal to ``n`` but it will be less if the
+ *                        slave sends an early NACK on the bus and the
+ *                        transaction fails.
+ * \param send_stop_bit   if this is non-zero then a stop bit
+ *                        will be sent on the bus after the transaction.
+ *                        This is usually required for normal operation. If
+ *                        this parameter is zero then no stop bit will
+ *                        be omitted. In this case, no other task can use
+ *                        the component until a stop bit has been sent.
+ *
+ * \returns               ``I2C_ACK`` if the write was acknowledged by the slave
+ *                        device, otherwise ``I2C_NACK``.
+ */
 i2c_res_t i2c_master_write(
         i2c_master_t *ctx,
-        uint8_t device,
+        uint8_t device_addr,
         uint8_t buf[],
         size_t n,
         size_t *num_bytes_sent,
         int send_stop_bit);
 
+/**
+ * Reads data from an I2C bus as a master.
+ *
+ * \param ctx             the I2C master context to use
+ * \param device_addr     the address of the slave device to read from
+ * \param buf             the buffer to fill with data
+ * \param n               the number of bytes to read
+ * \param send_stop_bit   if this is non-zero then a stop bit
+ *                        will be sent on the bus after the transaction.
+ *                        This is usually required for normal operation. If
+ *                        this parameter is zero then no stop bit will
+ *                        be omitted. In this case, no other task can use
+ *                        the component until a stop bit has been sent.
+ *
+ * \returns               ``I2C_ACK`` if the read was acknowledged by the slave
+ *                        device, otherwise ``I2C_NACK``.
+ */
 i2c_res_t i2c_master_read(
         i2c_master_t *ctx,
-        uint8_t device,
+        uint8_t device_addr,
         uint8_t buf[],
-        size_t m,
+        size_t n,
         int send_stop_bit);
 
+/**
+ * Send a stop bit to an I2C bus as a master.
+ *
+ * This function will cause a stop bit to be sent on the bus. It should
+ * be used to complete/abort a transaction if the ``send_stop_bit`` argument
+ * was not set when calling the read() or write() functions.
+ *
+ * \param ctx             the I2C master context to use
+ */
 void i2c_master_stop_bit_send(
         i2c_master_t *ctx);
 
 
+/**
+ * Implements an I2C master device on one or two single or multi-bit ports.
+ *
+ * \param ctx                 the I2C master context to initialize to represent this
+ *                            new I2C master device.
+ * \param p_scl               the port containing SCL. This may be either the same as
+ *                            or different than \p p_sda.
+ * \param scl_bit_position    the bit number of the SCL line on the port \p p_scl.
+ * \param scl_other_bits_mask a value that is ORed into the port value driven to \p p_scl
+ *                            both when SCL is high and low. The bit representing SCL (as
+ *                            well as SDA if they share the same port) must be set to 0.
+ * \param p_sda               the port containing SDA. This may be either the same as
+ *                            or different than \p p_scl.
+ * \param sda_bit_position    the bit number of the SDA line on the port \p p_sda.
+ * \param sda_other_bits_mask a value that is ORed into the port value driven to \p p_sda
+ *                            both when SDA is high and low. The bit representing SDA (as
+ *                            well as SCL if they share the same port) must be set to 0.
+ * \param tmr                 The hardware timer to use for the I2C bus timing. If set to
+ *                            0 then a new hardware timer is allocated.
+ *
+ * \param kbits_per_second    the speed of the I2C bus. The maximum value allowed is 400.
+ */
 void i2c_master_init(
         i2c_master_t *ctx,
         const port_t p_scl,
@@ -82,170 +153,172 @@ void i2c_master_init(
         hwtimer_t tmr,
         const unsigned kbits_per_second);
 
-void i2c_master_shutdown(i2c_master_t *ctx) ;
 
-#define I2C_CALLBACK_ATTR __attribute__((fptrgroup("i2c_callback")))
-
-typedef struct i2c_master_async_struct i2c_master_async_t;
-
-typedef void (*i2c_master_async_operation_complete_t)(i2c_master_async_t *ctx);
-
-struct i2c_master_async_struct {
-    port_t p_scl;
-    port_t p_sda;
-    unsigned kbits_per_second;
-    uint32_t bit_time; /*= BIT_TIME(kbits_per_second);*/
-    uint32_t half_bit_time;
-    uint32_t quarter_bit_time;
-    uint32_t scl_low_time;
-
-    uint32_t scl_high;
-    uint32_t sda_high;
-
-    uint8_t *buf; /* buffer provided by app */
-    hwtimer_t tmr; /* not the shared one, but could be assigned the shared timer? */
-    int state; /* init to IDLE */
-
-    int waiting_for_clock_release;
-    int timer_enabled;
-
-    int optype;
-    uint32_t fall_time;
-    int data;
-    int bitnum;
-    int bytes_sent;
-    int num_bytes;
-    uint32_t event_time;
-    int send_stop_bit;
-    int stopped; /* init to 1 */
-    i2c_res_t res; /* init to I2C_ACK? */
-
-    I2C_CALLBACK_ATTR i2c_master_async_operation_complete_t operation_complete;
-    void *app_data;
-};
-
-i2c_res_t i2c_master_async_write(
-        i2c_master_async_t *ctx,
-        uint8_t device_addr,
-        uint8_t *buf,
-        size_t n,
-        int send_stop_bit);
-
-i2c_res_t i2c_master_async_read(
-        i2c_master_async_t *ctx,
-        uint8_t device_addr,
-        uint8_t *buf,
-        size_t n,
-        int send_stop_bit);
-
-i2c_res_t i2c_master_async_stop_bit_send(
-        i2c_master_async_t *ctx);
-
-i2c_res_t i2c_master_async_result_get(
-        i2c_master_async_t *ctx,
-        size_t *num_bytes_transferred);
-
-void i2c_master_async_init(
-        i2c_master_async_t *ctx,
-        port_t p_scl,
-        port_t p_sda,
-        const unsigned kbits_per_second,
-        void *app_data,
-        i2c_master_async_operation_complete_t op_complete);
+/**
+ * Shuts down the I2C master device.
+ *
+ * \param ctx  the I2C master context to shut down.
+ *
+ * This function disables the ports associated with the I2C master
+ * and deallocates its timer if it was not provided by the application.
+ *
+ * If subsequent reads or writes need to be performed, then i2c_master_init()
+ * must be called again first.
+ */
+void i2c_master_shutdown(i2c_master_t *ctx);
 
 
-/** I2C Slave Response
-*
-*  This type is used to describe the I2C slave response.
-*/
+/**
+ * I2C Slave Response
+ *
+ *  This type is used to describe the I2C slave response.
+ */
 typedef enum i2c_slave_ack_t {
-    I2C_SLAVE_ACK,  ///<< ACK to accept request
-    I2C_SLAVE_NACK, ///<< NACK to ignore request
+    I2C_SLAVE_ACK,  /**<< ACK to accept request */
+    I2C_SLAVE_NACK, /**<< NACK to ignore request */
 } i2c_slave_ack_t;
 
-/** Master has requested a read.
+/**
+ * The bus master has requested a read.
  *
- *  This callback function is called by the component
- *  if the bus master requests a read from this slave device.
+ * This callback function is called if the bus master requests a
+ * read from this slave device.
  *
- *  At this point the slave can choose to accept the request (and
- *  drive an ACK signal back to the master) or not (and drive a NACK
- *  signal).
+ * At this point the slave can choose to accept the request (and
+ * drive an ACK signal back to the master) or not (and drive a NACK
+ * signal).
  *
- *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
- *            ``I2C_SLAVE_NACK``.
+ * \param app_data A pointer to application specific data provided
+ *                 by the application. Used to share data between
+ *                 the callback functions and the application.
+ *
+ * \returns  the callback must return either ``I2C_SLAVE_ACK`` or
+ *           ``I2C_SLAVE_NACK``.
  */
 typedef i2c_slave_ack_t (*ack_read_request_t)(void *app_data);
 
-/** Master has requested a write.
+/**
+ * The bus master has requested a write.
  *
- *  This callback function is called by the component
- *  if the bus master requests a write from this slave device.
+ * This callback function is called if the bus master requests a
+ * write from this slave device.
  *
- *  At this point the slave can choose to accept the request (and
- *  drive an ACK signal back to the master) or not (and drive a NACK
- *  signal).
+ * At this point the slave can choose to accept the request (and
+ * drive an ACK signal back to the master) or not (and drive a NACK
+ * signal).
  *
- *  \returns  the callback must return either ``I2C_SLAVE_ACK`` or
- *            ``I2C_SLAVE_NACK``.
+ * \param app_data A pointer to application specific data provided
+ *                 by the application. Used to share data between
+ *                 the callback functions and the application.
+ *
+ * \returns  the callback must return either ``I2C_SLAVE_ACK`` or
+ *           ``I2C_SLAVE_NACK``.
  */
 typedef i2c_slave_ack_t (*ack_write_request_t)(void *app_data);
 
-/** Master requires data.
+/**
+ * The bus master requires data.
  *
- *  This callback function will be called when the I2C master requires data
- *  from the slave.
+ * This callback function is called when the bus master requires
+ * data from this slave device.
  *
- *  \return   the data to pass to the master.
+ * \param app_data A pointer to application specific data provided
+ *                 by the application. Used to share data between
+ *                 the callback functions and the application.
+ *
+ * \returns a byte of data to send to the master.
  */
 typedef uint8_t (*master_requires_data_t)(void *app_data);
 
-/** Master has sent some data.
+/**
+ * The bus master has sent some data.
  *
- *  This callback function will be called when the I2C master has transferred
- *  a byte of data to the slave.
+ * This callback function is called when the bus master has transferred
+ * a byte of data this slave device.
+ *
+ * \param app_data A pointer to application specific data provided
+ *                 by the application. Used to share data between
+ *                 the callback functions and the application.
+ * \param data     The byte of data received from the bus master.
+ *
+ * \returns  the callback must return either ``I2C_SLAVE_ACK`` or
+ *           ``I2C_SLAVE_NACK``.
  */
 typedef i2c_slave_ack_t (*master_sent_data_t)(void *app_data, uint8_t data);
 
-/** Stop bit.
-*
-*  This callback function will be called by the component when a stop bit
-*  is sent by the master.
-*/
+/**
+ * The bus master has sent a stop bit.
+ *
+ * This callback function is called when a stop bit is sent by the
+ * bus master.
+ *
+ * \param app_data A pointer to application specific data provided
+ *                 by the application. Used to share data between
+ *                 the callback functions and the application.
+ */
 typedef void (*stop_bit_t)(void *app_data);
 
-/** Shutdown the I2C component.
+/**
+ * Shuts down the I2C slave device.
  *
- *  This function will cause the I2C slave task to shutdown and return.
+ * This function can be used to stop the I2C slave task. It will disable
+ * the SCL and SDA ports and then return.
+ *
+ * \param app_data A pointer to application specific data provided
+ *                 by the application. Used to share data between
+ *                 the callback functions and the application.
+ *
+ * \returns - Non-zero if the I2C slave task should shut down.
+ *          - Zero if the I2C slave task should continue running.
  */
 typedef int (*shutdown_t)(void *app_data);
 
 /**
+ * This attribute must be specified on all I2C callback functions
+ * provided by the application.
+ */
+#define I2C_CALLBACK_ATTR __attribute__((fptrgroup("i2c_callback")))
+
+/**
  * Callback group representing callback events that can occur during the
- * operation of the sI2C lave task. Must be initialized by the application
+ * operation of the I2C slave task. Must be initialized by the application
  * prior to passing it to one of the I2C tasks.
  */
 typedef struct {
+    /** Pointer to the application's ack_read_request_t function to be called by the I2C device */
     I2C_CALLBACK_ATTR ack_read_request_t ack_read_request;
+
+    /** Pointer to the application's ack_write_request_t function to be called by the I2C device */
     I2C_CALLBACK_ATTR ack_write_request_t ack_write_request;
+
+    /** Pointer to the application's master_requires_data_t function to be called by the I2C device */
     I2C_CALLBACK_ATTR master_requires_data_t master_requires_data;
+
+    /** Pointer to the application's master_sent_data_t function to be called by the I2C device */
     I2C_CALLBACK_ATTR master_sent_data_t master_sent_data;
+
+    /** Pointer to the application's stop_bit_t function to be called by the I2C device */
     I2C_CALLBACK_ATTR stop_bit_t stop_bit;
+
+    /** Pointer to the application's shutdown_t function to be called by the I2C device */
     I2C_CALLBACK_ATTR shutdown_t shutdown;
     void *app_data;
 } i2c_callback_group_t;
 
-/** I2C slave task.
+/**
+ * I2C slave task.
  *
- *  This function instantiates an i2c_slave component.
+ * This function instantiates an I2C slave device.
  *
- *  \param i2c_cbg     The I2C callback group pointing to the application's
- *                     functions to use for initialization and getting and
- *                     receiving frames. Also points to application specific
- *                     data which will be shared between the callbacks.
- *  \param  p_scl      the SCL port of the I2C bus
- *  \param  p_sda      the SDA port of the I2C bus
- *  \param device_addr the address of the slave device
+ * \param i2c_cbg     The I2C callback group pointing to the application's
+ *                    functions to use for initialization and getting and
+ *                    receiving frames. Also points to application specific
+ *                    data which will be shared between the callbacks.
+ * \param  p_scl      the SCL port of the I2C bus. This should be a 1 bit port. If not,
+ *                    the SCL pin must be at bit 0 and the other bits unused.
+ * \param  p_sda      the SDA port of the I2C bus. This should be a 1 bit port. If not,
+ *                    the SDA pin must be at bit 0 and the other bits unused.
+ * \param device_addr the address of the slave device
  *
  */
 void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
