@@ -302,6 +302,8 @@ typedef struct {
 
     /** Pointer to the application's shutdown_t function to be called by the I2C device */
     I2C_CALLBACK_ATTR shutdown_t shutdown;
+
+    /** Pointer to application specific data which is passed to each callback. */
     void *app_data;
 } i2c_callback_group_t;
 
