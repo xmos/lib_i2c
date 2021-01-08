@@ -26,13 +26,13 @@ pipeline {
     }
     stage('xCORE builds') {
       steps {
-        dir("${REPO}") {
-          xcoreAllAppsBuild('examples')
-          xcoreAllAppNotesBuild('examples')
-          dir("${REPO}") {
-            runXdoc('doc')
-          }
-        }
+        xcoreAllAppsBuild("${REPO}/examples")
+      }
+    }
+    stage('xCORE docs') {
+      steps {
+        xcoreAllAppNotesBuild("${REPO}/examples")
+        runXdoc("${REPO}/${REPO}/doc")
       }
     }
     stage('Tests') {
