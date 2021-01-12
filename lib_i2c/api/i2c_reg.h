@@ -10,36 +10,38 @@
  * report back on whether the operation was a success or not.
  */
 typedef enum {
-  I2C_REGOP_SUCCESS,     /**< the operation was successful */
-  I2C_REGOP_DEVICE_NACK, /**< the operation was NACKed when sending the device address, so either the device is missing or busy */
-  I2C_REGOP_INCOMPLETE,  /**< the operation was NACKed halfway through by the slave */
+  I2C_REGOP_SUCCESS,     /**< The operation was successful. */
+  I2C_REGOP_DEVICE_NACK, /**< The operation was NACKed when sending the device address, so either the device is missing or busy. */
+  I2C_REGOP_INCOMPLETE,  /**< The operation was NACKed halfway through by the slave. */
 } i2c_regop_res_t;
 
-/** Read an 8-bit register on a slave device.
+/**
+ * Read an 8-bit register on a slave device.
  *
- *  This function reads an 8-bit addressed, 8-bit register from the i2c
- *  bus. The function reads data by
- *  transmitting the register addr and then reading the data from the slave
- *  device.
+ * This function reads from an 8-bit addressed, 8-bit register in
+ * an I2C device. The function reads the data by sending the
+ * register address followed reading the register data from the
+ * device at the specified device address.
  *
- *  Note that no stop bit is transmitted between the write and the read.
- *  The operation is performed as one transaction using a repeated start.
+ * Note that no stop bit is transmitted between the write and the read.
+ * The operation is performed as one transaction using a repeated start.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to read from
- *  \param reg         the address of the register to read
- *  \param result      indicates whether the read completed successfully. Will
- *                     be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
- *                     and ``I2C_REGOP_SUCCESS`` on successful completion of the
- *                     read.
+ * \param ctx         A pointer to the I2C master context to use.
+ * \param device_addr The address of the device to read from.
+ * \param reg         The address of the register to read from.
+ * \param result      Indicates whether the read completed successfully. Will
+ *                    be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
+ *                    and ``I2C_REGOP_SUCCESS`` on successful completion of the
+ *                    read.
  *
- *  \returns           the value of the register
+ * \returns           The value of the register.
  */
 inline uint8_t read_reg(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint8_t reg,
-        i2c_regop_res_t *result) {
+        i2c_regop_res_t *result)
+{
     uint8_t buf[1] = {reg};
     size_t bytes_sent = 0;
     i2c_res_t res;
@@ -60,32 +62,33 @@ inline uint8_t read_reg(
     return buf[0];
 }
 
-/** Read an 8-bit register on a slave device from a 16-bit register address.
+/**
+ * Read an 8-bit register on a slave device.
  *
- *  This function reads a 16-bit addressed, 8-bit register from the i2c
- *  bus. The function reads data by
- *  transmitting the register addr and then reading the data from the slave
- *  device.
+ * This function reads from an 16-bit addressed, 8-bit register in
+ * an I2C device. The function reads the data by sending the
+ * register address followed reading the register data from the
+ * device at the specified device address.
  *
- *  Note that no stop bit is transmitted between the write and the read.
- *  The operation is performed as one transaction using a repeated start.
+ * Note that no stop bit is transmitted between the write and the read.
+ * The operation is performed as one transaction using a repeated start.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to read from
- *  \param reg         the 16-bit address of the register to read
- *                     (most significant byte first)
- *  \param result      indicates whether the read completed successfully. Will
- *                     be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
- *                     and ``I2C_REGOP_SUCCESS`` on successful completion of the
- *                     read.
+ * \param ctx         A pointer to the I2C master context to use.
+ * \param device_addr The address of the device to read from.
+ * \param reg         The address of the register to read from.
+ * \param result      Indicates whether the read completed successfully. Will
+ *                    be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
+ *                    and ``I2C_REGOP_SUCCESS`` on successful completion of the
+ *                    read.
  *
- *  \returns           the value of the register
+ * \returns           The value of the register.
  */
 inline uint8_t read_reg8_addr16(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint16_t reg,
-        i2c_regop_res_t *result) {
+        i2c_regop_res_t *result)
+{
     uint8_t buf[2] = {(reg >> 8) & 0xFF, reg & 0xFF};
     size_t bytes_sent = 0;
     i2c_res_t res;
@@ -106,31 +109,33 @@ inline uint8_t read_reg8_addr16(
     return buf[0];
 }
 
-/** Read an 16-bit register on a slave device from a 8-bit register address.
+/**
+ * Read an 16-bit register on a slave device.
  *
- *  This function reads a 8-bit addressed, 16-bit register from the i2c
- *  bus. The function reads data by  transmitting the register addr and
- *  then reading the data from the slave device. It is assumed that the data
- *  is return most significant byte first on the bus.
+ * This function reads from an 8-bit addressed, 16-bit register in
+ * an I2C device. The function reads the data by sending the
+ * register address followed reading the register data from the
+ * device at the specified device address.
  *
- *  Note that no stop bit is transmitted between the write and the read.
- *  The operation is performed as one transaction using a repeated start.
+ * Note that no stop bit is transmitted between the write and the read.
+ * The operation is performed as one transaction using a repeated start.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to read from
- *  \param reg         the address of the register to read
- *  \param result      indicates whether the read completed successfully. Will
- *                     be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
- *                     and ``I2C_REGOP_SUCCESS`` on successful completion of the
- *                     read.
+ * \param ctx         A pointer to the I2C master context to use.
+ * \param device_addr The address of the device to read from.
+ * \param reg         The address of the register to read from.
+ * \param result      Indicates whether the read completed successfully. Will
+ *                    be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
+ *                    and ``I2C_REGOP_SUCCESS`` on successful completion of the
+ *                    read.
  *
- *  \returns           the 16-bit value of the register
+ * \returns           The value of the register.
  */
 inline uint16_t read_reg16_addr8(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint8_t reg,
-        i2c_regop_res_t *result) {
+        i2c_regop_res_t *result)
+{
     uint8_t buf[2] = {reg, 0x00};
     size_t bytes_sent = 0;
     i2c_res_t res;
@@ -151,32 +156,33 @@ inline uint16_t read_reg16_addr8(
     return (uint16_t)((buf[0] << 8 )| buf[1]);
 }
 
-/** Read an 16-bit register on a slave device from a 16-bit register address.
+/**
+ * Read an 16-bit register on a slave device.
  *
- *  This function reads a 16-bit addressed, 16-bit register from the i2c
- *  bus. The function reads data by transmitting the register addr and then
- *  reading the data from the slave device. It is assumed the data is returned
- *  most significant byte first on the bus.
+ * This function reads from an 16-bit addressed, 16-bit register in
+ * an I2C device. The function reads the data by sending the
+ * register address followed reading the register data from the
+ * device at the specified device address.
  *
- *  Note that no stop bit is transmitted between the write and the read.
- *  The operation is performed as one transaction using a repeated start.
+ * Note that no stop bit is transmitted between the write and the read.
+ * The operation is performed as one transaction using a repeated start.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to read from
- *  \param reg         the address of the register to read (most
- *                     significant byte first)
- *  \param result      indicates whether the read completed successfully. Will
- *                     be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
- *                     and ``I2C_REGOP_SUCCESS`` on successful completion of the
- *                     read.
+ * \param ctx         A pointer to the I2C master context to use.
+ * \param device_addr The address of the device to read from.
+ * \param reg         The address of the register to read from.
+ * \param result      Indicates whether the read completed successfully. Will
+ *                    be set to ``I2C_REGOP_DEVICE_NACK`` if the slave NACKed,
+ *                    and ``I2C_REGOP_SUCCESS`` on successful completion of the
+ *                    read.
  *
- *  \returns           the 16-bit value of the register
+ * \returns           The value of the register.
  */
 inline uint16_t read_reg16(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint16_t reg,
-        i2c_regop_res_t *result) {
+        i2c_regop_res_t *result)
+{
     uint8_t buf[2] = {(reg >> 8) & 0xFF, reg & 0xFF};
     size_t bytes_sent = 0;
     i2c_res_t res;
@@ -197,23 +203,29 @@ inline uint16_t read_reg16(
     return (uint16_t)((buf[0] << 8 )| buf[1]);
 }
 
-/** Write an 8-bit register on a slave device.
+/**
+ * Write to an 8-bit register on an I2C device.
  *
- *  This function writes an 8-bit addressed, 8-bit register from the i2c
- *  bus. The function writes data by
- *  transmitting the register addr and then
- *  transmitting the data to the slave device.
+ * This function writes to an 8-bit addressed, 8-bit register in
+ * an I2C device. The function writes the data by sending the
+ * register address followed by the register data to the device
+ * at the specified device address.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to write to
- *  \param reg         the address of the register to write
- *  \param data        the 8-bit value to write
+ * \param ctx          A pointer to the I2C master context to use.
+ * \param device_addr  The address of the device to write to.
+ * \param reg          The address of the register to write to.
+ * \param data         The 8-bit value to write.
+ *
+ * \retval             ``I2C_REGOP_DEVICE_NACK`` if the address is NACKed.
+ * \retval             ``I2C_REGOP_INCOMPLETE`` if not all data was ACKed.
+ * \retval             ``I2C_REGOP_SUCCESS`` on successful completion of the write.
  */
 inline i2c_regop_res_t write_reg(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint8_t reg,
-        uint8_t data) {
+        uint8_t data)
+{
     uint8_t buf[2] = {reg, data};
     size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
@@ -229,24 +241,29 @@ inline i2c_regop_res_t write_reg(
     return reg_res;
 }
 
-/** Write an 8-bit register on a slave device from a 16-bit register address.
+/**
+ * Write to an 8-bit register on an I2C device.
  *
- *  This function writes a 16-bit addressed, 8-bit register from the i2c
- *  bus. The function writes data by
- *  transmitting the register addr and then
- *  transmitting the data to the slave device.
+ * This function writes to a 16-bit addressed, 8-bit register in
+ * an I2C device. The function writes the data by sending the
+ * register address followed by the register data to the device
+ * at the specified device address.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to write to
- *  \param reg         the 16-bit address of the register to write
- *                     (most significant byte first)
- *  \param data        the 8-bit value to write
+ * \param ctx          A pointer to the I2C master context to use.
+ * \param device_addr  The address of the device to write to.
+ * \param reg          The address of the register to write to.
+ * \param data         The 8-bit value to write.
+ *
+ * \retval             ``I2C_REGOP_DEVICE_NACK`` if the address is NACKed.
+ * \retval             ``I2C_REGOP_INCOMPLETE`` if not all data was ACKed.
+ * \retval             ``I2C_REGOP_SUCCESS`` on successful completion of the write.
  */
 inline i2c_regop_res_t write_reg8_addr16(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint16_t reg,
-        uint8_t data) {
+        uint8_t data)
+{
     uint8_t buf[3] = {(reg >> 8) & 0xFF, reg & 0xFF, data};
     size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
@@ -262,27 +279,29 @@ inline i2c_regop_res_t write_reg8_addr16(
     return reg_res;
 }
 
-/** Write an 16-bit register on a slave device from a 8-bit register address.
+/**
+ * Write to a 16-bit register on an I2C device.
  *
- *  This function writes a 8-bit addressed, 16-bit register from the i2c
- *  bus. The function writes data by transmitting the register addr and then
- *  transmitting the data to the slave device.
+ * This function writes to an 8-bit addressed, 16-bit register in
+ * an I2C device. The function writes the data by sending the
+ * register address followed by the register data to the device
+ * at the specified device address.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to write to
- *  \param reg         the address of the register to write
- *  \param data        the 16-bit value to write (most significant byte first)
+ * \param ctx          A pointer to the I2C master context to use.
+ * \param device_addr  The address of the device to write to.
+ * \param reg          The address of the register to write to.
+ * \param data         The 16-bit value to write.
  *
- *  \returns           ``I2C_REGOP_DEVICE_NACK`` if the address is NACKed,
- *                     ``I2C_REGOP_INCOMPLETE`` if not all data was ACKed and
- *                     ``I2C_REGOP_SUCCESS`` on successful completion of the
- *                     write with every byte being ACKed.
+ * \retval             ``I2C_REGOP_DEVICE_NACK`` if the address is NACKed.
+ * \retval             ``I2C_REGOP_INCOMPLETE`` if not all data was ACKed.
+ * \retval             ``I2C_REGOP_SUCCESS`` on successful completion of the write.
  */
 inline i2c_regop_res_t write_reg16_addr8(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint8_t reg,
-        uint16_t data) {
+        uint16_t data)
+{
     uint8_t buf[3] = {reg, (data >> 8) & 0xFF, data & 0xFF};
     size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
@@ -298,29 +317,29 @@ inline i2c_regop_res_t write_reg16_addr8(
     return reg_res;
 }
 
-/** Write an 16-bit register on a slave device from a 16-bit register address.
+/**
+ * Write to a 16-bit register on an I2C device.
  *
- *  This function writes a 16-bit addressed, 16-bit register from the i2c
- *  bus. The function writes data by transmitting the register addr and then
- *  transmitting the data to the slave device.
+ * This function writes to a 16-bit addressed, 16-bit register in
+ * an I2C device. The function writes the data by sending the
+ * register address followed by the register data to the device
+ * at the specified device address.
  *
- *  \param ctx         the I2C master context to use
- *  \param device_addr the address of the slave device to write to
- *  \param reg         the 16-bit address of the register to write
- *                     (most significant byte first)
- *  \param data        the 16-bit value to write (most significant
- *                     byte first)
+ * \param ctx          A pointer to the I2C master context to use.
+ * \param device_addr  The address of the device to write to.
+ * \param reg          The address of the register to write to.
+ * \param data         The 16-bit value to write.
  *
- *  \returns           ``I2C_REGOP_DEVICE_NACK`` if the address is NACKed,
- *                     ``I2C_REGOP_INCOMPLETE`` if not all data was ACKed and
- *                     ``I2C_REGOP_SUCCESS`` on successful completion of the
- *                     write with every byte being ACKed.
+ * \retval             ``I2C_REGOP_DEVICE_NACK`` if the address is NACKed.
+ * \retval             ``I2C_REGOP_INCOMPLETE`` if not all data was ACKed.
+ * \retval             ``I2C_REGOP_SUCCESS`` on successful completion of the write.
  */
 inline i2c_regop_res_t write_reg16(
         i2c_master_t *ctx,
         uint8_t device_addr,
         uint16_t reg,
-        uint16_t data) {
+        uint16_t data)
+{
     uint8_t buf[4] = {(reg >> 8) & 0xFF, reg & 0xFF, (data >> 8) & 0xFF, data & 0xFF};
     size_t bytes_sent = 0;
     i2c_regop_res_t reg_res;
