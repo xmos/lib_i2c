@@ -1,14 +1,16 @@
 BUILD_FLAGS = -O2 -g -save-temps -DDEBUG_PRINT_ENABLE=1 -report
 
 XCOREAI ?= 0
+
+XCC_FLAGS_xs1 = $(BUILD_FLAGS)
+XCC_FLAGS_xcoreai = $(BUILD_FLAGS)
+
 # The TARGET variable determines what target system the application is
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
 ifeq ($(XCOREAI),0)
-  XCC_FLAGS_xs1 = $(BUILD_FLAGS)
   TARGET = SLICEKIT-L16
 else
-  XCC_FLAGS_xcoreai = $(BUILD_FLAGS)
   TARGET = XCORE-AI-EXPLORER
 endif
 
