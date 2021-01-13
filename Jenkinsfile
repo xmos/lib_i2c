@@ -58,8 +58,6 @@ pipeline {
         }
       }
     }
-  }
-  stages {
     stage('Standard build and XS3 tests') {
       agent {
         label 'x86_64&&brew&&macOS'
