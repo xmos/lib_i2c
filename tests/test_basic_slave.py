@@ -4,11 +4,12 @@ from i2c_slave_checker import I2CSlaveChecker
 import os
 
 
-def do_slave_test(speed, level):
+def do_slave_test(arch, speed, level):
     resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_slave_test/bin/xs1/i2c_slave_test.xe'
-
+    binary = 'i2c_slave_test/bin/%(arch)s/i2c_slave_test%(arch)s.xe' % {
+      'arch' : arch
+    }
     checker = I2CSlaveChecker("tile[0]:XS1_PORT_1A",
                               "tile[0]:XS1_PORT_1B",
                               tsequence =
@@ -34,6 +35,7 @@ def do_slave_test(speed, level):
                               tester = tester)
 
 def runtest():
-    do_slave_test(400, 'smoke')
-    do_slave_test(100, 'nightly')
-    do_slave_test(10, 'nightly')
+    for arch in ['xs1']:
+        do_slave_test(arch, 400, 'smoke')
+        do_slave_test(arch, 100, 'nightly')
+        do_slave_test(arch, 10, 'nightly')
