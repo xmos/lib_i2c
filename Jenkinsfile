@@ -59,12 +59,58 @@ pipeline {
       }
     }
   }
+    stage('Standard build and XS3 tests') {
+      agent {
+        label 'x86_64&&brew&&macOS'
+      }
+      environment {
+        REPO = 'lib_i2c'
+        VIEW = getViewName(REPO)
+      }
+      options {
+        skipDefaultCheckout()
+      }
+      stages {
+        stage('Get view') {
+          steps {
+            xcorePrepareSandbox("${VIEW}", "${REPO}")
+          }
+        }
+        stage('Library checks') {
+          steps {
+             xcoreLibraryChecks("${REPO}")
+          }
+        }
+        stage('xCORE builds') {
+          steps {
+            dir("${REPO}") {
+              xcoreAllAppsBuild('examples', '', 'XCOREAI=1')
+              xcoreAllAppNotesBuild('examples', '', 'XCOREAI=1')
+              dir("${REPO}") {
+                runXdoc('doc')
+              }
+            }
+          }
+        }
+        stage('Tests') {
+          steps {
+            runXmostest("${REPO}", 'tests')
+          }
+        }
+      }
+      post {
+        cleanup {
+          xcoreCleanSandbox()
+        }
+      }
+    }
+  }
   post {
     success {
-      updateViewfiles()
-    }
-    cleanup {
-      xcoreCleanSandbox()
+      node("linux") {
+        updateViewfiles()
+        xcoreCleanSandbox()
+      }
     }
   }
 }
