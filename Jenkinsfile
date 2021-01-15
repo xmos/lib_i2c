@@ -46,7 +46,7 @@ pipeline {
         stage('xCORE App Doc builds') {
           steps {
             dir("${REPO}") {
-              runXdoc('doc')
+              runXdoc()
             }
           }
         }
