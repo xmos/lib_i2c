@@ -27,21 +27,33 @@ pipeline {
              xcoreLibraryChecks("${REPO}")
           }
         }
-        stage('xCORE builds') {
+        stage('xCORE App XS2 builds') {
           steps {
             dir("${REPO}") {
               xcoreAllAppsBuild('examples')
               xcoreAllAppNotesBuild('examples')
+            }
+          }
+        }
+        stage('xCORE App XCOREAI builds') {
+          steps {
+            dir("${REPO}") {
               xcoreAllAppsBuild('examples', '', 'XCOREAI=1')
               xcoreAllAppNotesBuild('examples', '', 'XCOREAI=1')
+            }
+          }
+        }
+        stage('xCORE App Doc builds') {
+          steps {
 
               dir("${REPO}") {
                 runXdoc('doc')
               }
             }
           }
+
         }
-        stage('Tests') {
+        stage('Tests XS1, XS2 and XCOREAI') {
           steps {
             runXmostest("${REPO}", 'tests')
           }
