@@ -43,9 +43,9 @@ pipeline {
             }
           }
         }
-        stage('xCORE App Doc builds') {
+        stage('Lib Doc build') {
           steps {
-            dir("${REPO}") {
+            dir("${REPO}"/"${REPO}") {
               runXdoc()
             }
           }
