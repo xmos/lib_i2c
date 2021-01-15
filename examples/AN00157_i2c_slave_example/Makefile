@@ -14,7 +14,7 @@ XCOREAI ?= 0
 # or a valid argument for the --target option when compiling.
 ifeq ($(XCOREAI),0)
 XCC_FLAGS_xs1 = $(BUILD_FLAGS)
-TARGET = SLICEKIT-L16
+TARGET = XCORE-200-EXPLORER
 else
 XCC_FLAGS_xcoreai = $(BUILD_FLAGS)
 TARGET = XCORE-AI-EXPLORER
