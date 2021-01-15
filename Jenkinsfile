@@ -45,13 +45,10 @@ pipeline {
         }
         stage('xCORE App Doc builds') {
           steps {
-
-              dir("${REPO}") {
-                runXdoc('doc')
-              }
+            dir("${REPO}") {
+              runXdoc('doc')
             }
           }
-
         }
         stage('Tests XS1, XS2 and XCOREAI') {
           steps {
