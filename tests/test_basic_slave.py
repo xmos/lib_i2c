@@ -35,7 +35,7 @@ def do_slave_test(arch, speed, level):
                               tester = tester)
 
 def runtest():
-    for arch in ['xs1']:
+    for arch in ['xs1', 'xcoreai']:
         do_slave_test(arch, 400, 'smoke')
         do_slave_test(arch, 100, 'nightly')
         do_slave_test(arch, 10, 'nightly')

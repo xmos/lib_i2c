@@ -39,5 +39,5 @@ def do_test(arch):
 
 def runtest():
   # See BUG 17936 - the xs1 is not fast enough to run this test
-  for arch in ['xs2']:
+  for arch in ['xs2', 'xcoreai']:
     do_test(arch)

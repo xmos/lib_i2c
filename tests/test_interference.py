@@ -38,6 +38,6 @@ def do_master_test(arch, stop):
                               tester = tester)
 
 def runtest():
-  for arch in ['xs1', 'xs2']:
+  for arch in ['xs1', 'xs2', , 'xcoreai']:
     for stop in ['stop', 'no_stop']:
       do_master_test(arch, stop)

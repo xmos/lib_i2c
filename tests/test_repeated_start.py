@@ -28,5 +28,5 @@ def do_test(arch):
                               tester = tester)
 
 def runtest():
-  for arch in ['xs1', 'xs2']:
+  for arch in ['xs1', 'xs2', 'xcoreai']:
     do_test(arch)

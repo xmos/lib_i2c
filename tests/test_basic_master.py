@@ -41,7 +41,7 @@ def do_master_test(arch, stop, speed):
                               tester = tester)
 
 def runtest():
-    for arch in ['xs1', 'xs2']:
+    for arch in ['xs1', 'xs2', 'xcoreai']:
       for stop in ['stop', 'no_stop']:
         for speed in [400, 100, 10]:
           do_master_test(arch, stop, speed)
