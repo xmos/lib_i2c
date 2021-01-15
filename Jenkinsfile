@@ -45,7 +45,7 @@ pipeline {
         }
         stage('Lib Doc build') {
           steps {
-            dir("${REPO}"/"${REPO}") {
+            dir("${REPO}/${REPO}") {
               runXdoc()
             }
           }
