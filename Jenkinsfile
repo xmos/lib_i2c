@@ -30,23 +30,34 @@ pipeline {
         stage('xCORE App XS2 builds') {
           steps {
             dir("${REPO}") {
-              xcoreAllAppsBuild('examples')
-              xcoreAllAppNotesBuild('examples')
+              forAllMatch("${REPO}/examples", "app_*/") { path ->
+                runXmake(path)
+              }
+              forAllMatch("${REPO}/examples", "AN*/") { path ->
+                runXmake(path)
+              }
             }
           }
         }
         stage('xCORE App XCOREAI builds') {
           steps {
             dir("${REPO}") {
-              xcoreAllAppsBuild('examples', '', 'XCOREAI=1')
-              xcoreAllAppNotesBuild('examples', '', 'XCOREAI=1')
+              forAllMatch("${REPO}/examples", "app_*/") { path ->
+                runXmake(path, '', 'XCOREAI=1'))
+              }
+              forAllMatch("${REPO}/examples", "AN*/") { path ->
+                runXmake(path, '', 'XCOREAI=1'))
+              }
             }
           }
         }
-        stage('Lib Doc build') {
+        stage("Docs build') {
           steps {
             dir("${REPO}/${REPO}") {
               runXdoc('doc')
+            }
+            forAllMatch("${REPO}/examples", "AN*/") { path ->
+              runXdoc("${dir}/doc")
             }
           }
         }
