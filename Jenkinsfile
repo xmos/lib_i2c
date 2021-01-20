@@ -47,13 +47,11 @@ pipeline {
             }
           }
         }
-        stage('Docs build') {
+        stage('Doc builds') {
           steps {
-            dir("${REPO}/${REPO}") {
-              runXdoc('doc')
-            }
+            runXdoc("${REPO}/${REPO}/doc")
             forAllMatch("${REPO}/examples", "AN*/") { path ->
-              runXdoc("${dir}/doc")
+              runXdoc("${path}/doc")
             }
           }
         }
