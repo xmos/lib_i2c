@@ -51,7 +51,7 @@ pipeline {
             }
           }
         }
-        stage("Docs build') {
+        stage('Docs build') {
           steps {
             dir("${REPO}/${REPO}") {
               runXdoc('doc')
