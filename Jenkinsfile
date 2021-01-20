@@ -29,25 +29,21 @@ pipeline {
         }
         stage('xCORE App XS2 builds') {
           steps {
-            dir("${REPO}") {
-              forAllMatch("${REPO}/examples", "app_*/") { path ->
-                runXmake(path)
-              }
-              forAllMatch("${REPO}/examples", "AN*/") { path ->
-                runXmake(path)
-              }
+            forAllMatch("${REPO}/examples", "app_*/") { path ->
+              runXmake(path)
+            }
+            forAllMatch("${REPO}/examples", "AN*/") { path ->
+              runXmake(path)
             }
           }
         }
         stage('xCORE App XCOREAI builds') {
           steps {
-            dir("${REPO}") {
-              forAllMatch("${REPO}/examples", "app_*/") { path ->
-                runXmake(path, '', 'XCOREAI=1')
-              }
-              forAllMatch("${REPO}/examples", "AN*/") { path ->
-                runXmake(path, '', 'XCOREAI=1')
-              }
+            forAllMatch("${REPO}/examples", "app_*/") { path ->
+              runXmake(path, '', 'XCOREAI=1')
+            }
+            forAllMatch("${REPO}/examples", "AN*/") { path ->
+              runXmake(path, '', 'XCOREAI=1')
             }
           }
         }
