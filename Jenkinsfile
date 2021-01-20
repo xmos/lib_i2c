@@ -43,10 +43,10 @@ pipeline {
           steps {
             dir("${REPO}") {
               forAllMatch("${REPO}/examples", "app_*/") { path ->
-                runXmake(path, '', 'XCOREAI=1'))
+                runXmake(path, '', 'XCOREAI=1')
               }
               forAllMatch("${REPO}/examples", "AN*/") { path ->
-                runXmake(path, '', 'XCOREAI=1'))
+                runXmake(path, '', 'XCOREAI=1')
               }
             }
           }
