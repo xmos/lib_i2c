@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2013-2021, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include "i2c.h"
 #include "debug_print.h"
@@ -8,7 +8,7 @@ port p_scl = XS1_PORT_1E;
 port p_sda = XS1_PORT_1F;
 
 // FXOS8700CQ register address defines
-#define FXOS8700CQ_I2C_ADDR 0x18
+#define FXOS8700CQ_I2C_ADDR 0x1E
 #define FXOS8700CQ_XYZ_DATA_CFG_REG 0x0E
 #define FXOS8700CQ_CTRL_REG_1 0x2A
 #define FXOS8700CQ_DR_STATUS 0x0
@@ -42,9 +42,7 @@ void accelerometer(client interface i2c_master_if i2c) {
   i2c_regop_res_t result;
 
   // Configure FXOS8700CQ
-  debug_printf("Before write");
   result = i2c.write_reg(FXOS8700CQ_I2C_ADDR, FXOS8700CQ_XYZ_DATA_CFG_REG, 0x01);
-  debug_printf("After write");
 
   if (result != I2C_REGOP_SUCCESS) {
     debug_printf("I2C write reg failed\n");
