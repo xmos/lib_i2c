@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+# Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
@@ -6,7 +6,7 @@ import os
 def do_sp_test(stop, speed):
     resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_sp_test/bin/%(speed)d_%(stop)s/i2c_sp_test_%(speed)d_%(stop)s.xe' % {
+    binary = 'i2c_sp_test/bin/%(speed)d_%(stop)s_xs2/i2c_sp_test_%(speed)d_%(stop)s_xs2.xe' % {
       'speed' : speed,
       'stop'  : stop
     }

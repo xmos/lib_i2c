@@ -1,6 +1,5 @@
-// Copyright (c) 2013-2018, XMOS Ltd, All rights reserved
-
-#ifdef __XS2A__
+// Copyright (c) 2013-2020, XMOS Ltd, All rights reserved
+#if (defined(__XS2A__) || defined(__XS3A__))
 
 #include "i2c.h"
 #include <xs1.h>

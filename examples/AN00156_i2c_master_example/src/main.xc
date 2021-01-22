@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2013-2021, XMOS Ltd, All rights reserved
 #include <xs1.h>
 #include "i2c.h"
 #include "debug_print.h"
@@ -43,6 +43,7 @@ void accelerometer(client interface i2c_master_if i2c) {
 
   // Configure FXOS8700CQ
   result = i2c.write_reg(FXOS8700CQ_I2C_ADDR, FXOS8700CQ_XYZ_DATA_CFG_REG, 0x01);
+
   if (result != I2C_REGOP_SUCCESS) {
     debug_printf("I2C write reg failed\n");
   }

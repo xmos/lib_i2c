@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+# Copyright (c) 2014-2021, XMOS Ltd, All rights reserved
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
@@ -39,5 +39,5 @@ def do_test(arch):
 
 def runtest():
   # See BUG 17936 - the xs1 is not fast enough to run this test
-  for arch in ['xs2']:
+  for arch in ['xs2', 'xcoreai']:
     do_test(arch)
