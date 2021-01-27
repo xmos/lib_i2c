@@ -1,4 +1,4 @@
-// Copyright (c) 2013-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2013-2021, XMOS Ltd, All rights reserved
 #if (defined(__XS2A__) || defined(__XS3A__))
 
 #include "i2c.h"
