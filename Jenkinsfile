@@ -11,7 +11,7 @@ pipeline {
       }
       environment {
         REPO = 'lib_i2c'
-        VIEW = "lib_i2c_develop_tools_15"
+        VIEW = getViewName(REPO)
       }
       options {
         skipDefaultCheckout()

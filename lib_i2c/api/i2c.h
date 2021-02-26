@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2020, XMOS Ltd, All rights reserved
+// Copyright (c) 2014-2021, XMOS Ltd, All rights reserved
 #ifndef _i2c_h_
 #define _i2c_h_
 
