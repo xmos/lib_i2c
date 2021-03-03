@@ -1,4 +1,5 @@
-// Copyright (c) 2014-2016, XMOS Ltd, All rights reserved
+// Copyright (c) 2014-2021, XMOS Ltd, All rights reserved
+// This software is available under the terms provided in LICENSE.txt.
 #include <i2c.h>
 
 /* This file provides external definitions for the inline functions declared in

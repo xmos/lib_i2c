@@ -1,4 +1,5 @@
 // Copyright (c) 2013-2021, XMOS Ltd, All rights reserved
+// This software is available under the terms provided in LICENSE.txt.
 #include <xs1.h>
 #include "i2c.h"
 #include "debug_print.h"
