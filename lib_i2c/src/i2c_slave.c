@@ -279,8 +279,17 @@ void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
                     /* SDA has transitioned low to high,
                      * so check SCL for stop bit */
                     if (val) {
-                        if (!ignore_stop_bit) {
+                        if (!ignore_stop_bit && i2c_cbg->stop_bit != NULL) {
+                            // Hold the clock low while application code is called.
+                            // If the master supports multi-master, then this should
+                            // ensure that it does not begin another transaction until
+                            // the application code here has returned.
+                            port_out(p_scl, 0);
+
                             i2c_cbg->stop_bit(i2c_cbg->app_data);
+
+                            // Release the clock
+                            (void) port_in(p_scl);
                         }
                         state = WAITING_FOR_START_OR_STOP;
                         ignore_stop_bit = 1;
