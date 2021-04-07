@@ -1,5 +1,5 @@
-# Copyright (c) 2014-2021, XMOS Ltd, All rights reserved
-# This software is available under the terms provided in LICENSE.txt.
+# Copyright 2014-2021 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import xmostest
 from i2c_slave_checker import I2CSlaveChecker
 import os
