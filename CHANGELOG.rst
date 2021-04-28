@@ -5,6 +5,7 @@ I2C library change log
 -----
 
   * CHANGED: Use XMOS Public Licence Version 1
+  * CHANGED: Rearrange documentation files
 
 6.0.1
 -----
