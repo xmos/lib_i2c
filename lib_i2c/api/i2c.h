@@ -1,4 +1,5 @@
-// Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+// Copyright 2014-2021 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #ifndef _i2c_h_
 #define _i2c_h_
 
@@ -403,7 +404,7 @@ extends client interface i2c_master_if : {
                                   port p_scl, port p_sda,
                                   static const unsigned kbits_per_second);
 
-#if defined(__XS2A__) || defined(__DOXYGEN__)
+#if (defined(__XS2A__) || defined(__XS3A__) || defined(__DOXYGEN__))
 /** Implements I2C on a single multi-bit port.
  *
  *  This function implements an I2C master bus using a single port. It is only

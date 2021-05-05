@@ -1,6 +1,6 @@
-// Copyright (c) 2013-2018, XMOS Ltd, All rights reserved
-
-#ifdef __XS2A__
+// Copyright 2013-2021 XMOS LIMITED.
+// This Software is subject to the terms of the XMOS Public Licence: Version 1.
+#if (defined(__XS2A__) || defined(__XS3A__))
 
 #include "i2c.h"
 #include <xs1.h>

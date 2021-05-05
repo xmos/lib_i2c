@@ -1,8 +1,3 @@
-ifeq ($(USING_XWAF),1)
-all:
-	xwaf configure build --config $(CONFIG)
-else # USING_XWAF
-
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to
 # the project name
@@ -17,7 +12,7 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to
 # xcc for the final link (mapping) stage.
 
-ARCHS = xs1 xs2
+ARCHS = xs1 xs2 xcoreai
 SPEEDS = 10 100 400
 STOPS = stop no_stop
 COMBS = comb non_comb
@@ -48,12 +43,17 @@ $(foreach arch,$(ARCHS),\
   $(foreach stop,$(STOPS),\
     $(eval $(call create_flags_interfere,$(arch),$(stop)))))
 
+# The TARGET variable determines what target system the application is
+# compiled for. It either refers to an XN file in the source directories
+# or a valid argument for the --target option when compiling.
+
 ifeq ($(findstring xs1, $(CONFIG)), xs1)
   TARGET = SLICEKIT-L16
-else
+else ifeq ($(findstring xs2, $(CONFIG)), xs2)
   TARGET = XCORE-200-EXPLORER
+else ifeq ($(findstring xcoreai, $(CONFIG)), xcoreai)
+  TARGET = XCORE-AI-EXPLORER
 endif
-
 # The USED_MODULES variable lists other module used by the application.
 
 USED_MODULES = lib_i2c lib_logging
@@ -64,4 +64,3 @@ USED_MODULES = lib_i2c lib_logging
 
 XMOS_MAKE_PATH ?= ../..
 include $(XMOS_MAKE_PATH)/xcommon/module_xcommon/build/Makefile.common
-endif # USING_XWAF
