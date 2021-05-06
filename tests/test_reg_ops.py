@@ -1,4 +1,5 @@
-# Copyright (c) 2014-2018, XMOS Ltd, All rights reserved
+# Copyright 2014-2021 XMOS LIMITED.
+# This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import xmostest
 from i2c_master_checker import I2CMasterChecker
 import os
@@ -37,5 +38,5 @@ def do_test(arch):
                               tester=tester)
 
 def runtest():
-  for arch in ['xs1', 'xs2']:
+  for arch in ['xs1', 'xs2', 'xcoreai']:
     do_test(arch)

@@ -193,7 +193,7 @@ Launching from the command line
 From the command line you use the ``xrun`` tool to download and run the code
 on the xCORE device::
 
-  xrun --xscope bin/AN00156_i2c_master_example.xe
+  xrun --xscope bin/xs2/AN00156_i2c_master_example.xe
 
 Once this command has executed the application will be running on the
 xCORE-200 eXplorerKIT.

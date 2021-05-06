@@ -407,12 +407,20 @@ On the command-line run change to the application note folder and run::
 
   xmake
 
+to build for XCORE-200 or::
+
+  xmake XCOREAI=1
+
+to build for XCORE-AI
+
 Then run ``xsim`` with the following arguments::
 
   xsim --trace-to trace.txt --plugin LoopbackPort.so
     "-pullup -port tile[0] XS1_PORT_1E 1 0 -port tile[0] XS1_PORT_1G 1 0
      -pullup -port tile[0] XS1_PORT_1F 1 0 -port tile[0] XS1_PORT_1H 1 0"
-     bin/AN00157_i2c_slave_example.xe
+     bin/<XS>/AN00157_i2c_slave_example.xe
+
+where <XS> is either 'XS2' or 'XCOREAI'.
 
 If you would like to look at the waveforms to further understand how the |I2C|
 is working then add the following to the xsim command arguments before the name
