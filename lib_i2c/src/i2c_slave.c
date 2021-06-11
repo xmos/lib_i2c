@@ -8,6 +8,10 @@
 #include "xclib.h"
 #include "i2c.h"
 
+#ifndef LIBXCORE_HWTIMER_HAS_REFERENCE_TIME
+#error This library requires reference time
+#endif
+
 enum i2c_slave_state {
     WAITING_FOR_START_OR_STOP,
     READING_ADDR,
@@ -22,11 +26,8 @@ enum i2c_slave_state {
 static inline void ensure_setup_time()
 {
     // The I2C spec requires a 100ns setup time
-    hwtimer_t tmr = hwtimer_alloc();
-    {
-        hwtimer_delay(tmr, 10);
-    }
-    hwtimer_free(tmr);
+    uint32_t start_time = get_reference_time();
+    while ((get_reference_time() - start_time) < 10) {;}
 }
 
 void i2c_slave(const i2c_callback_group_t *const i2c_cbg,
