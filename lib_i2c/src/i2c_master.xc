@@ -133,7 +133,7 @@ static void start_bit(
 
   if (!stopped) {
     tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
-    release_clock_and_wait(p_scl, fall_time, compute_bus_off_ticks(kbits_per_second));
+    release_clock_and_wait(p_scl, fall_time + compute_low_period_ticks(kbits_per_second), compute_bus_off_ticks(kbits_per_second));
   }
 
   // Drive SDA low
