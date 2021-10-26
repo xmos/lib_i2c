@@ -157,7 +157,8 @@ static void start_bit(
   timer tmr;
 
   if (!stopped) {
-    tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+    fall_time += compute_low_period_ticks(kbits_per_second);
+    tmr when timerafter(fall_time) :> fall_time;
     p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
     wait_for_clock_high(p_i2c, scl_bit_position, fall_time, compute_bus_off_ticks(kbits_per_second));
   }
