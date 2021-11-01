@@ -132,7 +132,8 @@ static void start_bit(
   timer tmr;
 
   if (!stopped) {
-    tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+    fall_time += compute_low_period_ticks(kbits_per_second);
+    tmr when timerafter(fall_time) :> fall_time;
     release_clock_and_wait(p_scl, fall_time, compute_bus_off_ticks(kbits_per_second));
   }
 

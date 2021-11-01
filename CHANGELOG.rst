@@ -1,6 +1,11 @@
 I2C library change log
 ======================
 
+6.1.1
+-----
+
+  * RESOLVED: Fixed timing for repeated START condition
+
 6.1.0
 -----
 
