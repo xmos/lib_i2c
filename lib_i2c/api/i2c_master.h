@@ -11,9 +11,9 @@
 #include <xcore/port.h>
 #include <xcore/clock.h>
 #include <xcore/hwtimer.h>
-#else
-typedef port port_t;
 #endif
+
+#include <xccompat.h>
 
 /**
  * \addtogroup hil_i2c_master hil_i2c_master
@@ -54,6 +54,8 @@ struct i2c_master_struct {
     int stopped;
 };
 
+#ifndef __XC__
+
 /**
  * Writes data to an I2C bus as a master.
  *
@@ -78,7 +80,7 @@ struct i2c_master_struct {
 i2c_res_t i2c_master_write(
         i2c_master_t *ctx,
         uint8_t device_addr,
-        uint8_t buf[],
+        uint8_t *buf,
         size_t n,
         size_t *num_bytes_sent,
         int send_stop_bit);
@@ -102,7 +104,7 @@ i2c_res_t i2c_master_write(
 i2c_res_t i2c_master_read(
         i2c_master_t *ctx,
         uint8_t device_addr,
-        uint8_t buf[],
+        uint8_t *buf,
         size_t n,
         int send_stop_bit);
 
@@ -161,5 +163,7 @@ void i2c_master_init(
  * must be called again first.
  */
 void i2c_master_shutdown(i2c_master_t *ctx);
+
+#endif  // !__XC__
 
 #endif
