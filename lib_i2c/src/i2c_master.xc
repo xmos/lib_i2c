@@ -1,5 +1,4 @@
 #include <i2c_master_if.h>
-#include <i2c_opaque.h>
 #include <i2c_master.h>
 
 #include <xs1.h>
@@ -14,9 +13,11 @@ void i2c_master(
     port p_sda,
     static const unsigned kbits_per_second)
 {
-    uint8_t ctx[sizeof(i2c_master_t)];
-    intptr_t ctx_opaque = (intptr_t)&ctx[0];
-    i2c_master_opaque_init(ctx_opaque, p_scl, 0, 0, p_sda, 0, 0, kbits_per_second);
+    i2c_master_t ctx;
+    unsafe {
+        i2c_master_t * unsafe pctx = &ctx;
+        i2c_master_init(pctx, p_scl, 0, 0, p_sda, 0, 0, kbits_per_second);
+    }
 
     int locked_client = -1;
 
@@ -29,8 +30,9 @@ void i2c_master(
             // TODO: lbuf needs to be statically sized, but how to handle longer arrays?
             uint8_t lbuf[8];
             unsafe {
+                i2c_master_t * unsafe pctx = &ctx;
                 uint8_t * unsafe plbuf = &lbuf[0];
-                result = i2c_master_opaque_read(ctx_opaque, device, plbuf, m, send_stop_bit);
+                result = i2c_master_read(pctx, p_scl, p_sda, device, plbuf, m, send_stop_bit);
             }
             for (int j = 0; j < m; ++j) {
                 buf[j] = lbuf[j];
@@ -48,21 +50,28 @@ void i2c_master(
             }
             size_t bytes = num_bytes_sent;
             unsafe {
+                i2c_master_t * unsafe pctx = &ctx;
                 uint8_t * unsafe plbuf = &lbuf[0];
                 size_t * unsafe pbytes = &bytes;
-                result = i2c_master_opaque_write(ctx_opaque, device, plbuf, m, pbytes, send_stop_bit);
+                result = i2c_master_write(pctx, p_scl, p_sda, device, plbuf, m, pbytes, send_stop_bit);
             }
             num_bytes_sent = bytes;
             locked_client = -1;
             break;
 
         case c[int i].send_stop_bit(void):
-            i2c_master_opaque_stop_bit_send(ctx_opaque);
+            unsafe {
+                i2c_master_t * unsafe pctx = &ctx;
+                i2c_master_stop_bit_send(pctx, p_scl, p_sda);
+            }
             locked_client = -1;
             break;
 
         case c[int i].shutdown(void):
-            i2c_master_opaque_shutdown(ctx_opaque);
+            unsafe {
+                i2c_master_t * unsafe pctx = &ctx;
+                i2c_master_shutdown(pctx, p_scl, p_sda);
+            }
             return;
         }
     }

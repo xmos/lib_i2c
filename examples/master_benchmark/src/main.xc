@@ -82,11 +82,11 @@ int main() {
     interface i2c_master_if i2c[1];
 
     par {
-        on tile[0]: {
+        {
             ctrlPort();
             i2c_master(i2c, 1, p_scl, p_sda, 100);
         };
-        on tile[1]: benchmark_task(i2c[0]);
+        benchmark_task(i2c[0]);
     }
 
     return 0;

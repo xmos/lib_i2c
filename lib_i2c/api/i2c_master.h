@@ -33,9 +33,7 @@ typedef struct i2c_master_struct i2c_master_t;
  * The members in this struct should not be accessed directly.
  */
 struct i2c_master_struct {
-    port_t p_scl;
     uint32_t scl_mask;
-    port_t p_sda;
     uint32_t sda_mask;
 
     uint32_t scl_high;
@@ -54,7 +52,11 @@ struct i2c_master_struct {
     int stopped;
 };
 
-#ifndef __XC__
+#ifdef __XC__
+#define UNSAFE unsafe
+#else
+#define UNSAFE
+#endif
 
 /**
  * Writes data to an I2C bus as a master.
@@ -78,11 +80,13 @@ struct i2c_master_struct {
  * \returns               #I2C_ACK if the write was acknowledged by the device, #I2C_NACK otherwise.
  */
 i2c_res_t i2c_master_write(
-        i2c_master_t *ctx,
+        i2c_master_t * UNSAFE ctx,
+        port_t p_scl,
+        port_t p_sda,
         uint8_t device_addr,
-        uint8_t *buf,
+        uint8_t * UNSAFE buf,
         size_t n,
-        size_t *num_bytes_sent,
+        size_t * UNSAFE num_bytes_sent,
         int send_stop_bit);
 
 /**
@@ -102,9 +106,11 @@ i2c_res_t i2c_master_write(
  * \returns               #I2C_ACK if the read was acknowledged by the device, #I2C_NACK otherwise.
  */
 i2c_res_t i2c_master_read(
-        i2c_master_t *ctx,
+        i2c_master_t * UNSAFE ctx,
+        port_t p_scl,
+        port_t p_sda,
         uint8_t device_addr,
-        uint8_t *buf,
+        uint8_t * UNSAFE buf,
         size_t n,
         int send_stop_bit);
 
@@ -119,7 +125,9 @@ i2c_res_t i2c_master_read(
  * \param ctx             A pointer to the I2C master context to use.
  */
 void i2c_master_stop_bit_send(
-        i2c_master_t *ctx);
+        i2c_master_t * UNSAFE ctx,
+        port_t p_scl,
+        port_t p_sda);
 
 
 /**
@@ -141,7 +149,7 @@ void i2c_master_stop_bit_send(
  * \param kbits_per_second    The speed of the I2C bus. The maximum value allowed is 400.
  */
 void i2c_master_init(
-        i2c_master_t *ctx,
+        i2c_master_t * UNSAFE ctx,
         port_t p_scl,
         uint32_t scl_bit_position,
         uint32_t scl_other_bits_mask,
@@ -162,8 +170,10 @@ void i2c_master_init(
  * If subsequent reads or writes need to be performed, then i2c_master_init()
  * must be called again first.
  */
-void i2c_master_shutdown(i2c_master_t *ctx);
+void i2c_master_shutdown(i2c_master_t * UNSAFE ctx,
+                port_t p_scl,
+                port_t p_sda);
 
-#endif  // !__XC__
+#undef UNSAFE
 
 #endif
