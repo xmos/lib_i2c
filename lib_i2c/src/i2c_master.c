@@ -286,61 +286,13 @@ i2c_res_t i2c_master_read(
         size_t n,
         int send_stop_bit)
 {
-    i2c_res_t result;
-    uint32_t scl_low;
-    uint32_t sda_low;
-
-    ctx->interrupt_state = interrupt_state_get();
-    interrupt_disable();
-
-    start_bit(ctx, p_scl, p_sda);
-
-    uint32_t ack = tx8(ctx, p_scl, p_sda, (device_addr << 1) | 1);
-    result = (ack == 0) ? I2C_ACK : I2C_NACK;
-
+    i2c_res_t result = i2c_master_pre_read(ctx, p_scl, p_sda, device_addr);
     if (result == I2C_ACK) {
-        for (size_t j = 0; j < n; j++) {
-            uint8_t data = 0;
-            for (int i = 8; i != 0; i--) {
-                uint32_t temp = high_pulse_sample(ctx, p_scl, p_sda);
-                data = (data << 1) | temp;
-            }
-            buf[j] = data;
-
-            uint32_t sda_value;
-            if (j == n-1) {
-                sda_value = 1;
-            } else {
-                sda_value = 0;
-            }
-
-            high_pulse_drive(ctx, p_scl, p_sda, sda_value);
+        for (int i = 0; i < n; ++i) {
+            buf[i] = i2c_master_read_byte(ctx, p_scl, p_sda, (i == n - 1));
         }
     }
-
-    scl_low = ctx->scl_low;
-    sda_low = ctx->sda_low;
-
-    if (p_scl == p_sda) {
-        sda_low |= scl_low;
-        scl_low |= ctx->sda_high;
-    }
-
-    interrupt_disable();
-    port_sync(p_scl);
-    interrupt_restore(ctx);
-    port_out(p_scl, scl_low);
-
-    if (send_stop_bit) {
-        port_out(p_sda, sda_low);
-        stop_bit(ctx, p_scl, p_sda);
-        ctx->stopped = 1;
-    } else {
-        ctx->stopped = 0;
-    }
-
-    interrupt_restore(ctx);
-
+    i2c_master_post_read(ctx, p_scl, p_sda, send_stop_bit);
     return result;
 }
 
@@ -354,50 +306,14 @@ i2c_res_t i2c_master_write(
         size_t *num_bytes_sent,
         int send_stop_bit)
 {
-    i2c_res_t result;
-    uint32_t scl_low;
-    uint32_t sda_low;
-
-    ctx->interrupt_state = interrupt_state_get();
-    interrupt_disable();
-
-    start_bit(ctx, p_scl, p_sda);
-    uint32_t ack = tx8(ctx, p_scl, p_sda, (device_addr << 1) | 0);
-
-    size_t j = 0;
-    for (; j < n && ack == 0; j++) {
-        ack = tx8(ctx, p_scl, p_sda, buf[j]);
+    uint32_t ack = i2c_master_pre_write(ctx, p_scl, p_sda, device_addr);
+    size_t i = 0;
+    for (; i < n && ack == 0; ++i) {
+        ack = i2c_master_write_byte(ctx, p_scl, p_sda, buf[i]);
     }
-
-    scl_low = ctx->scl_low;
-    sda_low = ctx->sda_low;
-
-    if (p_scl == p_sda) {
-        sda_low |= scl_low;
-        scl_low |= ctx->sda_high;
-    }
-
-    interrupt_disable();
-    port_sync(p_scl);
-    interrupt_restore(ctx);
-    port_out(p_scl, scl_low);
-
-    if (send_stop_bit) {
-        port_out(p_sda, sda_low);
-        stop_bit(ctx, p_scl, p_sda);
-        ctx->stopped = 1;
-    } else {
-        ctx->stopped = 0;
-    }
-
-    interrupt_restore(ctx);
-
-    if (num_bytes_sent != NULL) {
-        *num_bytes_sent = j;
-    }
-
-    result = (ack == 0) ? I2C_ACK : I2C_NACK;
-
+    i2c_master_post_write(ctx, p_scl, p_sda, send_stop_bit);
+    i2c_res_t result = (ack == 0) ? I2C_ACK : I2C_NACK;
+    *num_bytes_sent = i;
     return result;
 }
 
@@ -492,4 +408,125 @@ void i2c_master_shutdown(
     if (p_scl != p_sda) {
         port_disable(p_scl);
     }
+}
+
+
+i2c_res_t i2c_master_pre_read(i2c_master_t *ctx,
+                port_t p_scl,
+                port_t p_sda,
+                uint8_t device_addr)
+{
+    i2c_res_t result;
+
+    ctx->interrupt_state = interrupt_state_get();
+    interrupt_disable();
+
+    start_bit(ctx, p_scl, p_sda);
+
+    uint32_t ack = tx8(ctx, p_scl, p_sda, (device_addr << 1) | 1);
+    result = (ack == 0) ? I2C_ACK : I2C_NACK;
+    return result;
+}
+
+uint8_t i2c_master_read_byte(i2c_master_t *ctx,
+                port_t p_scl,
+                port_t p_sda,
+                int final_byte)
+{
+    uint8_t data = 0;
+    for (int i = 8; i != 0; i--) {
+        uint32_t temp = high_pulse_sample(ctx, p_scl, p_sda);
+        data = (data << 1) | temp;
+    }
+
+    uint32_t sda_value;
+    if (final_byte) {
+        sda_value = 1;
+    } else {
+        sda_value = 0;
+    }
+
+    high_pulse_drive(ctx, p_scl, p_sda, sda_value);
+
+    return data;
+}
+
+void i2c_master_post_read(i2c_master_t *ctx,
+                port_t p_scl,
+                port_t p_sda,
+                int send_stop_bit)
+{
+    uint32_t scl_low = ctx->scl_low;
+    uint32_t sda_low = ctx->sda_low;
+
+    if (p_scl == p_sda) {
+        sda_low |= scl_low;
+        scl_low |= ctx->sda_high;
+    }
+
+    interrupt_disable();
+    port_sync(p_scl);
+    interrupt_restore(ctx);
+    port_out(p_scl, scl_low);
+
+    if (send_stop_bit) {
+        port_out(p_sda, sda_low);
+        stop_bit(ctx, p_scl, p_sda);
+        ctx->stopped = 1;
+    } else {
+        ctx->stopped = 0;
+    }
+
+    interrupt_restore(ctx);
+}
+
+uint32_t i2c_master_pre_write(i2c_master_t *ctx,
+                port_t p_scl,
+                port_t p_sda,
+                uint8_t device_addr)
+{
+    ctx->interrupt_state = interrupt_state_get();
+    interrupt_disable();
+
+    start_bit(ctx, p_scl, p_sda);
+    return tx8(ctx, p_scl, p_sda, (device_addr << 1) | 0);
+}
+
+uint32_t i2c_master_write_byte(i2c_master_t *ctx,
+                port_t p_scl,
+                port_t p_sda,
+                uint8_t data)
+{
+    return tx8(ctx, p_scl, p_sda, data);
+}
+
+void i2c_master_post_write(i2c_master_t *ctx,
+                port_t p_scl,
+                port_t p_sda,
+                int send_stop_bit)
+{
+    uint32_t scl_low;
+    uint32_t sda_low;
+    scl_low = ctx->scl_low;
+    sda_low = ctx->sda_low;
+
+    if (p_scl == p_sda) {
+        sda_low |= scl_low;
+        scl_low |= ctx->sda_high;
+    }
+
+    interrupt_disable();
+    port_sync(p_scl);
+    interrupt_restore(ctx);
+    port_out(p_scl, scl_low);
+
+    if (send_stop_bit) {
+        port_out(p_sda, sda_low);
+        stop_bit(ctx, p_scl, p_sda);
+        ctx->stopped = 1;
+    } else {
+        ctx->stopped = 0;
+    }
+
+    interrupt_restore(ctx);
 }

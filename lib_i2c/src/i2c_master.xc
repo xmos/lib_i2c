@@ -27,15 +27,15 @@ void i2c_master(
             (locked_client == -1 || i == locked_client) =>
             c[i].read(uint8_t device, uint8_t buf[m], size_t m, int send_stop_bit) -> i2c_res_t result:
 
-            // TODO: lbuf needs to be statically sized, but how to handle longer arrays?
-            uint8_t lbuf[8];
             unsafe {
                 i2c_master_t * unsafe pctx = &ctx;
-                uint8_t * unsafe plbuf = &lbuf[0];
-                result = i2c_master_read(pctx, p_scl, p_sda, device, plbuf, m, send_stop_bit);
-            }
-            for (int j = 0; j < m; ++j) {
-                buf[j] = lbuf[j];
+                result = i2c_master_pre_read(pctx, p_scl, p_sda, device);
+                if (result == I2C_ACK) {
+                    for (int j = 0; j < m; ++j) {
+                        buf[j] = i2c_master_read_byte(pctx, p_scl, p_sda, (j == m - 1));
+                    }
+                }
+                i2c_master_post_read(pctx, p_scl, p_sda, send_stop_bit);
             }
             locked_client = -1;
             break;
@@ -44,18 +44,17 @@ void i2c_master(
             (locked_client == -1 || i == locked_client) =>
             c[i].write(uint8_t device, uint8_t buf[m], size_t m, size_t &num_bytes_sent, int send_stop_bit) -> i2c_res_t result:
 
-            uint8_t lbuf[8];
-            for (int j = 0; j < m; ++j) {
-                lbuf[j] = buf[j];
-            }
-            size_t bytes = num_bytes_sent;
             unsafe {
                 i2c_master_t * unsafe pctx = &ctx;
-                uint8_t * unsafe plbuf = &lbuf[0];
-                size_t * unsafe pbytes = &bytes;
-                result = i2c_master_write(pctx, p_scl, p_sda, device, plbuf, m, pbytes, send_stop_bit);
+                uint32_t ack = i2c_master_pre_write(pctx, p_scl, p_sda, device);
+                size_t j = 0;
+                for (; j < m && ack == 0; ++j) {
+                    ack = i2c_master_write_byte(pctx, p_scl, p_sda, buf[j]);
+                }
+                i2c_master_post_write(pctx, p_scl, p_sda, send_stop_bit);
+                result = (ack == 0) ? I2C_ACK : I2C_NACK;
+                num_bytes_sent = j;
             }
-            num_bytes_sent = bytes;
             locked_client = -1;
             break;
 

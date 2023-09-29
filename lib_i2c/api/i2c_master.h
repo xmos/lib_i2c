@@ -174,6 +174,36 @@ void i2c_master_shutdown(i2c_master_t * UNSAFE ctx,
                 port_t p_scl,
                 port_t p_sda);
 
+i2c_res_t i2c_master_pre_read(i2c_master_t * UNSAFE ctx,
+                port_t p_scl,
+                port_t p_sda,
+                uint8_t device_addr);
+
+uint8_t i2c_master_read_byte(i2c_master_t * UNSAFE ctx,
+                port_t p_scl,
+                port_t p_sda,
+                int final_byte);
+
+void i2c_master_post_read(i2c_master_t * UNSAFE ctx,
+                port_t p_scl,
+                port_t p_sda,
+                int send_stop_bit);
+
+uint32_t i2c_master_pre_write(i2c_master_t * UNSAFE ctx,
+                port_t p_scl,
+                port_t p_sda,
+                uint8_t device_addr);
+
+uint32_t i2c_master_write_byte(i2c_master_t * UNSAFE ctx,
+                port_t p_scl,
+                port_t p_sda,
+                uint8_t data);
+
+void i2c_master_post_write(i2c_master_t * UNSAFE ctx,
+                port_t p_scl,
+                port_t p_sda,
+                int send_stop_bit);
+
 #undef UNSAFE
 
 #endif
