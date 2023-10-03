@@ -16,7 +16,7 @@ void i2c_master(
     i2c_master_t ctx;
     unsafe {
         i2c_master_t * unsafe pctx = &ctx;
-        i2c_master_init(pctx, p_scl, 0, 0, p_sda, 0, 0, kbits_per_second);
+        i2c_master_init(pctx, (port_t)p_scl, 0, 0, (port_t)p_sda, 0, 0, kbits_per_second);
     }
 
     int locked_client = -1;
@@ -29,13 +29,13 @@ void i2c_master(
 
             unsafe {
                 i2c_master_t * unsafe pctx = &ctx;
-                result = i2c_master_pre_read(pctx, p_scl, p_sda, device);
+                result = i2c_master_pre_read(pctx, device);
                 if (result == I2C_ACK) {
                     for (int j = 0; j < m; ++j) {
-                        buf[j] = i2c_master_read_byte(pctx, p_scl, p_sda, (j == m - 1));
+                        buf[j] = i2c_master_read_byte(pctx, (j == m - 1));
                     }
                 }
-                i2c_master_post_read(pctx, p_scl, p_sda, send_stop_bit);
+                i2c_master_post_read(pctx, send_stop_bit);
             }
             locked_client = -1;
             break;
@@ -46,12 +46,12 @@ void i2c_master(
 
             unsafe {
                 i2c_master_t * unsafe pctx = &ctx;
-                uint32_t ack = i2c_master_pre_write(pctx, p_scl, p_sda, device);
+                uint32_t ack = i2c_master_pre_write(pctx, device);
                 size_t j = 0;
                 for (; j < m && ack == 0; ++j) {
-                    ack = i2c_master_write_byte(pctx, p_scl, p_sda, buf[j]);
+                    ack = i2c_master_write_byte(pctx, buf[j]);
                 }
-                i2c_master_post_write(pctx, p_scl, p_sda, send_stop_bit);
+                i2c_master_post_write(pctx, send_stop_bit);
                 result = (ack == 0) ? I2C_ACK : I2C_NACK;
                 num_bytes_sent = j;
             }
@@ -61,7 +61,7 @@ void i2c_master(
         case c[int i].send_stop_bit(void):
             unsafe {
                 i2c_master_t * unsafe pctx = &ctx;
-                i2c_master_stop_bit_send(pctx, p_scl, p_sda);
+                i2c_master_stop_bit_send(pctx);
             }
             locked_client = -1;
             break;
@@ -69,7 +69,7 @@ void i2c_master(
         case c[int i].shutdown(void):
             unsafe {
                 i2c_master_t * unsafe pctx = &ctx;
-                i2c_master_shutdown(pctx, p_scl, p_sda);
+                i2c_master_shutdown(pctx);
             }
             return;
         }

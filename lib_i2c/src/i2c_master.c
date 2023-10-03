@@ -59,10 +59,10 @@ static inline void hold_port_value_for(port_t p, uint32_t val, uint32_t t)
 __attribute__((always_inline))
 static inline uint32_t wait_for_clock_high(
         const i2c_master_t *ctx,
-        port_t p_scl,
         uint32_t scl_val)
 {
     const uint32_t scl_mask = ctx->scl_mask;
+    const port_t p_scl = ctx->p_scl;
 
     interrupt_restore(ctx);
     port_sync(p_scl);
@@ -76,10 +76,10 @@ static inline uint32_t wait_for_clock_high(
 __attribute__((always_inline))
 static inline void high_pulse_drive(
         const i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda,
         int sda_value)
 {
+    const port_t p_sda = ctx->p_sda;
+    const port_t p_scl = ctx->p_scl;
     uint32_t scl_low = ctx->scl_low;
     uint32_t scl_high = ctx->scl_high;
     uint16_t scheduled_fall_time;
@@ -104,7 +104,7 @@ static inline void high_pulse_drive(
     port_sync(p_scl);
     actual_fall_time = port_get_trigger_time(p_scl);
     port_out_at_time(p_scl, actual_fall_time + ctx->low_period_ticks, scl_high);
-    rise_time = wait_for_clock_high(ctx, p_scl, scl_high);
+    rise_time = wait_for_clock_high(ctx, scl_high);
 
     scheduled_fall_time += ctx->bit_time;
     if ((int16_t) (scheduled_fall_time - actual_fall_time) < ctx->bit_time - WAKEUP_TICKS) {
@@ -119,10 +119,10 @@ static inline void high_pulse_drive(
 
 __attribute__((always_inline))
 static inline uint32_t high_pulse_sample(
-        const i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda)
+        const i2c_master_t *ctx)
 {
+    const port_t p_sda = ctx->p_sda;
+    const port_t p_scl = ctx->p_scl;
     uint32_t scl_low = ctx->scl_low;
     uint32_t scl_high = ctx->scl_high;
     uint32_t sda_high = ctx->sda_high;
@@ -148,7 +148,7 @@ static inline uint32_t high_pulse_sample(
     port_sync(p_scl);
     actual_fall_time = port_get_trigger_time(p_scl);
     port_out_at_time(p_scl, actual_fall_time + ctx->low_period_ticks, scl_high);
-    rise_time = wait_for_clock_high(ctx, p_scl, scl_high);
+    rise_time = wait_for_clock_high(ctx, scl_high);
 
     sample_value = (port_peek(p_sda) & ctx->sda_mask) ? 1 : 0;
 
@@ -166,10 +166,10 @@ static inline uint32_t high_pulse_sample(
 }
 
 static void start_bit(
-        const i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda)
+        const i2c_master_t *ctx)
 {
+    const port_t p_sda = ctx->p_sda;
+    const port_t p_scl = ctx->p_scl;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
     const uint32_t s_hold_ticks = ctx->s_hold_ticks;
     uint32_t scl_low = ctx->scl_low;
@@ -195,7 +195,7 @@ static void start_bit(
         port_sync(p_scl);
 
         port_out(p_scl, scl_high);
-        uint32_t rise_time = wait_for_clock_high(ctx, p_scl, scl_high);
+        uint32_t rise_time = wait_for_clock_high(ctx, scl_high);
         /*
          * Output SDA high here at the time at which SDA should go
          * low. This is so that the sync below will wait the correct
@@ -226,10 +226,10 @@ static void start_bit(
 /** Output a stop bit.
  */
 static void stop_bit(
-        const i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda)
+        const i2c_master_t *ctx)
 {
+    const port_t p_scl = ctx->p_scl;
+    const port_t p_sda = ctx->p_sda;
     const uint32_t low_period_ticks = ctx->low_period_ticks;
     const uint32_t bus_off_ticks = low_period_ticks; /* bus off and scl low times are the same */
     const uint32_t p_setup_ticks = ctx->p_setup_ticks;
@@ -253,7 +253,7 @@ static void stop_bit(
     port_sync(p_scl);
 
     port_out(p_scl, scl_high);
-    wait_for_clock_high(ctx, p_scl, scl_high);
+    wait_for_clock_high(ctx, scl_high);
     hold_port_value_for(p_scl, scl_high, p_setup_ticks);
     port_sync(p_scl);
 
@@ -264,64 +264,58 @@ static void stop_bit(
 __attribute__((always_inline))
 static inline uint32_t tx8(
         const i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda,
         uint32_t data)
 {
     // Data is transmitted MSB first
     data = bitrev(data) >> 24;
     for (size_t i = 8; i != 0; i--) {
-        high_pulse_drive(ctx, p_scl, p_sda, data & 1);
+        high_pulse_drive(ctx, data & 1);
         data >>= 1;
     }
-    return high_pulse_sample(ctx, p_scl, p_sda);
+    return high_pulse_sample(ctx);
 }
 
 i2c_res_t i2c_master_read(
         i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda,
         uint8_t device_addr,
         uint8_t buf[],
         size_t n,
         int send_stop_bit)
 {
-    i2c_res_t result = i2c_master_pre_read(ctx, p_scl, p_sda, device_addr);
+    i2c_res_t result = i2c_master_pre_read(ctx, device_addr);
     if (result == I2C_ACK) {
         for (int i = 0; i < n; ++i) {
-            buf[i] = i2c_master_read_byte(ctx, p_scl, p_sda, (i == n - 1));
+            buf[i] = i2c_master_read_byte(ctx, (i == n - 1));
         }
     }
-    i2c_master_post_read(ctx, p_scl, p_sda, send_stop_bit);
+    i2c_master_post_read(ctx, send_stop_bit);
     return result;
 }
 
 i2c_res_t i2c_master_write(
         i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda,
         uint8_t device_addr,
         uint8_t buf[],
         size_t n,
         size_t *num_bytes_sent,
         int send_stop_bit)
 {
-    uint32_t ack = i2c_master_pre_write(ctx, p_scl, p_sda, device_addr);
+    uint32_t ack = i2c_master_pre_write(ctx, device_addr);
     size_t i = 0;
     for (; i < n && ack == 0; ++i) {
-        ack = i2c_master_write_byte(ctx, p_scl, p_sda, buf[i]);
+        ack = i2c_master_write_byte(ctx, buf[i]);
     }
-    i2c_master_post_write(ctx, p_scl, p_sda, send_stop_bit);
+    i2c_master_post_write(ctx, send_stop_bit);
     i2c_res_t result = (ack == 0) ? I2C_ACK : I2C_NACK;
     *num_bytes_sent = i;
     return result;
 }
 
 void i2c_master_stop_bit_send(
-        i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda)
+        i2c_master_t *ctx)
 {
+    const port_t p_scl = ctx->p_scl;
+    const port_t p_sda = ctx->p_sda;
     uint32_t scl_low = ctx->scl_low;
     uint32_t sda_low = ctx->sda_low;
 
@@ -333,7 +327,7 @@ void i2c_master_stop_bit_send(
     interrupt_disable();
 
     port_out(p_sda, sda_low);
-    stop_bit(ctx, p_scl, p_sda);
+    stop_bit(ctx);
 
     interrupt_restore(ctx);
 
@@ -351,6 +345,9 @@ void i2c_master_init(
         unsigned kbits_per_second)
 {
     memset(ctx, 0, sizeof(i2c_master_t));
+
+    ctx->p_scl = p_scl;
+    ctx->p_sda = p_sda;
 
     ctx->scl_mask = BIT_MASK(scl_bit_position);
     ctx->sda_mask = BIT_MASK(sda_bit_position);
@@ -398,22 +395,20 @@ void i2c_master_init(
 }
 
 void i2c_master_shutdown(
-        i2c_master_t *ctx,
-        port_t p_scl,
-        port_t p_sda)
+        i2c_master_t *ctx)
 {
-    if (p_sda != 0) {
-        port_disable(p_sda);
+    if (ctx->p_sda != 0) {
+        port_disable(ctx->p_sda);
     }
-    if (p_scl != p_sda) {
-        port_disable(p_scl);
+    if (ctx->p_scl != 0 && ctx->p_scl != ctx->p_sda) {
+        port_disable(ctx->p_scl);
     }
+    ctx->p_sda = 0;
+    ctx->p_scl = 0;
 }
 
 
 i2c_res_t i2c_master_pre_read(i2c_master_t *ctx,
-                port_t p_scl,
-                port_t p_sda,
                 uint8_t device_addr)
 {
     i2c_res_t result;
@@ -421,21 +416,19 @@ i2c_res_t i2c_master_pre_read(i2c_master_t *ctx,
     ctx->interrupt_state = interrupt_state_get();
     interrupt_disable();
 
-    start_bit(ctx, p_scl, p_sda);
+    start_bit(ctx);
 
-    uint32_t ack = tx8(ctx, p_scl, p_sda, (device_addr << 1) | 1);
+    uint32_t ack = tx8(ctx, (device_addr << 1) | 1);
     result = (ack == 0) ? I2C_ACK : I2C_NACK;
     return result;
 }
 
 uint8_t i2c_master_read_byte(i2c_master_t *ctx,
-                port_t p_scl,
-                port_t p_sda,
                 int final_byte)
 {
     uint8_t data = 0;
     for (int i = 8; i != 0; i--) {
-        uint32_t temp = high_pulse_sample(ctx, p_scl, p_sda);
+        uint32_t temp = high_pulse_sample(ctx);
         data = (data << 1) | temp;
     }
 
@@ -446,16 +439,16 @@ uint8_t i2c_master_read_byte(i2c_master_t *ctx,
         sda_value = 0;
     }
 
-    high_pulse_drive(ctx, p_scl, p_sda, sda_value);
+    high_pulse_drive(ctx, sda_value);
 
     return data;
 }
 
 void i2c_master_post_read(i2c_master_t *ctx,
-                port_t p_scl,
-                port_t p_sda,
                 int send_stop_bit)
 {
+    const port_t p_scl = ctx->p_scl;
+    const port_t p_sda = ctx->p_sda;
     uint32_t scl_low = ctx->scl_low;
     uint32_t sda_low = ctx->sda_low;
 
@@ -471,7 +464,7 @@ void i2c_master_post_read(i2c_master_t *ctx,
 
     if (send_stop_bit) {
         port_out(p_sda, sda_low);
-        stop_bit(ctx, p_scl, p_sda);
+        stop_bit(ctx);
         ctx->stopped = 1;
     } else {
         ctx->stopped = 0;
@@ -481,30 +474,26 @@ void i2c_master_post_read(i2c_master_t *ctx,
 }
 
 uint32_t i2c_master_pre_write(i2c_master_t *ctx,
-                port_t p_scl,
-                port_t p_sda,
                 uint8_t device_addr)
 {
     ctx->interrupt_state = interrupt_state_get();
     interrupt_disable();
 
-    start_bit(ctx, p_scl, p_sda);
-    return tx8(ctx, p_scl, p_sda, (device_addr << 1) | 0);
+    start_bit(ctx);
+    return tx8(ctx, (device_addr << 1) | 0);
 }
 
 uint32_t i2c_master_write_byte(i2c_master_t *ctx,
-                port_t p_scl,
-                port_t p_sda,
                 uint8_t data)
 {
-    return tx8(ctx, p_scl, p_sda, data);
+    return tx8(ctx, data);
 }
 
 void i2c_master_post_write(i2c_master_t *ctx,
-                port_t p_scl,
-                port_t p_sda,
                 int send_stop_bit)
 {
+    const port_t p_scl = ctx->p_scl;
+    const port_t p_sda = ctx->p_sda;
     uint32_t scl_low;
     uint32_t sda_low;
     scl_low = ctx->scl_low;
@@ -522,7 +511,7 @@ void i2c_master_post_write(i2c_master_t *ctx,
 
     if (send_stop_bit) {
         port_out(p_sda, sda_low);
-        stop_bit(ctx, p_scl, p_sda);
+        stop_bit(ctx);
         ctx->stopped = 1;
     } else {
         ctx->stopped = 0;

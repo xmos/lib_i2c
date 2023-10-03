@@ -1,10 +1,6 @@
 #ifndef _i2c_common_h_
 #define _i2c_common_h_
 
-#ifdef __XC__
-typedef port port_t;
-#endif
-
 
 /**
  * Status codes for I2C master operations

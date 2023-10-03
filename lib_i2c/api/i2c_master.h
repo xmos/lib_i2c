@@ -11,6 +11,9 @@
 #include <xcore/port.h>
 #include <xcore/clock.h>
 #include <xcore/hwtimer.h>
+#else
+// typedef in xcore/port.h isn't included in XC sources, so need this typedef
+typedef unsigned port_t;
 #endif
 
 #include <xccompat.h>
@@ -33,7 +36,9 @@ typedef struct i2c_master_struct i2c_master_t;
  * The members in this struct should not be accessed directly.
  */
 struct i2c_master_struct {
+    port_t p_scl;
     uint32_t scl_mask;
+    port_t p_sda;
     uint32_t sda_mask;
 
     uint32_t scl_high;
@@ -81,8 +86,6 @@ struct i2c_master_struct {
  */
 i2c_res_t i2c_master_write(
         i2c_master_t * UNSAFE ctx,
-        port_t p_scl,
-        port_t p_sda,
         uint8_t device_addr,
         uint8_t * UNSAFE buf,
         size_t n,
@@ -107,8 +110,6 @@ i2c_res_t i2c_master_write(
  */
 i2c_res_t i2c_master_read(
         i2c_master_t * UNSAFE ctx,
-        port_t p_scl,
-        port_t p_sda,
         uint8_t device_addr,
         uint8_t * UNSAFE buf,
         size_t n,
@@ -125,9 +126,7 @@ i2c_res_t i2c_master_read(
  * \param ctx             A pointer to the I2C master context to use.
  */
 void i2c_master_stop_bit_send(
-        i2c_master_t * UNSAFE ctx,
-        port_t p_scl,
-        port_t p_sda);
+        i2c_master_t * UNSAFE ctx);
 
 
 /**
@@ -170,38 +169,24 @@ void i2c_master_init(
  * If subsequent reads or writes need to be performed, then i2c_master_init()
  * must be called again first.
  */
-void i2c_master_shutdown(i2c_master_t * UNSAFE ctx,
-                port_t p_scl,
-                port_t p_sda);
+void i2c_master_shutdown(i2c_master_t * UNSAFE ctx);
 
 i2c_res_t i2c_master_pre_read(i2c_master_t * UNSAFE ctx,
-                port_t p_scl,
-                port_t p_sda,
                 uint8_t device_addr);
 
 uint8_t i2c_master_read_byte(i2c_master_t * UNSAFE ctx,
-                port_t p_scl,
-                port_t p_sda,
                 int final_byte);
 
 void i2c_master_post_read(i2c_master_t * UNSAFE ctx,
-                port_t p_scl,
-                port_t p_sda,
                 int send_stop_bit);
 
 uint32_t i2c_master_pre_write(i2c_master_t * UNSAFE ctx,
-                port_t p_scl,
-                port_t p_sda,
                 uint8_t device_addr);
 
 uint32_t i2c_master_write_byte(i2c_master_t * UNSAFE ctx,
-                port_t p_scl,
-                port_t p_sda,
                 uint8_t data);
 
 void i2c_master_post_write(i2c_master_t * UNSAFE ctx,
-                port_t p_scl,
-                port_t p_sda,
                 int send_stop_bit);
 
 #undef UNSAFE
