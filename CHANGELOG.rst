@@ -1,10 +1,16 @@
 I2C library change log
 ======================
 
-UNRELEASED
-----------
+6.2.0
+-----
 
   * ADDED:    Support for XCommon CMake build system
+
+  * Changes to dependencies:
+
+    - lib_logging: 2.0.0 -> 3.2.0
+
+    - lib_xassert: 2.0.0 -> 4.2.0
 
 6.1.1
 -----
