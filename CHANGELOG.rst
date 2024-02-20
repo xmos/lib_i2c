@@ -4,8 +4,8 @@ I2C library change log
 6.2.0
 -----
 
-  * ADDED:    Support for XCommon CMake build system
-  * REMOVED:  Not used dependencies
+  * ADDED: Support for XCommon CMake build system
+  * REMOVED: Unused dependency lib_logging
 
   * Changes to dependencies:
 
