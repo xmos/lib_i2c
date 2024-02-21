@@ -1,4 +1,4 @@
-@Library('xmos_jenkins_shared_library@v0.16.2') _
+@Library('xmos_jenkins_shared_library@v0.18.0') _
 
 getApproval()
 
@@ -7,7 +7,7 @@ pipeline {
   stages {
     stage('Standard build and XS3 tests') {
       agent {
-        label 'x86_64&&brew&&macOS'
+        label 'x86_64&&macOS'
       }
       environment {
         REPO = 'lib_i2c'
