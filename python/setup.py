@@ -13,7 +13,7 @@ setuptools.setup(
     name='lib_i2c',
     packages=setuptools.find_packages(),
     install_requires=[
-        'flake8~=7.0',
+        'flake8~=3.8',
     ],
     dependency_links=[
     ],
