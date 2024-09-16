@@ -1,3 +1,6 @@
+xCORE got ack, 2
+xCORE got nack, 2
+xCORE got nack, 0
 Start bit received
 Byte received: 0x78
 Speed = \d+ Kbps
@@ -27,6 +30,3 @@ Speed = \d+ Kbps
 Master write transaction started, device address=0x31
 Sending nack
 Stop bit received
-xCORE got ack, 2
-xCORE got nack, 2
-xCORE got nack, 0

@@ -1,37 +1,49 @@
-# Copyright 2014-2021 XMOS LIMITED.
+# Copyright 2014-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-import xmostest
+from pathlib import Path
+import Pyxsim
+import pytest
+import json
 from i2c_master_checker import I2CMasterChecker
 
-def do_master_test(arch, stop):
-    resources = xmostest.request_resource("xsim")
+test_name = "i2c_master_test"
 
-    binary = 'i2c_master_test/bin/tx_only_%(stop)s_%(arch)s/i2c_master_test_tx_only_%(stop)s_%(arch)s.xe' % {
-      'stop' : stop,
-      'arch' : arch,
-    }
+with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
+    params = json.load(f)
+
+
+@pytest.mark.parametrize("dir", ["tx_only"]) # Tests only test the tx_only
+@pytest.mark.parametrize("speed", [400]) # Tests only test speed = 400
+@pytest.mark.parametrize("stop", params['STOPS'])
+def test_async_master(capfd, request, nightly, dir, speed, stop):
+    cwd = Path(request.fspath).parent
+    arch = "xcoreai"
+    cfg = f"{dir}_{speed}_{stop}_{arch}"
+    binary = f'{cwd}/{test_name}/bin/{cfg}/{test_name}_{cfg}.xe'
+
+    assert Path(binary).exists(), f"Cannot find {binary}"
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
                                tx_data = [0x99, 0x3A, 0xff],
-                               expected_speed = 400,
+                               expected_speed = speed,
                                ack_sequence=[True, True, True,
                                              True, True, False,
                                              False, True])
 
-    tester = xmostest.ComparisonTester(open('ack_test_%s.expect' % stop),
-                                      'lib_i2c', 'i2c_master_sim_tests',
-                                      'ack_test',
-                                      {'speed':400, 'arch' : arch, 'stop' : stop},
-                                      regexp=True)
 
-    xmostest.run_on_simulator(resources['xsim'], binary,
-                              simthreads = [checker],
-                              simargs=['--weak-external-drive'],
-                              suppress_multidrive_messages = True,
-                              tester = tester)
+    tester = Pyxsim.testers.AssertiveComparisonTester(
+        f'{cwd}/ack_test_{stop}.expect',
+        regexp = True,
+        ordered = True,
+        suppress_multidrive_messages=True,
+    )
 
-def runtest():
-  for arch in ['xs1', 'xs2', 'xcoreai']:
-    for stop in ['stop', 'no_stop']:
-        do_master_test(arch, stop)
+    Pyxsim.run_on_simulator_(
+        binary,
+        tester = tester,
+        do_xe_prebuild = False,
+        simthreads = [checker],
+        simargs=['--weak-external-drive'],
+        capfd=capfd
+        )
