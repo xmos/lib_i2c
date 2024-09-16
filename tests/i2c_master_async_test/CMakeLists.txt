@@ -26,8 +26,14 @@ set(XMOS_SANDBOX_DIR    ${CMAKE_CURRENT_LIST_DIR}/../../..)
 set(APP_HW_TARGET   XCORE-AI-EXPLORER)
 include(${CMAKE_CURRENT_LIST_DIR}/../../deps.cmake)
 
+if(APP_HW_TARGET STREQUAL "XCORE-AI-EXPLORER")
+    set(target "xcoreai")
+elseif(APP_HW_TARGET STREQUAL "XCORE-200-EXPLORER")
+    set(target "xs2")
+endif()
+
 set(comb_val 1)
-set(no_comb_val 0)
+set(non_comb_val 0)
 set(stop_val 1)
 set(no_stop_val 0)
 
@@ -39,8 +45,8 @@ foreach(i RANGE 0 ${comb_list_len})
 
         foreach(k RANGE 0 ${stop_list_len})
             string(JSON stop GET ${stop_list} ${k})
-            set(config ${comb}_${speed}_${stop})
-            message(STATUS "building config ${comb}_${speed}_${stop}, ${${comb}_val}_${speed}_${${stop}_val}")
+            set(config ${comb}_${speed}_${target}_${stop})
+            message(STATUS "building config ${comb}_${speed}_${stop} => ${${comb}_val}_${speed}_${${stop}_val}")
 
             set(APP_COMPILER_FLAGS_${config}
                 -O2
@@ -54,13 +60,5 @@ foreach(i RANGE 0 ${comb_list_len})
         endforeach()
     endforeach()
 endforeach()
-
-
-#set(params_list SPEEDS;STOPS)
-#foreach(elem IN LISTS params_list)
-#    message(STATUS, "elem = ${elem}")
-#    string(JSON ${elem}_list GET ${params_json} ${elem})
-#    message(STATUS, "elem = ${${elem}_list}")
-#endforeach()
 
 XMOS_REGISTER_APP()

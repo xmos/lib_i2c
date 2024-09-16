@@ -1,18 +1,30 @@
-# Copyright 2014-2021 XMOS LIMITED.
+# Copyright 2014-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-import xmostest
+#from i2c_master_checker import I2CMasterChecker
+from pathlib import Path
+import Pyxsim
+import pytest
+import json
 from i2c_master_checker import I2CMasterChecker
-import os
 
-def do_master_test(arch, speed, impl, stop):
-    resources = xmostest.request_resource("xsim")
 
-    binary = 'i2c_master_async_test/bin/%(impl)s_%(speed)s_%(arch)s_%(stop)s/i2c_master_async_test_%(impl)s_%(speed)s_%(arch)s_%(stop)s.xe' % {
-      'impl' : impl,
-      'speed' : speed,
-      'arch' : arch,
-      'stop' : stop
-    }
+test_name = "i2c_master_async_test"
+with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
+    params = json.load(f)
+
+@pytest.mark.parametrize("impl", params['COMBS'])
+@pytest.mark.parametrize("speed", params['SPEEDS'])
+@pytest.mark.parametrize("stop", params['STOPS'])
+def test_async_master(capfd, request, nightly, impl, speed, stop):
+    if speed == 400 and impl == "comb":
+        pytest.skip("Unsupported config")
+
+    cwd = Path(request.fspath).parent
+    arch = "xcoreai"
+    cfg = f"{impl}_{speed}_{arch}_{stop}"
+    binary = f'{cwd}/{test_name}/bin/{cfg}/{test_name}_{cfg}.xe'
+
+    assert Path(binary).exists(), f"Cannot find {binary}"
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
@@ -24,25 +36,18 @@ def do_master_test(arch, speed, impl, stop):
                                              True, True, True, False,
                                              True, False])
 
-    tester = xmostest.ComparisonTester(open('master_test_%s.expect' % stop),
-                                     'lib_i2c', 'i2c_master_sim_tests',
-                                     'async_basic_test',
-                                     {'speed' : speed, 'impl' : impl, 'arch' : arch, 'stop' : stop},
-                                     regexp=True)
+    tester = Pyxsim.testers.AssertiveComparisonTester(
+        f'{cwd}/master_test_{stop}.expect',
+        regexp = True,
+        ordered = True,
+        suppress_multidrive_messages=True,
+    )
 
-    if speed == 10:
-        tester.set_min_testlevel('nightly')
-
-    xmostest.run_on_simulator(resources['xsim'], binary,
-                              simthreads = [checker],
-                              simargs=['--weak-external-drive'],
-                              suppress_multidrive_messages = True,
-                              tester = tester)
-
-def runtest():
-  for arch in ['xs1', 'xs2', 'xcoreai']:
-    for stop in ['stop', 'no_stop']:
-      do_master_test(arch, 400, 'non_comb', stop)
-      for impl in ['comb', 'non_comb']:
-        for speed in [100, 10]:
-          do_master_test(arch, speed, impl, stop)
+    Pyxsim.run_on_simulator_(
+        binary,
+        tester = tester,
+        do_xe_prebuild = False,
+        simthreads = [checker],
+        simargs=['--weak-external-drive'],
+        capfd=capfd
+        )

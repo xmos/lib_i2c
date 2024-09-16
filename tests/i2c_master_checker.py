@@ -1,10 +1,13 @@
-# Copyright 2014-2021 XMOS LIMITED.
+# Copyright 2014-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-import xmostest
+import Pyxsim as px
+from typing import Sequence
+from numbers import Number
+from functools import partial
 
 VERBOSE = False
 
-class I2CMasterChecker(xmostest.SimThread):
+class I2CMasterChecker(px.SimThread):
     """"
     This simulator thread will act as I2C slave and check any transactions
     caused by the master.
@@ -40,10 +43,10 @@ class I2CMasterChecker(xmostest.SimThread):
 
         self._drive_ack = 1
 
-        print "Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port)
+        #print("Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port))
 
     def error(self, str):
-         print "ERROR: %s @ %s" % (str, self.xsi.get_time())
+         print("ERROR: %s @ %s" % (str, self.xsi.get_time()))
 
     def read_port(self, port, external_value):
       driving = self.xsi.is_port_driving(port)
@@ -86,45 +89,45 @@ class I2CMasterChecker(xmostest.SimThread):
             # Data change must have been for a previous bit
             return
 
-        if (self._expected_speed == 100 and time > 3450) or\
-           (self._expected_speed == 400 and time >  900):
+        if (self._expected_speed == 100 and time > 3450e6) or\
+           (self._expected_speed == 400 and time >  900e6):
             self.error("Data valid time not respected: %gns" % time)
 
     def check_hold_start_time(self, time):
-        if (self._expected_speed == 100 and time < 4000) or\
-           (self._expected_speed == 400 and time < 600):
+        if (self._expected_speed == 100 and time < 4000e6) or\
+           (self._expected_speed == 400 and time < 600e6):
             self.error("Start hold time less than minimum in spec: %gns" % time)
 
     def check_setup_start_time(self, time):
-        if (self._expected_speed == 100 and time < 4700) or\
-           (self._expected_speed == 400 and time < 600):
+        if (self._expected_speed == 100 and time < 4700e6) or\
+           (self._expected_speed == 400 and time < 600e6):
             self.error("Start bit setup time less than minimum in spec: %gns" % time)
 
     def check_data_setup_time(self, time):
-        if (self._expected_speed == 100 and time < 250) or\
-           (self._expected_speed == 400 and time < 100):
+        if (self._expected_speed == 100 and time < 250e6) or\
+           (self._expected_speed == 400 and time < 100e6):
             self.error("Data setup time less than minimum in spec: %gns" % time)
 
     def check_clock_low_time(self, time):
-        if (self._expected_speed == 100 and time < 4700) or\
-           (self._expected_speed == 400 and time < 1300):
+        if (self._expected_speed == 100 and time < 4700e6) or\
+           (self._expected_speed == 400 and time < 1300e6):
             self.error("Clock low time less than minimum in spec: %gns" % time)
 
     def check_clock_high_time(self, time):
-        if (self._expected_speed == 100 and time < 4000) or\
-           (self._expected_speed == 400 and time < 900):
+        if (self._expected_speed == 100 and time < 4000e6) or\
+           (self._expected_speed == 400 and time < 900e6):
             self.error("Clock high time less than minimum in spec: %gns" % time)
 
     def check_setup_stop_time(self, time):
-        if (self._expected_speed == 100 and time < 4000) or\
-           (self._expected_speed == 400 and time < 600):
+        if (self._expected_speed == 100 and time < 4000e6) or\
+           (self._expected_speed == 400 and time < 600e6):
             self.error("Stop bit setup time less than minimum in spec: %gns" % time)
 
     def check_bus_free_time(self, time):
       """ Check the time from the STOP to the START condition
       """
-      if (self._expected_speed == 100 and time < 4700) or \
-         (self._expected_speed == 400 and time < 1300):
+      if (self._expected_speed == 100 and time < 4700e6) or \
+         (self._expected_speed == 400 and time < 1300e6):
           self.error("STOP to START time less than minimum in spec: %gns" % time)
 
     def get_next_data_item(self):
@@ -197,7 +200,7 @@ class I2CMasterChecker(xmostest.SimThread):
             self.drive_scl(1)
             self._clock_release_time = None
             if VERBOSE:
-              print "End clock stretching @ {}".format(self.xsi.get_time())
+              print("End clock stretching @ {}".format(self.xsi.get_time()))
 
         else:
           # Default case, simply wait for one of the pins to change
@@ -209,8 +212,8 @@ class I2CMasterChecker(xmostest.SimThread):
       time_now = self.xsi.get_time()
 
       if VERBOSE:
-        print "wait_for_change {},{} -> {},{} @ {}".format(
-          scl_value, sda_value, new_scl_value, new_sda_value, time_now)
+        print("wait_for_change {},{} -> {},{} @ {}".format(
+          scl_value, sda_value, new_scl_value, new_sda_value, time_now))
 
       #
       # SCL changed
@@ -240,7 +243,7 @@ class I2CMasterChecker(xmostest.SimThread):
           self.drive_scl(0)
           self._clock_release_time = time_now + self._clock_stretch
           if VERBOSE:
-            print "Start clock stretching @ {}".format(self.xsi.get_time())
+            print("Start clock stretching @ {}".format(self.xsi.get_time()))
 
       #
       # SDA changed - don't detect simultaneous changes and have the clock
@@ -262,7 +265,7 @@ class I2CMasterChecker(xmostest.SimThread):
 
     def set_state(self, next_state):
       if VERBOSE:
-        print "State: {} -> {} @ {}".format(self._state, next_state, self.xsi.get_time())
+        print("State: {} -> {} @ {}".format(self._state, next_state, self.xsi.get_time()))
       self._prev_state = self._state
       self._state = next_state
 
@@ -314,15 +317,15 @@ class I2CMasterChecker(xmostest.SimThread):
 
       if self._bit_times:
         avg_bit_time = sum(self._bit_times) / len(self._bit_times)
-        speed_in_kbps = pow(10, 6) / avg_bit_time
-        print "Speed = %d Kbps" % int(speed_in_kbps + .5)
+        speed_in_kbps = pow(10, 12) / avg_bit_time
+        print("Speed = %d Kbps" % int(speed_in_kbps + .5))
         if self._expected_speed != None and \
           (speed_in_kbps < 0.99 * self._expected_speed):
-           print "ERROR: speed is <1% slower than expected"
+           print("ERROR: speed is <1% slower than expected")
 
         if self._expected_speed != None and \
           (speed_in_kbps > self._expected_speed * 1.05):
-           print "ERROR: speed is faster than expected"
+           print("ERROR: speed is faster than expected")
 
       if self._byte_num == 0:
         # Command byte
@@ -374,7 +377,7 @@ class I2CMasterChecker(xmostest.SimThread):
     def handle_starting(self):
       print("Start bit received")
       self.starting_sequence()
-      
+
     def handle_sample_bit(self):
       if self._read_data is not None:
         # Ensure that the data setup time has been respected
@@ -477,7 +480,7 @@ class I2CMasterChecker(xmostest.SimThread):
       self.drive_sda(1)
 
       # Ignore the blips on the ports at the start
-      self.wait_until(100)
+      self.wait_until(100e6)
       self._scl_value = self.read_scl_value()
       self._sda_value = self.read_sda_value()
 
