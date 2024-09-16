@@ -20,7 +20,7 @@ class I2CMasterChecker(px.SimThread):
         self._tx_data = tx_data
         self._ack_sequence = ack_sequence
         self._expected_speed = expected_speed
-        self._clock_stretch = clock_stretch
+        self._clock_stretch = clock_stretch*1e6 # ns to fs conversion
 
         self._external_scl_value = 0
         self._external_sda_value = 0
