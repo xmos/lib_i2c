@@ -1,6 +1,5 @@
 # Copyright 2014-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-#from i2c_master_checker import I2CMasterChecker
 from pathlib import Path
 import Pyxsim
 import pytest
