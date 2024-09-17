@@ -46,7 +46,7 @@ foreach(i RANGE 0 ${comb_list_len})
         foreach(k RANGE 0 ${stop_list_len})
             string(JSON stop GET ${stop_list} ${k})
             set(config ${comb}_${speed}_${target}_${stop})
-            message(STATUS "building config ${comb}_${speed}_${stop} => ${${comb}_val}_${speed}_${${stop}_val}")
+            message(STATUS "building config ${config} => ${${comb}_val}_${speed}_${target}_${${stop}_val}")
 
             set(APP_COMPILER_FLAGS_${config}
                 -O2
@@ -60,5 +60,24 @@ foreach(i RANGE 0 ${comb_list_len})
         endforeach()
     endforeach()
 endforeach()
+
+
+foreach(k RANGE 0 ${stop_list_len})
+    string(JSON stop GET ${stop_list} ${k})
+    set(config interfere_${target}_${stop})
+    message(STATUS "building config ${config} => ${target}_${${stop}_val}")
+
+    set(APP_COMPILER_FLAGS_${config}
+        -O2
+        -g
+        -DDEBUG_PRINT_ENABLE=1
+        -report
+        -DSPEED=100
+        -DCOMB=1
+        -DSTOP=${${stop}_val}
+        -DINTERFERE)
+
+endforeach()
+
 
 XMOS_REGISTER_APP()

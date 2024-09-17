@@ -44,7 +44,7 @@ foreach(i RANGE 0 ${dir_list_len})
         foreach(k RANGE 0 ${stop_list_len})
             string(JSON stop GET ${stop_list} ${k})
             set(config ${dir}_${speed}_${stop}_${target})
-            message(STATUS "building config ${dir}_${speed}_${stop} => ${dir}_${speed}_${${stop}_val}")
+            message(STATUS "building config ${config} => ${dir}_${speed}_${${stop}_val}_${target}")
 
             if(dir STREQUAL "rx_tx")
                 set(rx_enable 1)
