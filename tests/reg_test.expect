@@ -1,3 +1,15 @@
+XCORE: ACK
+XCORE: ACK
+XCORE: ACK
+XCORE: ACK
+XCORE: ACK
+XCORE: val=99
+XCORE: ACK
+XCORE: val=3A
+XCORE: ACK
+XCORE: val=FF05
+XCORE: ACK
+XCORE: val=EE06
 Start bit received
 Byte received: 0x88
 Speed = \d+ Kbps
@@ -142,15 +154,3 @@ Speed = \d+ Kbps
 Master sends NACK.
 Waiting for stop/start bit
 Stop bit received
-ACK
-ACK
-ACK
-ACK
-ACK
-val=99
-ACK
-val=3A
-ACK
-val=FF05
-ACK
-val=EE06

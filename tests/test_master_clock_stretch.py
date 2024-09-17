@@ -15,7 +15,7 @@ with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
 @pytest.mark.parametrize("dir", ["rx_tx"]) # only test the rx_tx config
 @pytest.mark.parametrize("speed", [400]) # only test speed = 400
 @pytest.mark.parametrize("stop", params['STOPS'])
-def test_async_master(capfd, request, nightly, dir, speed, stop):
+def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop):
     cwd = Path(request.fspath).parent
     arch = "xcoreai"
     cfg = f"{dir}_{speed}_{stop}_{arch}"
