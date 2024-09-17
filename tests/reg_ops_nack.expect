@@ -1,3 +1,15 @@
+XCORE: NACK
+XCORE: NACK
+XCORE: NACK
+XCORE: NACK
+XCORE: NACK
+XCORE: val=0
+XCORE: NACK
+XCORE: val=0
+XCORE: NACK
+XCORE: val=0
+XCORE: NACK
+XCORE: val=45
 Start bit received
 Byte received: 0x88
 Speed = \d+ Kbps
@@ -72,15 +84,4 @@ Speed = \d+ Kbps
 Master read transaction started, device address=0x47
 Sending nack
 Stop bit received
-NACK
-NACK
-NACK
-NACK
-NACK
-val=0
-NACK
-val=0
-NACK
-val=0
-NACK
-val=45
+

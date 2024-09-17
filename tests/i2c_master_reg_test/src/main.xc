@@ -44,11 +44,11 @@ void test(client i2c_master_if i2c)
 
   // Print all the results
   for (size_t i = 0; i < NUM_WRITE_TESTS; ++i) {
-    debug_printf(write_results[i] == I2C_REGOP_SUCCESS ? "XCORE: ACK\n" : "NACK\n");
+    debug_printf(write_results[i] == I2C_REGOP_SUCCESS ? "XCORE: ACK\n" : "XCORE: NACK\n");
   }
 
   for (size_t i = 0; i < NUM_READ_TESTS; ++i) {
-    debug_printf(read_results[i] == I2C_REGOP_SUCCESS ? "XCORE: ACK\n" : "NACK\n");
+    debug_printf(read_results[i] == I2C_REGOP_SUCCESS ? "XCORE: ACK\n" : "XCORE: NACK\n");
     debug_printf("XCORE: val=%x\n", vals[i]);
   }
   exit(0);
