@@ -1,8 +1,8 @@
 # Copyright 2014-2021 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-import xmostest
+import Pyxsim as px
 
-class I2CSlaveChecker(xmostest.SimThread):
+class I2CSlaveChecker(px.SimThread):
     """"
     This simulator thread will act as I2C master, create
     bus transactions and test the response of the slave
@@ -14,8 +14,8 @@ class I2CSlaveChecker(xmostest.SimThread):
         self._sda_port = sda_port
         self._tsequence = tsequence
         self._speed = speed
-        self._bit_time = 1000000 / speed
-        print "Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port)
+        self._bit_time = 1000000e6 / speed
+        #print("Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port))
 
     def get_port_val(self, xsi, port):
         "Sample port, modelling the pull up"
@@ -63,7 +63,7 @@ class I2CSlaveChecker(xmostest.SimThread):
         return data
 
     def write(self, xsi, byte):
-        print "Sending data 0x%x" % byte
+        print("Sending data 0x%x" % byte)
         for i in range(8):
             self.wait_until(self._fall_time + self._bit_time / 8);
             bit = (byte >> 7) & 1
@@ -72,12 +72,12 @@ class I2CSlaveChecker(xmostest.SimThread):
             self.high_pulse(xsi)
         ack = self.high_pulse_sample(xsi)
         if ack == 1:
-            print "Master received NACK"
+            print("Master received NACK")
         else:
-            print "Master received ACK"
+            print("Master received ACK")
 
     def stop_bit(self, xsi):
-        print "Sending stop bit"
+        print("Sending stop bit")
         self.wait_until(self._fall_time + self._bit_time / 4)
         xsi.drive_port_pins(self._sda_port, 0)
         self.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
@@ -92,12 +92,12 @@ class I2CSlaveChecker(xmostest.SimThread):
         for i in range(8):
             bit = self.high_pulse_sample(xsi)
             byte = (byte << 1) | bit
-        print "Received byte 0x%x" % byte
+        print("Received byte 0x%x" % byte)
         self.wait_until(self._fall_time + self._bit_time / 8);
         if ack == 0:
-            print "Master sending ACK"
+            print("Master sending ACK")
         else:
-            print "Master sending NACK"
+            print("Master sending NACK")
         xsi.drive_port_pins(self._sda_port, ack)
         self.high_pulse(xsi)
 
@@ -106,18 +106,18 @@ class I2CSlaveChecker(xmostest.SimThread):
         xsi = self.xsi
         xsi.drive_port_pins(self._scl_port, 1)
         xsi.drive_port_pins(self._sda_port, 1)
-        self.wait_until(xsi.get_time() + 30000)
+        self.wait_until(xsi.get_time() + 30000e6)
         for (typ, addr, d) in self._tsequence:
             if typ == "w":
                 self.start_bit(xsi)
-                print "Starting write transaction to device id 0x%x" % addr
+                print("Starting write transaction to device id 0x%x" % addr)
                 self.write(xsi, (addr << 1) | 0)
                 for x in d:
                     self.write(xsi, x);
                 self.stop_bit(xsi)
             elif typ == "r":
                 self.start_bit(xsi)
-                print "Starting read transaction to device id 0x%x" % addr
+                print("Starting read transaction to device id 0x%x" % addr)
                 self.write(xsi, (addr << 1) | 1)
                 for x in range(d-1):
                     self.read(xsi, 0);

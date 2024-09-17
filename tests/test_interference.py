@@ -13,7 +13,7 @@ with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
     params = json.load(f)
 
 @pytest.mark.parametrize("stop", params['STOPS'])
-def test_async_master(capfd, request, nightly, stop):
+def test_interference(capfd, request, nightly, stop):
     cwd = Path(request.fspath).parent
     arch = "xcoreai"
     speed = 100

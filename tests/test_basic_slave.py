@@ -1,16 +1,21 @@
-# Copyright 2014-2021 XMOS LIMITED.
+# Copyright 2014-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-import xmostest
+from pathlib import Path
+import Pyxsim
+import pytest
+import json
 from i2c_slave_checker import I2CSlaveChecker
-import os
 
+test_name = "i2c_slave_test"
 
-def do_slave_test(arch, speed, level):
-    resources = xmostest.request_resource("xsim")
+@pytest.mark.parametrize("speed", [400, 100, 10])
+def test_basic_slave(capfd, request, nightly, speed):
+    cwd = Path(request.fspath).parent
+    arch = "xcoreai"
+    binary = f'{cwd}/{test_name}/bin/{test_name}.xe'
 
-    binary = 'i2c_slave_test/bin/%(arch)s/i2c_slave_test_%(arch)s.xe' % {
-      'arch' : arch
-    }
+    assert Path(binary).exists(), f"Cannot find {binary}"
+
     checker = I2CSlaveChecker("tile[0]:XS1_PORT_1A",
                               "tile[0]:XS1_PORT_1B",
                               tsequence =
@@ -22,21 +27,19 @@ def do_slave_test(arch, speed, level):
                                ("w", 0x3c, [0x22, 0xff])],
                                speed = speed)
 
-    tester = xmostest.ComparisonTester(open('basic_slave_test.expect'),
-                                     'lib_i2c', 'i2c_slave_sim_tests',
-                                     'basic_test', {'speed':speed},
-                                     regexp=True)
+    tester = Pyxsim.testers.AssertiveComparisonTester(
+        f'{cwd}/basic_slave_test.expect',
+        regexp = True,
+        ordered = True,
+        suppress_multidrive_messages=True,
+    )
 
-    tester.set_min_testlevel(level)
+    Pyxsim.run_on_simulator_(
+        binary,
+        tester = tester,
+        do_xe_prebuild = False,
+        simthreads = [checker],
+        simargs=['--weak-external-drive'],
+        capfd=capfd
+        )
 
-    xmostest.run_on_simulator(resources['xsim'], binary,
-                              simthreads = [checker],
-                              simargs=['--weak-external-drive'],
-                              suppress_multidrive_messages = True,
-                              tester = tester)
-
-def runtest():
-    for arch in ['xs1', 'xcoreai']:
-        do_slave_test(arch, 400, 'smoke')
-        do_slave_test(arch, 100, 'nightly')
-        do_slave_test(arch, 10, 'nightly')
