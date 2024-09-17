@@ -30,7 +30,7 @@ def test_reg_ops(capfd, request, nightly):
                                             True, True, True])
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/reg_test.expect',
+        f'{cwd}/expected/reg_test.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

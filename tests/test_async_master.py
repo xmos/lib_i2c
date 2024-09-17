@@ -36,7 +36,7 @@ def test_async_master(capfd, request, nightly, impl, speed, stop):
                                              True, False])
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/master_test_{stop}.expect',
+        f'{cwd}/expected/master_test_{stop}.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

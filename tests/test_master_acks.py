@@ -33,7 +33,7 @@ def test_master_acks(capfd, request, nightly, dir, speed, stop):
 
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/ack_test_{stop}.expect',
+        f'{cwd}/expected/ack_test_{stop}.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

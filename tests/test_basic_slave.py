@@ -28,7 +28,7 @@ def test_basic_slave(capfd, request, nightly, speed):
                                speed = speed)
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/basic_slave_test.expect',
+        f'{cwd}/expected/basic_slave_test.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

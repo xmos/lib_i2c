@@ -30,7 +30,7 @@ def test_reg_ops_nack(capfd, request, nightly):
                                         ])
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/reg_ops_nack.expect',
+        f'{cwd}/expected/reg_ops_nack.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

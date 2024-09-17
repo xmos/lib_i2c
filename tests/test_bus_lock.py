@@ -8,7 +8,7 @@ from i2c_master_checker import I2CMasterChecker
 
 test_name = "i2c_test_locks"
 
-def test_reg_ops(capfd, request, nightly):
+def test_bus_lock(capfd, request, nightly):
     cwd = Path(request.fspath).parent
     arch = "xcoreai"
     binary = f'{cwd}/{test_name}/bin/{test_name}.xe'
@@ -21,7 +21,7 @@ def test_reg_ops(capfd, request, nightly):
                                expected_speed=speed)
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/lock_test.expect',
+        f'{cwd}/expected/lock_test.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

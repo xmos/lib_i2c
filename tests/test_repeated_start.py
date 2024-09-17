@@ -20,7 +20,7 @@ def test_repeated_start(capfd, request, nightly):
                             expected_speed=400)
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/repeated_start.expect',
+        f'{cwd}/expected/repeated_start.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

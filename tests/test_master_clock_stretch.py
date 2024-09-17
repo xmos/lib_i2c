@@ -35,7 +35,7 @@ def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop):
                                              True, False])
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/master_test_{stop}.expect',
+        f'{cwd}/expected/master_test_{stop}.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,

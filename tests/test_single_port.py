@@ -32,7 +32,7 @@ def test_single_port(capfd, request, nightly, speed, stop):
                                             True, True, True, False])
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
-        f'{cwd}/single_port_test_{stop}.expect',
+        f'{cwd}/expected/single_port_test_{stop}.expect',
         regexp = True,
         ordered = True,
         suppress_multidrive_messages=True,
