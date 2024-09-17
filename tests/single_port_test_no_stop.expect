@@ -1,3 +1,10 @@
+xCORE got nack, 2
+xCORE got nack, 3
+xCORE got ack
+xCORE received: 0x99, 0x3A
+xCORE got ack
+xCORE received: 0xFF, 0xAA, 0xBB
+xCORE got ack, 1
 Start bit received
 Byte received: 0x78
 Speed = \d+ Kbps
@@ -58,10 +65,3 @@ Sending ack
 Byte received: 0xee
 Speed = \d+ Kbps
 Sending ack
-xCORE got nack, 2
-xCORE got nack, 3
-xCORE got ack
-xCORE received: 0x99, 0x3A
-xCORE got ack
-xCORE received: 0xFF, 0xAA, 0xBB
-xCORE got ack, 1
