@@ -1,7 +1,7 @@
 Typical Resource Usage
 ......................
 
-.. resusage_disabled::
+.. resusage::
 
   * - configuration: Master
     - globals: port p_scl = XS1_PORT_1A; port p_sda = XS1_PORT_1B;

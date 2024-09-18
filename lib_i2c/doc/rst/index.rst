@@ -1,6 +1,5 @@
 .. include:: ../../../README.rst
 
-.. include:: resource_usage_summary.rst
 
 External signal description
 ---------------------------
