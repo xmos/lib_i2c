@@ -1,5 +1,5 @@
-# python_version 3.7.6
-# pip_version 20.*
+# python_version 3.12.2
+# pip_version 24.*
 #
 # The parse_version_from_requirements() function in the installPipfile.groovy
 # file of the Jenkins Shared Library uses the python_version comment to set
@@ -18,9 +18,8 @@
 # pip-install this one as editable using this repository's setup.py file.  The
 # same modules should appear in the setup.py list as given below.
 
-flake8==3.8.3
-# Pin importlib-metadata to <5 due to https://github.com/python/importlib_metadata/issues/409.
-importlib-metadata==4.13.0
+pytest==8.3.3
+pytest-xdist==3.6.1
 
 # Development dependencies
 #
@@ -34,4 +33,4 @@ importlib-metadata==4.13.0
 # If this repository uses the setup functionality (e.g., script entry points)
 # of its own setup.py file, then this list must include an entry for that
 # setup.py file, e.g., '-e .' or '-e ./python' (without the quotes).
--e ./python
+-e ./../test_support
