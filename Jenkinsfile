@@ -2,6 +2,7 @@
 
 def clone_test_deps() {
   dir("${WORKSPACE}") {
+    sh "ls ."
     sh "git clone git@github.com:xmos/test_support"
   }
 }
@@ -62,8 +63,12 @@ pipeline {
                     sh "xdoc xmospdf"
                     archiveArtifacts artifacts: "pdf/*.pdf"
                   }
-                  forAllMatch("${REPO}/examples", "AN*/") { path ->
-                    runXdoc("${path}/doc")
+                  forAllMatch("examples", "AN*/") { path ->
+                    dir("${path}/doc")
+                    {
+                      sh "xdoc xmospdf"
+                      archiveArtifacts artifacts: "pdf/*.pdf"
+                    }
                   }
                 }
               }
@@ -72,9 +77,6 @@ pipeline {
         }  // Build documentation
 
         stage('Simulator tests') {
-          agent {
-            label 'x86_64 && linux'
-          }
           steps {
             dir("${REPO}") {
               withTools(params.TOOLS_VERSION) {
@@ -90,7 +92,7 @@ pipeline {
               }
             }
           }
-        }
+        } // Simulator tests
       }
       post {
         always {
