@@ -12,12 +12,12 @@ with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
     params = json.load(f)
 
 
+@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
 @pytest.mark.parametrize("dir", ["rx_tx"]) # Tests only test the rx_tx config
 @pytest.mark.parametrize("speed", params['SPEEDS'])
 @pytest.mark.parametrize("stop", params['STOPS'])
-def test_basic_master(capfd, request, nightly, dir, speed, stop):
+def test_basic_master(capfd, request, nightly, dir, speed, stop, arch):
     cwd = Path(request.fspath).parent
-    arch = "xcoreai"
     cfg = f"{dir}_{speed}_{stop}_{arch}"
     binary = f'{cwd}/{test_name}/bin/{cfg}/{test_name}_{cfg}.xe'
 

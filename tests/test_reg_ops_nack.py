@@ -8,10 +8,10 @@ from i2c_master_checker import I2CMasterChecker
 
 test_name = "i2c_master_reg_test"
 
-def test_reg_ops_nack(capfd, request, nightly):
+@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
+def test_reg_ops_nack(capfd, request, nightly, arch):
     cwd = Path(request.fspath).parent
-    arch = "xcoreai"
-    binary = f'{cwd}/{test_name}/bin/{test_name}.xe'
+    binary = f'{cwd}/{test_name}/bin/{arch}/{test_name}_{arch}.xe'
 
     assert Path(binary).exists(), f"Cannot find {binary}"
 

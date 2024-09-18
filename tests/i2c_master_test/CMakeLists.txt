@@ -19,56 +19,62 @@ math(EXPR speed_list_len "${speed_list_len} - 1")
 math(EXPR stop_list_len "${stop_list_len} - 1")
 math(EXPR dir_list_len "${dir_list_len} - 1")
 
-project(i2c_master_test)
 
 set(APP_PCA_ENABLE ON)
 set(XMOS_SANDBOX_DIR    ${CMAKE_CURRENT_LIST_DIR}/../../..)
-set(APP_HW_TARGET   XCORE-AI-EXPLORER)
 include(${CMAKE_CURRENT_LIST_DIR}/../../deps.cmake)
 
-if(APP_HW_TARGET STREQUAL "XCORE-AI-EXPLORER")
-    set(target "xcoreai")
-elseif(APP_HW_TARGET STREQUAL "XCORE-200-EXPLORER")
-    set(target "xs2")
-endif()
+set(HW_TARGETS xs2 xcoreai)
 
 set(stop_val 1)
 set(no_stop_val 0)
 
-foreach(i RANGE 0 ${dir_list_len})
-    string(JSON dir GET ${dir_list} ${i})
+foreach(hwtarget ${HW_TARGETS})
+    if(hwtarget STREQUAL "xcoreai")
+        set(target "XCORE-AI-EXPLORER")
+    elseif(hwtarget STREQUAL "xs2")
+        set(target "XCORE-200-EXPLORER")
+    endif()
 
-    foreach(j RANGE 0 ${speed_list_len})
-        string(JSON speed GET ${speed_list} ${j})
+    foreach(i RANGE 0 ${dir_list_len})
+        string(JSON dir GET ${dir_list} ${i})
 
-        foreach(k RANGE 0 ${stop_list_len})
-            string(JSON stop GET ${stop_list} ${k})
-            set(config ${dir}_${speed}_${stop}_${target})
-            message(STATUS "building config ${config} => ${dir}_${speed}_${${stop}_val}_${target}")
+        foreach(j RANGE 0 ${speed_list_len})
+            string(JSON speed GET ${speed_list} ${j})
 
-            if(dir STREQUAL "rx_tx")
-                set(rx_enable 1)
-                set(tx_enable 1)
-            elseif(dir STREQUAL "tx_only")
-                set(rx_enable 0)
-                set(tx_enable 1)
-            else()
-                set(rx_enable 1)
-                set(tx_enable 0)
-            endif()
+            foreach(k RANGE 0 ${stop_list_len})
+                string(JSON stop GET ${stop_list} ${k})
+                set(config ${dir}_${speed}_${stop}_${hwtarget})
+                message(STATUS "building config ${config} => ${dir}_${speed}_${${stop}_val}_${hwtarget}")
 
-            set(APP_COMPILER_FLAGS_${config}
-                -O2
-                -g
-                -DDEBUG_PRINT_ENABLE=1
-                -report
-                -DSPEED=${speed}
-                -DENABLE_TX=${tx_enable}
-                -DENABLE_RX=${rx_enable}
-                -DSTOP=${${stop}_val})
+                if(dir STREQUAL "rx_tx")
+                    set(rx_enable 1)
+                    set(tx_enable 1)
+                elseif(dir STREQUAL "tx_only")
+                    set(rx_enable 0)
+                    set(tx_enable 1)
+                else()
+                    set(rx_enable 1)
+                    set(tx_enable 0)
+                endif()
 
-        endforeach()
-    endforeach()
-endforeach()
+                project(i2c_master_test)
+                set(APP_HW_TARGET  ${target})
 
-XMOS_REGISTER_APP()
+                set(APP_COMPILER_FLAGS_${config}
+                    -O2
+                    -g
+                    -DDEBUG_PRINT_ENABLE=1
+                    -report
+                    -DSPEED=${speed}
+                    -DENABLE_TX=${tx_enable}
+                    -DENABLE_RX=${rx_enable}
+                    -DSTOP=${${stop}_val})
+
+                XMOS_REGISTER_APP()
+                unset(APP_COMPILER_FLAGS_${config})
+
+            endforeach() # stop
+        endforeach() # speed
+    endforeach() # direction
+endforeach() # hwtarget

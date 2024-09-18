@@ -11,15 +11,15 @@ test_name = "i2c_master_async_test"
 with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
     params = json.load(f)
 
+@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
 @pytest.mark.parametrize("impl", params['COMBS'])
 @pytest.mark.parametrize("speed", params['SPEEDS'])
 @pytest.mark.parametrize("stop", params['STOPS'])
-def test_async_master(capfd, request, nightly, impl, speed, stop):
+def test_async_master(capfd, request, nightly, impl, speed, stop, arch):
     if speed == 400 and impl == "comb":
         pytest.skip("Unsupported config")
 
     cwd = Path(request.fspath).parent
-    arch = "xcoreai"
     cfg = f"{impl}_{speed}_{arch}_{stop}"
     binary = f'{cwd}/{test_name}/bin/{cfg}/{test_name}_{cfg}.xe'
 

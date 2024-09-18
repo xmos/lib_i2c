@@ -8,11 +8,11 @@ from i2c_slave_checker import I2CSlaveChecker
 
 test_name = "i2c_slave_test"
 
+@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
 @pytest.mark.parametrize("speed", [400, 100, 10])
-def test_basic_slave(capfd, request, nightly, speed):
+def test_basic_slave(capfd, request, nightly, speed, arch):
     cwd = Path(request.fspath).parent
-    arch = "xcoreai"
-    binary = f'{cwd}/{test_name}/bin/{test_name}.xe'
+    binary = f'{cwd}/{test_name}/bin/{arch}/{test_name}_{arch}.xe'
 
     assert Path(binary).exists(), f"Cannot find {binary}"
 

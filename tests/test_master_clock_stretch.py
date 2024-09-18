@@ -11,13 +11,12 @@ test_name = "i2c_master_test"
 with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
     params = json.load(f)
 
-
+@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
 @pytest.mark.parametrize("dir", ["rx_tx"]) # only test the rx_tx config
 @pytest.mark.parametrize("speed", [400]) # only test speed = 400
 @pytest.mark.parametrize("stop", params['STOPS'])
-def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop):
+def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop, arch):
     cwd = Path(request.fspath).parent
-    arch = "xcoreai"
     cfg = f"{dir}_{speed}_{stop}_{arch}"
     binary = f'{cwd}/{test_name}/bin/{cfg}/{test_name}_{cfg}.xe'
 
