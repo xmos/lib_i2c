@@ -31,12 +31,14 @@ pipeline {
   }
   stages {
     stage('Build and test') {
-      parallel {
-        stage('xcore app build and run tests') {
-          agent {
-            label 'x86_64 && linux'
-          }
+      agent {
+        label 'x86_64 && linux'
+      }
+      stages {
+        stage('Build examples') {
           steps {
+            println "Stage running on ${env.NODE_NAME}"
+
             dir("${REPO}") {
               checkout scm
 
@@ -46,39 +48,14 @@ pipeline {
                   sh 'xmake -C build -j 8'
                 }
               }
-
-              runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.0")
-
-              clone_test_deps()
-              createVenv("requirements.txt")
-              withVenv() {
-                sh "pip install -r requirements.txt"
-              }
-              withTools(params.TOOLS_VERSION) {
-                withVenv() {
-                  dir("tests") {
-                    sh 'cmake -G "Unix Makefiles" -B build'
-                    sh 'xmake -C build -j 8'
-                    sh "pytest -v -n auto --junitxml=pytest_unit.xml"
-                  }
-                }
-              }
             }
+            runLibraryChecks("${WORKSPACE}/${REPO}")
           }
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          }
-        }
-        stage('Build docs') {
-          agent {
-            label 'documentation'
-          }
+        }  // Build examples
+
+        stage('Build documentation') {
           steps {
             dir("${REPO}") {
-              checkout scm
-
               withXdoc("v2.0.20.2.post0") {
                 withTools(params.TOOLS_VERSION) {
                   dir("${REPO}/doc") {
@@ -89,13 +66,37 @@ pipeline {
               }
             }
           }
-          post {
-            cleanup {
-              xcoreCleanSandbox()
+        }  // Build documentation
+
+        stage('Simulator tests') {
+          agent {
+            label 'x86_64 && linux'
+          }
+          steps {
+            dir("${REPO}") {
+              withTools(params.TOOLS_VERSION) {
+                clone_test_deps()
+                createVenv(reqFile: "requirements.txt")
+                withVenv {
+                  dir("tests") {
+                    sh 'cmake -G "Unix Makefiles" -B build'
+                    sh 'xmake -C build -j 8'
+                    sh "pytest -n auto --junitxml=pytest_result.xml"
+                  }
+                }
+              }
             }
           }
         }
       }
-    }
+      post {
+        always {
+          junit "${REPO}/tests/pytest_result.xml"
+        }
+        cleanup {
+          xcoreCleanSandbox()
+        }
+      }
+    }  // Build and test
   }
 }
