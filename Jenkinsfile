@@ -62,6 +62,9 @@ pipeline {
                     sh "xdoc xmospdf"
                     archiveArtifacts artifacts: "pdf/*.pdf"
                   }
+                  forAllMatch("${REPO}/examples", "AN*/") { path ->
+                    runXdoc("${path}/doc")
+                  }
                 }
               }
             }
