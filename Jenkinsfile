@@ -34,7 +34,7 @@ pipeline {
       parallel {
         stage('xcore app build and run tests') {
           agent {
-            label 'sw-hw-usba-mac0'
+            label 'x86_64 && linux'
           }
           steps {
             dir("${REPO}") {
