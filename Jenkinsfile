@@ -1,5 +1,11 @@
 @Library('xmos_jenkins_shared_library@develop') _
 
+def clone_test_deps() {
+  dir("${WORKSPACE}") {
+    sh "git clone git@github.com:xmos/test_support"
+  }
+}
+
 getApproval()
 
 pipeline {
@@ -18,19 +24,21 @@ pipeline {
       defaultValue: '15.3.0',
       description: 'The XTC tools version'
     )
+    string(
+      name: 'XMOSDOC_VERSION',
+      defaultValue: 'v6.0.0',
+      description: 'The xmosdoc version')
   }
   stages {
-    stage('Build') {
+    stage('Build and test') {
       parallel {
         stage('xcore app build and run tests') {
           agent {
-            label 'x86_64 && linux'
+            label 'sw-hw-usba-mac0'
           }
           steps {
             dir("${REPO}") {
               checkout scm
-
-              runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.0")
 
               dir("examples") {
                 withTools(params.TOOLS_VERSION) {
@@ -39,7 +47,9 @@ pipeline {
                 }
               }
 
-              sh "git clone git@github.com:xmos/test_support"
+              runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.0")
+
+              clone_test_deps()
               createVenv("requirements.txt")
               withVenv() {
                 sh "pip install -r requirements.txt"

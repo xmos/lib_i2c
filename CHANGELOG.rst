@@ -1,5 +1,10 @@
-I2C library change log
-======================
+lib_i2c change log
+==================
+
+UNRELEASED
+----------
+  * REMOVED: Support for XS1 - Please design with xcore.ai for new projects
+  * CHANGED: Build examples and tests using XCommon CMake instead of XCommon
 
 6.2.0
 -----
