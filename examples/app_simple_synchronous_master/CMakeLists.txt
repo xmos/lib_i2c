@@ -7,7 +7,7 @@ set(APP_HW_TARGET XK-EVK-XU316)
 
 set(APP_COMPILER_FLAGS -O2 -g -DDEBUG_PRINT_ENABLE=1 -report)
 
-include(${CMAKE_CURRENT_LIST_DIR}/../../deps.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../deps.cmake)
 
 set(XMOS_SANDBOX_DIR ${CMAKE_CURRENT_LIST_DIR}/../../../)
 

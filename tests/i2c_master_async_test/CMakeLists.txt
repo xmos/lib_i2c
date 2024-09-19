@@ -22,7 +22,7 @@ math(EXPR comb_list_len "${comb_list_len} - 1")
 
 set(APP_PCA_ENABLE ON)
 set(XMOS_SANDBOX_DIR    ${CMAKE_CURRENT_LIST_DIR}/../../..)
-include(${CMAKE_CURRENT_LIST_DIR}/../../deps.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/../../examples/deps.cmake)
 
 set(ARCH xs2 xs3)
 
