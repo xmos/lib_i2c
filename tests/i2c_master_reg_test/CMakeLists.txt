@@ -9,7 +9,7 @@ set(HW_TARGETS xs2 xcoreai)
 
 foreach(hwtarget ${HW_TARGETS})
     if(hwtarget STREQUAL "xcoreai")
-        set(target "XCORE-AI-EXPLORER")
+        set(target "XK-EVK-XU316")
     elseif(hwtarget STREQUAL "xs2")
         set(target "XCORE-200-EXPLORER")
     endif()
