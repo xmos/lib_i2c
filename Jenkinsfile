@@ -81,7 +81,7 @@ pipeline {
             dir("${REPO}") {
               withTools(params.TOOLS_VERSION) {
                 clone_test_deps()
-                createVenv(reqFile: "requirements.txt")
+                createVenv(reqFile: "tests/requirements.txt")
                 withVenv {
                   dir("tests") {
                     sh 'cmake -G "Unix Makefiles" -B build'
