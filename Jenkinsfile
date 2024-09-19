@@ -1,8 +1,9 @@
+// This file relates to internal XMOS infrastructure and should be ignored by external users
+
 @Library('xmos_jenkins_shared_library@develop') _
 
 def clone_test_deps() {
   dir("${WORKSPACE}") {
-    sh "ls ."
     sh "git clone git@github.com:xmos/test_support"
   }
 }
