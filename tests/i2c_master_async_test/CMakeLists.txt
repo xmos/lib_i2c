@@ -24,17 +24,17 @@ set(APP_PCA_ENABLE ON)
 set(XMOS_SANDBOX_DIR    ${CMAKE_CURRENT_LIST_DIR}/../../..)
 include(${CMAKE_CURRENT_LIST_DIR}/../../deps.cmake)
 
-set(HW_TARGETS xs2 xcoreai)
+set(ARCH xs2 xs3)
 
 set(comb_val 1)
 set(non_comb_val 0)
 set(stop_val 1)
 set(no_stop_val 0)
 
-foreach(hwtarget ${HW_TARGETS})
-    if(hwtarget STREQUAL "xcoreai")
+foreach(arch ${ARCH})
+    if(arch STREQUAL "xs3")
         set(target "XK-EVK-XU316")
-    elseif(hwtarget STREQUAL "xs2")
+    elseif(arch STREQUAL "xs2")
         set(target "XCORE-200-EXPLORER")
     endif()
 
@@ -46,8 +46,8 @@ foreach(hwtarget ${HW_TARGETS})
 
             foreach(k RANGE 0 ${stop_list_len})
                 string(JSON stop GET ${stop_list} ${k})
-                set(config ${comb}_${speed}_${hwtarget}_${stop})
-                message(STATUS "building config ${config} => ${${comb}_val}_${speed}_${hwtarget}_${${stop}_val}")
+                set(config ${comb}_${speed}_${arch}_${stop})
+                message(STATUS "building config ${config} => ${${comb}_val}_${speed}_${arch}_${${stop}_val}")
 
                 project(i2c_master_async_test)
                 set(APP_HW_TARGET   ${target})
@@ -71,8 +71,8 @@ foreach(hwtarget ${HW_TARGETS})
 
     foreach(k RANGE 0 ${stop_list_len})
         string(JSON stop GET ${stop_list} ${k})
-        set(config interfere_${hwtarget}_${stop})
-        message(STATUS "building config ${config} => ${hwtarget}_${${stop}_val}")
+        set(config interfere_${arch}_${stop})
+        message(STATUS "building config ${config} => ${arch}_${${stop}_val}")
 
         project(i2c_master_async_test)
         set(APP_HW_TARGET   ${target})
@@ -91,7 +91,7 @@ foreach(hwtarget ${HW_TARGETS})
         unset(APP_COMPILER_FLAGS_${config})
 
     endforeach() # stop
-endforeach() # hwtarget
+endforeach() # arch
 
 
 

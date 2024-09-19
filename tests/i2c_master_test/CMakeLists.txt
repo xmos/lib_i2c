@@ -24,15 +24,15 @@ set(APP_PCA_ENABLE ON)
 set(XMOS_SANDBOX_DIR    ${CMAKE_CURRENT_LIST_DIR}/../../..)
 include(${CMAKE_CURRENT_LIST_DIR}/../../deps.cmake)
 
-set(HW_TARGETS xs2 xcoreai)
+set(ARCH xs2 xs3)
 
 set(stop_val 1)
 set(no_stop_val 0)
 
-foreach(hwtarget ${HW_TARGETS})
-    if(hwtarget STREQUAL "xcoreai")
+foreach(arch ${ARCH})
+    if(arch STREQUAL "xs3")
         set(target "XK-EVK-XU316")
-    elseif(hwtarget STREQUAL "xs2")
+    elseif(arch STREQUAL "xs2")
         set(target "XCORE-200-EXPLORER")
     endif()
 
@@ -44,8 +44,8 @@ foreach(hwtarget ${HW_TARGETS})
 
             foreach(k RANGE 0 ${stop_list_len})
                 string(JSON stop GET ${stop_list} ${k})
-                set(config ${dir}_${speed}_${stop}_${hwtarget})
-                message(STATUS "building config ${config} => ${dir}_${speed}_${${stop}_val}_${hwtarget}")
+                set(config ${dir}_${speed}_${stop}_${arch})
+                message(STATUS "building config ${config} => ${dir}_${speed}_${${stop}_val}_${arch}")
 
                 if(dir STREQUAL "rx_tx")
                     set(rx_enable 1)
@@ -77,4 +77,4 @@ foreach(hwtarget ${HW_TARGETS})
             endforeach() # stop
         endforeach() # speed
     endforeach() # direction
-endforeach() # hwtarget
+endforeach() # arch
