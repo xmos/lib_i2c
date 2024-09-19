@@ -8,7 +8,7 @@ from i2c_master_checker import I2CMasterChecker
 
 test_name = "i2c_master_reg_test"
 
-@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
+@pytest.mark.parametrize("arch", ["xs2", "xs3"])
 def test_reg_ops_nack(capfd, request, nightly, arch):
     cwd = Path(request.fspath).parent
     binary = f'{cwd}/{test_name}/bin/{arch}/{test_name}_{arch}.xe'

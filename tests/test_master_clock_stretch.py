@@ -11,7 +11,7 @@ test_name = "i2c_master_test"
 with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
     params = json.load(f)
 
-@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
+@pytest.mark.parametrize("arch", ["xs2", "xs3"])
 @pytest.mark.parametrize("dir", ["rx_tx"]) # only test the rx_tx config
 @pytest.mark.parametrize("speed", [400]) # only test speed = 400
 @pytest.mark.parametrize("stop", params['STOPS'])

@@ -8,7 +8,7 @@ from i2c_slave_checker import I2CSlaveChecker
 
 test_name = "i2c_slave_test"
 
-@pytest.mark.parametrize("arch", ["xs2", "xcoreai"])
+@pytest.mark.parametrize("arch", ["xs2", "xs3"])
 @pytest.mark.parametrize("speed", [400, 100, 10])
 def test_basic_slave(capfd, request, nightly, speed, arch):
     cwd = Path(request.fspath).parent
