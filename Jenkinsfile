@@ -60,7 +60,7 @@ pipeline {
             dir("${REPO}") {
               withXdoc("v2.0.20.2.post0") {
                 withTools(params.TOOLS_VERSION) {
-                  dir("${REPO}/doc") {
+                  dir("doc") {
                     sh "xdoc xmospdf"
                     archiveArtifacts artifacts: "pdf/*.pdf"
                   }

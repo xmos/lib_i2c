@@ -1,4 +1,4 @@
-.. include:: ../../../README.rst
+.. include:: ../../README.rst
 
 
 External signal description
@@ -367,4 +367,4 @@ Known Issues
    This library is not recommended for use with the XS1 architecture.
 
 
-.. include:: ../../../CHANGELOG.rst
+.. include:: ../../CHANGELOG.rst
