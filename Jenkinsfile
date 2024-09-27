@@ -5,6 +5,7 @@
 def clone_test_deps() {
   dir("${WORKSPACE}") {
     sh "git clone git@github.com:xmos/test_support"
+    sh "git -C test_support checkout v2.0.0"
   }
 }
 
@@ -82,19 +83,19 @@ pipeline {
             dir("${REPO}") {
               withTools(params.TOOLS_VERSION) {
                 clone_test_deps()
-                createVenv(reqFile: "tests/requirements.txt")
-                withVenv {
-                  dir("tests") {
+                dir("tests") {
+                  createVenv(reqFile: "requirements.txt")
+                  withVenv {
                     sh 'cmake -G "Unix Makefiles" -B build'
                     sh 'xmake -C build -j 8'
                     sh "pytest -n auto --junitxml=pytest_result.xml"
-                  }
-                }
-              }
-            }
-          }
+                  } // withVenv
+                } // dir("tests")
+              } //withTools
+            } // dir("${REPO}")
+          } // steps
         } // Simulator tests
-      }
+      } // stages
       post {
         always {
           junit "${REPO}/tests/pytest_result.xml"

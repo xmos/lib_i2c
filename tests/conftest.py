@@ -1,8 +1,6 @@
 # Copyright 2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
 import pytest
-import Pyxsim as px
-from typing import Mapping
 
 # from https://github.com/pytest-dev/pytest/issues/3730#issuecomment-567142496
 def pytest_configure(config):
