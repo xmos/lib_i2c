@@ -88,7 +88,7 @@ pipeline {
                   withVenv {
                     sh 'cmake -G "Unix Makefiles" -B build'
                     sh 'xmake -C build -j 8'
-                    sh "pytest -n auto --junitxml=pytest_result.xml"
+                    sh "pytest -v -n auto --junitxml=pytest_result.xml"
                   } // withVenv
                 } // dir("tests")
               } //withTools
