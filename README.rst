@@ -59,4 +59,4 @@ You can find the documentation for this software in the /doc directory of the pa
 Support
 =======
 
-This package is supported by XMOS Ltd. Issues can be raised against the software at: https://www.xmos.com/support/
+This package is supported by XMOS Ltd. Issues can be raised against the software at www.xmos.com/support
