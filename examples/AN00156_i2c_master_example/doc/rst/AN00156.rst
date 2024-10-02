@@ -33,30 +33,29 @@ Block diagram
 The application uses a single logical core which runs the application and makes
 calls to the |I2C| master library functions as required.
 
-How to use |I2C| master
------------------------
 
 The Makefile
-............
+------------
 
-To start using the |I2C|, you need to add ``lib_i2c`` to you Makefile::
+To start using the |I2C|, you need to add ``lib_i2c`` to the dependent module list
+in the CMakeLists.txt file. This application note also uses ``lib_logging``, so this must be
+added to the list::
 
-  USED_MODULES = .. lib_i2c ...
+  set(APP_DEPENDENT_MODULES "lib_i2c"
+                            "lib_logging")
 
-This demo also uses the logging library (``lib_logging``) for the ``debug_printf``
-function. This is a faster, but more limited version of the C-Standard Library
-``printf`` function. So the Makefile also includes::
-
-  USED_MODULES = .. lib_logging ..
+The dependencies for this example are specified by ``deps.cmake`` in the ``examples`` directory
+and are included in the application ``CMakeLists.txt`` file.
 
 The logging library is configurable at compile-time allowing calls to
 ``debug_printf()`` to be easily enabled or disabled. For the prints to
 be enabled it is necessary to add the following to the compile flags::
 
-  XCC_FLAGS = .. -DDEBUG_PRINT_ENABLE=1 ..
+  set(APP_COMPILER_FLAGS ... -DDEBUG_PRINT_ENABLE=1 ...)
+
 
 Includes
-........
+--------
 
 This application requires the system header that defines XMOS xCORE specific
 defines for declaring and initialising hardware:
@@ -82,6 +81,9 @@ controlled by ``ports``. The application therefore declares two 1-bit ports:
 .. literalinclude:: main.xc
    :start-on: port p_scl
    :end-on: port p_sda
+
+Declarations
+------------
 
 Accelerometer defines
 .....................
@@ -163,6 +165,30 @@ only requires on logical core.
 |appendix|
 |newpage|
 
+Building the Application
+------------------------
+
+The following section assumes you have downloaded and installed the `XMOS XTC tools <https://www.xmos.com/software-tools/>`_
+(see `README` for required version). Installation instructions can be found `here <https://xmos.com/xtc-install-guide>`_.
+Be sure to pay attention to the section `Installation of required third-party tools
+<https://www.xmos.com/documentation/XM-014363-PC-10/html/installation/install-configure/install-tools/install_prerequisites.html>`_.
+
+The application uses the `xcommon-cmake <https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest>`_
+build system as bundled with the XTC tools.
+
+The ``AN00156_i2c_master_example`` software zip-file should be downloaded and unzipped to a chosen directory.
+
+To configure the build run the following from an XTC command prompt::
+
+    cd examples
+    cd AN00156_i2c_master_example
+    cmake -G "Unix Makefiles" -B build
+
+Finally, the application binaries can be built using ``xmake``::
+
+    xmake -C build
+
+
 Demo Hardware Setup
 -------------------
 
@@ -224,17 +250,17 @@ References
 
 .. nopoints::
 
-  * XMOS Tools User Guide
+   * XMOS Tools User Guide
 
-    http://www.xmos.com/published/xtimecomposer-user-guide
+     https://www.xmos.com/documentation/XM-014363-PC-9/html/
 
-  * XMOS xCORE Programming Guide
+   * XMOS xCORE Programming Guide
 
-    http://www.xmos.com/published/xmos-programming-guide
+     https://www.xmos.com/published/xmos-programming-guide
 
-  * XMOS |I2C| Library
+   * XMOS Libraries
 
-    http://www.xmos.com/support/libraries/lib_i2c
+     https://www.xmos.com/libraries/
 
 |newpage|
 

@@ -1,0 +1,5 @@
+{
+    "SPEEDS": [10, 100, 400],
+    "STOPS": ["stop", "no_stop"],
+    "COMBS": ["comb", "non_comb"]
+}

@@ -1,81 +1,109 @@
-@Library('xmos_jenkins_shared_library@v0.32.0') _
+// This file relates to internal XMOS infrastructure and should be ignored by external users
+
+@Library('xmos_jenkins_shared_library@v0.34.0') _
+
+def clone_test_deps() {
+  dir("${WORKSPACE}") {
+    sh "git clone git@github.com:xmos/test_support"
+    sh "git -C test_support checkout v2.0.0"
+  }
+}
 
 getApproval()
 
 pipeline {
   agent none
+  environment {
+    REPO = 'lib_i2c'
+  }
+  options {
+    buildDiscarder(xmosDiscardBuildSettings())
+    skipDefaultCheckout()
+    timestamps()
+  }
+  parameters {
+    string(
+      name: 'TOOLS_VERSION',
+      defaultValue: '15.3.0',
+      description: 'The XTC tools version'
+    )
+    string(
+      name: 'XMOSDOC_VERSION',
+      defaultValue: 'v6.0.0',
+      description: 'The xmosdoc version')
+  }
   stages {
-    stage('Standard build and XS3 tests') {
+    stage('Build and test') {
       agent {
-        label 'x86_64&&macOS'
-      }
-      environment {
-        REPO = 'lib_i2c'
-        VIEW = getViewName(REPO)
-      }
-      options {
-        skipDefaultCheckout()
+        label 'x86_64 && linux'
       }
       stages {
-        stage('Get view') {
+        stage('Build examples') {
           steps {
-            xcorePrepareSandbox("${VIEW}", "${REPO}")
-          }
-        }
-        stage('Library checks') {
-          steps {
-             xcoreLibraryChecks("${REPO}")
-          }
-        }
-        stage('xCORE App XS2 builds') {
-          steps {
-            forAllMatch("${REPO}/examples", "app_*/") { path ->
-              runXmake(path)
+            println "Stage running on ${env.NODE_NAME}"
+
+            dir("${REPO}") {
+              checkout scm
+
+              dir("examples") {
+                withTools(params.TOOLS_VERSION) {
+                  sh 'cmake -G "Unix Makefiles" -B build'
+                  sh 'xmake -C build -j 8'
+                }
+              }
             }
-            forAllMatch("${REPO}/examples", "AN*/") { path ->
-              runXmake(path)
-            }
+            runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
           }
-        }
-        stage('xCORE App XCOREAI builds') {
+        }  // Build examples
+
+        stage('Build documentation') {
           steps {
-            forAllMatch("${REPO}/examples", "app_*/") { path ->
-              runXmake(path, '', 'XCOREAI=1')
-            }
-            forAllMatch("${REPO}/examples", "AN*/") { path ->
-              runXmake(path, '', 'XCOREAI=1')
+            dir("${REPO}") {
+              withXdoc("v2.0.20.2.post0") {
+                withTools(params.TOOLS_VERSION) {
+                  dir("doc") {
+                    sh "xdoc xmospdf"
+                    archiveArtifacts artifacts: "pdf/*.pdf"
+                  }
+                  forAllMatch("examples", "AN*/") { path ->
+                    dir("${path}/doc")
+                    {
+                      sh "xdoc xmospdf"
+                      archiveArtifacts artifacts: "pdf/*.pdf"
+                    }
+                  }
+                }
+              }
             }
           }
-        }
-        stage('Doc builds') {
+        }  // Build documentation
+
+        stage('Simulator tests') {
           steps {
-            runXdoc("${REPO}/${REPO}/doc")
-            forAllMatch("${REPO}/examples", "AN*/") { path ->
-              runXdoc("${path}/doc")
-            }
-            // Archive all the generated .pdf docs
-            archiveArtifacts artifacts: "${REPO}/**/pdf/*.pdf", fingerprint: true, allowEmptyArchive: true
-          }
-        }
-        stage('Tests XS1, XS2 and XCOREAI') {
-          steps {
-            runXmostest("${REPO}", 'tests')
-          }
-        }
-      }
+            dir("${REPO}") {
+              withTools(params.TOOLS_VERSION) {
+                clone_test_deps()
+                dir("tests") {
+                  createVenv(reqFile: "requirements.txt")
+                  withVenv {
+                    sh 'cmake -G "Unix Makefiles" -B build'
+                    sh 'xmake -C build -j 8'
+                    sh "pytest -v -n auto --junitxml=pytest_result.xml"
+                  } // withVenv
+                } // dir("tests")
+              } //withTools
+            } // dir("${REPO}")
+          } // steps
+        } // Simulator tests
+      } // stages
       post {
+        always {
+          junit "${REPO}/tests/pytest_result.xml"
+        }
         cleanup {
           xcoreCleanSandbox()
         }
       }
-    }
-  }
-  post {
-    success {
-      node("linux") {
-        updateViewfiles()
-        xcoreCleanSandbox()
-      }
-    }
+    }  // Build and test
   }
 }
