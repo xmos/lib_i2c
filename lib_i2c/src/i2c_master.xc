@@ -178,7 +178,12 @@ static int tx8(
   // Data is transmitted MSB first
   data = bitrev(data) >> 24;
   for (int i = 8; i != 0; i--) {
-    p_sda <: data & 0x1;
+    if (data & 0x1) {
+      p_sda :> void;
+    }
+    else {
+      p_sda <: 0;
+    }
     data >>= 1;
     high_pulse(p_scl, kbits_per_second, fall_time);
   }

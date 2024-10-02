@@ -1,6 +1,10 @@
 lib_i2c change log
 ==================
 
+UNRELEASED
+----------
+  * FIXED: Drive data on SDA in open drain mode.
+
 6.3.1
 -----
 
