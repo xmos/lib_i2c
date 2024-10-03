@@ -5,6 +5,19 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <xccompat.h>
+
+// These are needed for DOXYGEN to render properly
+#ifndef __DOXYGEN__
+#define static_const_unsigned static const unsigned
+#define static_const_size_t static const size_t
+#define port_t port
+#define async_master_shutdown shutdown
+#define async_master_send_stop_bit send_stop_bit
+#define async_master_read read
+#define async_master_write write
+#define slave_void  slave void
+#endif
 
 /** This type is used in I2C functions to report back on whether the
  *  slave performed an ACK or NACK on the last piece of data sent
@@ -15,7 +28,7 @@ typedef enum {
   I2C_ACK,     ///< the slave has ACKed the last byte
 } i2c_res_t;
 
-#ifdef __XC__
+#if(defined __XC__ || defined __DOXYGEN__)
 
 #define BIT_TIME(KBITS_PER_SEC) ((XS1_TIMER_MHZ * 1000) / KBITS_PER_SEC)
 #define BIT_MASK(BIT_POS) (1 << BIT_POS)
@@ -24,7 +37,13 @@ typedef enum {
  *  It provides facilities for reading and writing to the bus.
  *
  */
+#ifndef __DOXYGEN__
 typedef interface i2c_master_if {
+#endif
+  /**
+   * \addtogroup i2c_master_if
+   * @{
+   */
 
   /** Write data to an I2C bus.
    *
@@ -48,7 +67,7 @@ typedef interface i2c_master_if {
    */
   [[guarded]]
   i2c_res_t write(uint8_t device_addr, uint8_t buf[n], size_t n,
-               size_t &num_bytes_sent, int send_stop_bit);
+               REFERENCE_PARAM(size_t, num_bytes_sent), int send_stop_bit);
 
   /** Read data from an I2C bus.
    *
@@ -82,7 +101,12 @@ typedef interface i2c_master_if {
    *  This function will cause the I2C task to shutdown and return.
    */
   void shutdown();
+
+/**@}*/ // END: addtogroup i2c_master_if
+
+#ifndef __DOXYGEN__
 } i2c_master_if;
+#endif
 
 /** This type is used by the supplementary I2C register read/write functions to
  *  report back on whether the operation was a success or not.
@@ -93,9 +117,13 @@ typedef enum {
   I2C_REGOP_INCOMPLETE   ///< the operation was NACKed halfway through by the slave
 } i2c_regop_res_t;
 
-
+#ifndef __DOXYGEN__
 extends client interface i2c_master_if : {
-
+#endif
+  /**
+   * \addtogroup i2c_master_if
+   * @{
+   */
   /** Read an 8-bit register on a slave device.
    *
    *  This function reads an 8-bit addressed, 8-bit register from the i2c
@@ -116,9 +144,9 @@ extends client interface i2c_master_if : {
    *
    *  \returns           the value of the register
    */
-  inline uint8_t read_reg(client interface i2c_master_if i,
+  inline uint8_t read_reg(CLIENT_INTERFACE(i2c_master_if, i),
                           uint8_t device_addr, uint8_t reg,
-                          i2c_regop_res_t &result) {
+                          REFERENCE_PARAM(i2c_regop_res_t, result)) {
     uint8_t a_reg[1] = {reg};
     uint8_t data[1] = {0};
     size_t n;
@@ -150,7 +178,7 @@ extends client interface i2c_master_if : {
    *  \param reg         the address of the register to write
    *  \param data        the 8-bit value to write
    */
-  inline i2c_regop_res_t write_reg(client interface i2c_master_if i,
+  inline i2c_regop_res_t write_reg(CLIENT_INTERFACE(i2c_master_if, i),
                              uint8_t device_addr, uint8_t reg, uint8_t data)
   {
     uint8_t a_data[2] = {reg, data};
@@ -186,9 +214,9 @@ extends client interface i2c_master_if : {
    *
    *  \returns           the value of the register
    */
-  inline uint8_t read_reg8_addr16(client interface i2c_master_if i,
+  inline uint8_t read_reg8_addr16(CLIENT_INTERFACE(i2c_master_if, i),
                                   uint8_t device_addr, uint16_t reg,
-                                  i2c_regop_res_t &result)
+                                  REFERENCE_PARAM(i2c_regop_res_t, result))
   {
     uint8_t a_reg[2] = {reg >> 8, reg};
     uint8_t data[1];
@@ -222,7 +250,7 @@ extends client interface i2c_master_if : {
    *                     (most significant byte first)
    *  \param data        the 8-bit value to write
    */
-  inline i2c_regop_res_t write_reg8_addr16(client interface i2c_master_if i,
+  inline i2c_regop_res_t write_reg8_addr16(CLIENT_INTERFACE(i2c_master_if, i),
                                            uint8_t device_addr, uint16_t reg,
                                            uint8_t data) {
     uint8_t a_data[3] = {reg >> 8, reg, data};
@@ -258,9 +286,9 @@ extends client interface i2c_master_if : {
    *
    *  \returns           the 16-bit value of the register
    */
-  inline uint16_t read_reg16(client interface i2c_master_if i,
+  inline uint16_t read_reg16(CLIENT_INTERFACE(i2c_master_if, i),
                              uint8_t device_addr, uint16_t reg,
-                             i2c_regop_res_t &result)
+                             REFERENCE_PARAM(i2c_regop_res_t, result))
   {
     uint8_t a_reg[2] = {reg >> 8, reg};
     uint8_t data[2];
@@ -299,7 +327,7 @@ extends client interface i2c_master_if : {
    *                     ``I2C_REGOP_SUCCESS`` on successful completion of the
    *                     write with every byte being ACKed.
    */
-  inline i2c_regop_res_t write_reg16(client interface i2c_master_if i,
+  inline i2c_regop_res_t write_reg16(CLIENT_INTERFACE(i2c_master_if, i),
                                uint8_t device_addr, uint16_t reg,
                                uint16_t data) {
     uint8_t a_data[4] = {reg >> 8, reg, data >> 8, data};
@@ -334,9 +362,9 @@ extends client interface i2c_master_if : {
    *
    *  \returns           the 16-bit value of the register
    */
-  inline uint16_t read_reg16_addr8(client interface i2c_master_if i,
+  inline uint16_t read_reg16_addr8(CLIENT_INTERFACE(i2c_master_if, i),
                                    uint8_t device_addr, uint8_t reg,
-                                   i2c_regop_res_t &result)
+                                   REFERENCE_PARAM(i2c_regop_res_t, result))
   {
     uint8_t a_reg[1] = {reg};
     uint8_t data[2];
@@ -373,7 +401,7 @@ extends client interface i2c_master_if : {
    *                     ``I2C_REGOP_SUCCESS`` on successful completion of the
    *                     write with every byte being ACKed.
    */
-  inline i2c_regop_res_t write_reg16_addr8(client interface i2c_master_if i,
+  inline i2c_regop_res_t write_reg16_addr8(CLIENT_INTERFACE(i2c_master_if, i),
                                            uint8_t device_addr, uint8_t reg,
                                            uint16_t data) {
     uint8_t a_data[3] = {reg, data >> 8, data};
@@ -387,8 +415,12 @@ extends client interface i2c_master_if : {
     }
     return I2C_REGOP_SUCCESS;
   }
-}
 
+/**@}*/ // END: addtogroup i2c_master_if
+
+#ifndef __DOXYGEN__
+}
+#endif
 
 /** Implements I2C on the i2c_master_if interface using two ports.
  *
@@ -399,10 +431,11 @@ extends client interface i2c_master_if : {
  *  \param  p_sda            the SDA port of the I2C bus
  *  \param  kbits_per_second the speed of the I2C bus
  **/
-[[distributable]] void i2c_master(server interface i2c_master_if i[n],
+[[distributable]]
+void i2c_master(SERVER_INTERFACE(i2c_master_if, i[n]),
                                   size_t n,
-                                  port p_scl, port p_sda,
-                                  static const unsigned kbits_per_second);
+                                  port_t p_scl, port_t p_sda,
+                                  static_const_unsigned kbits_per_second);
 
 #if (defined(__XS2A__) || defined(__XS3A__) || defined(__DOXYGEN__))
 /** Implements I2C on a single multi-bit port.
@@ -427,11 +460,11 @@ extends client interface i2c_master_if : {
  *                           to produce a value 1 on a bit.
  */
 [[distributable]]
-void i2c_master_single_port(server interface i2c_master_if c[n], static const size_t n,
-                            port p_i2c, static const unsigned kbits_per_second,
-                            static const unsigned scl_bit_position,
-                            static const unsigned sda_bit_position,
-                            static const unsigned other_bits_mask);
+void i2c_master_single_port(SERVER_INTERFACE(i2c_master_if, c[n]), static_const_size_t n,
+                            port_t p_i2c, static_const_unsigned kbits_per_second,
+                            static_const_unsigned scl_bit_position,
+                            static_const_unsigned sda_bit_position,
+                            static_const_unsigned other_bits_mask);
 #endif
 
 
@@ -440,7 +473,14 @@ void i2c_master_single_port(server interface i2c_master_if c[n], static const si
  *  It provides facilities for reading and writing to the bus.
  *
  */
+#ifndef __DOXYGEN__
 typedef interface i2c_master_async_if {
+#endif
+
+  /**
+   * \addtogroup i2c_master_async_if
+   * @{
+   */
 
   /** Initialize a write to an I2C bus.
    *
@@ -455,7 +495,7 @@ typedef interface i2c_master_async_if {
    *                         the component until a stop bit has been sent.
    */
   [[guarded]]
-  void write(uint8_t device_addr, uint8_t buf[n], size_t n,
+  void async_master_write(uint8_t device_addr, uint8_t buf[n], size_t n,
              int send_stop_bit);
 
   /** Initialize a read to an I2C bus.
@@ -470,14 +510,14 @@ typedef interface i2c_master_async_if {
    *                         the component until a stop bit has been sent.
    */
   [[guarded]]
-  void read(uint8_t device_addr, size_t n, int send_stop_bit);
+  void async_master_read(uint8_t device_addr, size_t n, int send_stop_bit);
 
   /** Completed operation notification.
    *
    *  This notification will fire when a read or write is completed.
    */
   [[notification]]
-  slave void operation_complete(void);
+  slave_void operation_complete(void);
 
   /** Get write result.
    *
@@ -493,7 +533,7 @@ typedef interface i2c_master_async_if {
    *                         device, otherwise ``I2C_NACK``.
    */
   [[clears_notification]]
-  i2c_res_t get_write_result(size_t &num_bytes_sent);
+  i2c_res_t get_write_result(REFERENCE_PARAM(size_t, num_bytes_sent));
 
 
   /** Get read result.
@@ -517,15 +557,20 @@ typedef interface i2c_master_async_if {
    *  be used to complete/abort a transaction if the ``send_stop_bit`` argument
    *  was not set when calling the read() or write() functions.
    */
-  void send_stop_bit(void);
+  void async_master_send_stop_bit(void);
 
 
   /** Shutdown the I2C component.
    *
    *  This function will cause the I2C task to shutdown and return.
    */
-  void shutdown();
+  void async_master_shutdown();
+
+/**@}*/ // END: addtogroup i2c_master_async_if
+
+#ifndef __DOXYGEN__
 } i2c_master_async_if;
+#endif
 
 /** I2C master component (asynchronous API).
  *
@@ -542,11 +587,11 @@ typedef interface i2c_master_async_if {
  *                               run-time exception.
  *
  */
-void i2c_master_async(server interface i2c_master_async_if i[n],
+void i2c_master_async(SERVER_INTERFACE(i2c_master_async_if, i[n]),
                       size_t n,
-                      port p_scl, port p_sda,
-                      static const unsigned kbits_per_second,
-                      static const size_t max_transaction_size);
+                      port_t p_scl, port_t p_sda,
+                      static_const_unsigned kbits_per_second,
+                      static_const_size_t max_transaction_size);
 
 /** I2C master component (asynchronous API, combinable).
  *
@@ -567,11 +612,11 @@ void i2c_master_async(server interface i2c_master_async_if i[n],
  *                               run-time exception.
  */
 [[combinable]]
-void i2c_master_async_comb(server interface i2c_master_async_if i[n],
+void i2c_master_async_comb(SERVER_INTERFACE(i2c_master_async_if, i[n]),
                            size_t n,
-                           port p_scl, port p_sda,
-                           static const unsigned kbits_per_second,
-                           static const size_t max_transaction_size);
+                           port_t p_scl, port_t p_sda,
+                           static_const_unsigned kbits_per_second,
+                           static_const_size_t max_transaction_size);
 
 
 
@@ -587,7 +632,14 @@ typedef enum i2c_slave_ack_t {
  *  to the application).
  *
  */
+#ifndef __DOXYGEN__
 typedef interface i2c_slave_callback_if {
+#endif
+
+  /**
+   * \addtogroup i2c_slave_callback_if
+   * @{
+   */
 
   /** Master has requested a read.
    *
@@ -651,7 +703,11 @@ typedef interface i2c_slave_callback_if {
    *  This function will cause the I2C slave task to shutdown and return.
    */
   [[notification]] slave void shutdown();
+
+  /**@}*/ // END: addtogroup i2c_slave_callback_if
+#ifndef __DOXYGEN__
 } i2c_slave_callback_if;
+#endif
 
 
 /** I2C slave task.
@@ -667,8 +723,8 @@ typedef interface i2c_slave_callback_if {
  *
  */
 [[combinable]]
-void i2c_slave(client i2c_slave_callback_if i,
-               port p_scl, port p_sda,
+void i2c_slave(CLIENT_INTERFACE(i2c_slave_callback_if, i),
+               port_t p_scl, port_t p_sda,
                uint8_t device_addr);
 
 #endif // __XC__

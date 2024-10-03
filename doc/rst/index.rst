@@ -26,7 +26,7 @@ resistors to pull the line up if no device is driving the signal
 down. The correct value for the resistors can be found in the |I2C|
 specification.
 
-.. figure:: images/i2c_open_drain.pdf
+.. figure:: images/i2c_open_drain.png
    :width: 60%
 
    |I2C| open-drain layout
@@ -106,7 +106,7 @@ connect the clock and data lines to different 1-bit ports as shown in
 
 .. _i2c_master_1_bit:
 
-.. figure:: images/i2c_master_1_bit.pdf
+.. figure:: images/i2c_master_1_bit.png
   :width: 40%
 
   |I2C| master (1-bit ports)
@@ -128,7 +128,7 @@ xCORE-200 devices.
 
 .. _i2c_master_n_bit:
 
-.. figure:: images/i2c_master_n_bit.pdf
+.. figure:: images/i2c_master_n_bit.png
   :width: 40%
 
   |I2C| master (single n-bit port)
@@ -138,7 +138,7 @@ connected to two 1-bit ports (as shown in :ref:`i2c_slave_connection`).
 
 .. _i2c_slave_connection:
 
-.. figure:: images/i2c_slave.pdf
+.. figure:: images/i2c_slave.png
   :width: 40%
 
   |I2C| slave connection
@@ -163,21 +163,21 @@ configuration of attached peripherals.
 can connect via an interface connection using the ``i2c_master_if``
 interface type:
 
-.. figure:: images/i2c_master_task_diag.*
+.. figure:: images/i2c_master_task_diag.png
 
    |I2C| master task diagram
 
 For example, the following code instantiates an |I2C| master and connects to it
 
-.. literalinclude:: simple_synchronous_master.xc
-   :start-on: port p_scl
+.. literalinclude:: ../../examples/app_simple_synchronous_master/src/simple_synchronous_master.xc
+   :start-at: port p_scl
    :end-before: void my_application
 
 For the single multi-bit port version of |I2C| the
 top level instantiation would look like
 
-.. literalinclude:: simple_single_port_master.xc
-   :start-on: port p_i2c
+.. literalinclude:: ../../examples/app_simple_single_port_master/src/simple_single_port_master.xc
+   :start-at: port p_i2c
    :end-before: void my_application
 
 Note that the connection is an array of interfaces, so several tasks
@@ -188,14 +188,14 @@ can connect to the same master.
 The application can use the client end of the interface connection to
 perform |I2C| bus operations e.g.
 
-.. literalinclude:: simple_synchronous_master.xc
-   :start-on: void my_application(client i2c_master_if i2c, uint8_t target_device_addr) {
+.. literalinclude:: ../../examples/app_simple_synchronous_master/src/simple_synchronous_master.xc
+   :start-at: void my_application(client i2c_master_if i2c, uint8_t target_device_addr) {
    :end-before: // end
 
 Here the operations such as ``i2c.read`` will
 block until the operation is completed on the bus.
 More information on interfaces and tasks can be be found in
-the :ref:`XMOS Programming Guide<programming_guide>`. By default the
+the `XMOS Programming Guide <https://www.xmos.com/file/xmos-programming-guide#programming-guide>`_. By default the
 |I2C| synchronous master mode component does not use any logical cores of its
 own. It is a *distributed* task which means it will perform its
 function on the logical core of the application task connected to
@@ -218,8 +218,8 @@ being used for continuous data transfer.
 Setting up an asynchronous |I2C| master component is done in the same
 manner as the synchronous component.
 
-.. literalinclude:: simple_asynchronous_master.xc
-   :start-on: port p_scl
+.. literalinclude:: ../../examples/app_simple_asynchronous_master/src/simple_asynchronous_master.xc
+   :start-at: port p_scl
    :end-before: void my_application
 
 |newpage|
@@ -228,8 +228,8 @@ The application can then use the asynchronous API to offload bus
 operations to the |I2C| master. For example, the following code
 repeatedly calculates *BUFFER_BYTES* bytes to send over the bus.
 
-.. literalinclude:: simple_asynchronous_master.xc
-   :start-on: void my_application(client i2c_master_async_if i2c, uint8_t target_device_addr) {
+.. literalinclude:: ../../examples/app_simple_asynchronous_master/src/simple_asynchronous_master.xc
+   :start-at: void my_application(client i2c_master_async_if i2c, uint8_t target_device_addr) {
    :end-before: void my_application_handle_bus_error
 
 Here the calculation of ``my_application_fill_buffer`` will overlap with
@@ -244,8 +244,8 @@ at the end of the transaction. If this is set to ``0`` then no stop
 bit is sent and the next transaction will begin with a repeated start
 bit e.g.
 
-.. literalinclude:: simple_repeated_start_master.xc
-   :start-on: void my_application(client i2c_master_if i2c, uint8_t target_device_addr) {
+.. literalinclude:: ../../examples/app_simple_repeated_start_master/src/simple_repeated_start_master.xc
+   :start-at: void my_application(client i2c_master_if i2c, uint8_t target_device_addr) {
    :end-before: // end
 
 Note that if no stop bit is sent then no other client using the
@@ -261,15 +261,15 @@ bit is sent.
 ``par`` statement. The application can connect via an interface
 connection.
 
-.. figure:: images/i2c_slave_task_diag.pdf
+.. figure:: images/i2c_slave_task_diag.png
 
    |I2C| slave task diagram
 
 For example, the following code instantiates an |I2C| slave
 and connects to it.
 
-.. literalinclude:: simple_slave.xc
-   :start-on: port p_scl
+.. literalinclude:: ../../examples/app_simple_slave/src/simple_slave.xc
+   :start-at: port p_scl
    :end-before: void my_application
 
 |newpage|
@@ -279,11 +279,11 @@ connection. This means it can "callback" to the application to respond
 to requests from the bus master. For example, the ``my_application``
 function above needs to respond to the calls e.g.
 
-.. literalinclude:: simple_slave.xc
-   :start-on: void my_application(server i2c_slave_callback_if i2c) {
+.. literalinclude:: ../../examples/app_simple_slave/src/simple_slave.xc
+   :start-at: void my_application(server i2c_slave_callback_if i2c) {
    :end-before: // end
 
-More information on interfaces and tasks can be be found in the :ref:`XMOS Programming Guide<programming_guide>`.
+More information on interfaces and tasks can be be found in the `XMOS Programming Guide <https://www.xmos.com/file/xmos-programming-guide#programming-guide>`_.
 
 
 Master API
@@ -311,6 +311,10 @@ Creating an |I2C| master instance
 
 |newpage|
 
+.. doxygenfunction:: i2c_master_async_comb
+
+|newpage|
+
 |I2C| master supporting typedefs
 ................................
 
@@ -323,14 +327,14 @@ Creating an |I2C| master instance
 |I2C| master synchronous interface
 ..................................
 
-.. doxygeninterface:: i2c_master_if
+.. doxygengroup:: i2c_master_if
 
 |newpage|
 
 |I2C| master asynchronous interface
 ...................................
 
-.. doxygeninterface:: i2c_master_async_if
+.. doxygengroup:: i2c_master_async_if
 
 Slave API
 ---------
@@ -354,11 +358,10 @@ Creating an |I2C| slave instance
 |I2C| slave interface
 .....................
 
-.. doxygeninterface:: i2c_slave_callback_if
+.. doxygengroup:: i2c_slave_callback_if
 
 |newpage|
 
-|appendix|
 
 Known Issues
 ------------

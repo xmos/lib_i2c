@@ -29,7 +29,7 @@ pipeline {
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v6.0.0',
+      defaultValue: 'v6.1.0',
       description: 'The xmosdoc version')
   }
   stages {
@@ -38,6 +38,24 @@ pipeline {
         label 'x86_64 && linux'
       }
       stages {
+        stage('Build Documentation') {
+          agent {
+            label 'x86_64&&docker'
+          }
+          steps {
+            println "Stage running on ${env.NODE_NAME}"
+            dir("${REPO}") {
+              checkout scm
+              buildDocs()
+            } // dir("${REPO}")
+          } // steps
+          post {
+            cleanup {
+              xcoreCleanSandbox()
+            }
+          } // post
+        } // stage('Build Documentation')
+
         stage('Build examples') {
           steps {
             println "Stage running on ${env.NODE_NAME}"
@@ -55,29 +73,6 @@ pipeline {
             runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
           }
         }  // Build examples
-
-        stage('Build documentation') {
-          steps {
-            dir("${REPO}") {
-              withXdoc("v2.0.20.2.post0") {
-                withTools(params.TOOLS_VERSION) {
-                  dir("doc") {
-                    sh "xdoc xmospdf"
-                    archiveArtifacts artifacts: "pdf/*.pdf"
-                  }
-                  forAllMatch("examples", "AN*/") { path ->
-                    dir("${path}/doc")
-                    {
-                      sh "xdoc xmospdf"
-                      archiveArtifacts artifacts: "pdf/*.pdf"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }  // Build documentation
-
         stage('Simulator tests') {
           steps {
             dir("${REPO}") {
