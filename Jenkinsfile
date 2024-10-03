@@ -50,6 +50,9 @@ pipeline {
               dir("examples/AN00156_i2c_master_example") {
                 buildDocs()
               }
+              dir("examples/AN00157_i2c_slave_example") {
+                buildDocs()
+              }
             } // dir("${REPO}")
           } // steps
           post {
