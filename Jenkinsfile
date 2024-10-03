@@ -47,6 +47,9 @@ pipeline {
             dir("${REPO}") {
               checkout scm
               buildDocs()
+              dir("examples/AN00156_i2c_master_example") {
+                buildDocs()
+              }
             } // dir("${REPO}")
           } // steps
           post {

@@ -60,17 +60,17 @@ Includes
 This application requires the system header that defines XMOS xCORE specific
 defines for declaring and initialising hardware:
 
-.. literalinclude:: main.xc
-   :start-on: include <xs1.h>
+.. literalinclude:: ../../src/main.xc
+   :start-at: include <xs1.h>
    :end-before: include "i2c.h"
 
 The |I2C| library functions are defined in ``i2c.h``. This header must
 be included in your code to use the library. The logging functions are
 provided by ``debug_print.h``.
 
-.. literalinclude:: main.xc
-   :start-on: include "i2c.h"
-   :end-on: include "debug_print.h"
+.. literalinclude:: ../../src/main.xc
+   :start-at: include "i2c.h"
+   :end-at: include "debug_print.h"
 
 Allocating hardware resources
 .............................
@@ -78,9 +78,9 @@ Allocating hardware resources
 An |I2C| master requires a clock and a data pin. On an xCORE the pins are
 controlled by ``ports``. The application therefore declares two 1-bit ports:
 
-.. literalinclude:: main.xc
-   :start-on: port p_scl
-   :end-on: port p_sda
+.. literalinclude:: ../../src/main.xc
+   :start-at: port p_scl
+   :end-at: port p_sda
 
 Declarations
 ------------
@@ -91,9 +91,9 @@ Accelerometer defines
 A number of defines are used for the accelerometer device address and
 register numbers:
 
-.. literalinclude:: main.xc
-   :start-on: define FXOS8700EQ_I2C_ADDR 0x1E
-   :end-on: define FXOS8700EQ_OUT_Z_MSB 0x5
+.. literalinclude:: ../../src/main.xc
+   :start-at: define FXOS8700CQ_I2C_ADDR 0x1E
+   :end-at: define FXOS8700CQ_OUT_Z_MSB 0x5
 
 Reading over |I2C|
 ..................
@@ -103,8 +103,8 @@ for a given axis. It uses the |I2C| master to read the MSB and LSB registers
 and then combines their results into the 10-bit value for the specified axis.
 Each register read is checked to ensure that it has completed correctly.
 
-.. literalinclude:: main.xc
-   :start-on: int read_acceleration
+.. literalinclude:: ../../src/main.xc
+   :start-at: int read_acceleration
    :end-before: void accelerometer
 
 The |I2C| ``read_reg()`` function takes the device address, the register number
@@ -120,8 +120,8 @@ Writing over |I2C|
 The core of the application is the ``accelerometer()`` function which starts
 by writing to the accelerometer device to configure and then enable it:
 
-.. literalinclude:: main.xc
-   :start-on: void accelerometer
+.. literalinclude:: ../../src/main.xc
+   :start-at: void accelerometer
    :end-before: while (1)
 
 |newpage|
@@ -130,8 +130,8 @@ After that it continually loops polling the accelerometer until it is ready
 and then reading the values from the three axes and displaying the current
 status.
 
-.. literalinclude:: main.xc
-   :start-on: while (1)
+.. literalinclude:: ../../src/main.xc
+   :start-at: while (1)
    :end-before: // End accelerometer
 
 The print uses a ``\r`` to ensure that only a single line of the screen is used.
@@ -146,15 +146,15 @@ means of concurrent tasks communicating with each other. In this
 application there is a single interface between the application and the |I2C|
 master.
 
-.. literalinclude:: main.xc
-   :start-on: i2c_master_if i2c[1];
+.. literalinclude:: ../../src/main.xc
+   :start-at: i2c_master_if i2c[1];
    :end-before: par
 
 The rest of the ``main()`` function starts all the tasks in parallel
 using the xC ``par`` construct:
 
-.. literalinclude:: main.xc
-   :start-on: par
+.. literalinclude:: ../../src/main.xc
+   :start-at: par
    :end-before: return 0
 
 This code starts the |I2C| master and the application. Because the |I2C| master
@@ -162,7 +162,6 @@ is marked as ``distributable`` it will not actually use a logical core but will
 be run on the logical cores with the application. As a result, the entire system
 only requires on logical core.
 
-|appendix|
 |newpage|
 
 Building the Application
@@ -248,8 +247,6 @@ move the development board these will change.
 References
 ----------
 
-.. nopoints::
-
    * XMOS Tools User Guide
 
      https://www.xmos.com/documentation/XM-014363-PC-9/html/
@@ -270,7 +267,6 @@ Full source code listing
 Source code for main.xc
 .......................
 
-.. literalinclude:: main.xc
-  :largelisting:
+.. literalinclude:: ../../src/main.xc
 
 |newpage|
