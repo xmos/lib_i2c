@@ -1,4 +1,5 @@
 
+.. |I2C| replace:: I\ :sup:`2`\ C
 
 lib_i2c
 #######

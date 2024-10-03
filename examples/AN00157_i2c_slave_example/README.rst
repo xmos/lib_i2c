@@ -1,3 +1,4 @@
+.. |I2C| replace:: I\ :sup:`2`\ C
 
 How to use the I2C slave library
 ================================
