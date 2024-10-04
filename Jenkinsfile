@@ -35,33 +35,9 @@ pipeline {
   stages {
     stage('Build and test') {
       agent {
-        label 'x86_64 && linux'
+        label 'documentation && linux && x86_64'
       }
       stages {
-        stage('Build Documentation') {
-          agent {
-            label 'x86_64&&docker'
-          }
-          steps {
-            println "Stage running on ${env.NODE_NAME}"
-            dir("${REPO}") {
-              checkout scm
-              buildDocs()
-              dir("examples/AN00156_i2c_master_example") {
-                buildDocs()
-              }
-              dir("examples/AN00157_i2c_slave_example") {
-                buildDocs()
-              }
-            } // dir("${REPO}")
-          } // steps
-          post {
-            cleanup {
-              xcoreCleanSandbox()
-            }
-          } // post
-        } // stage('Build Documentation')
-
         stage('Build examples') {
           steps {
             println "Stage running on ${env.NODE_NAME}"
@@ -75,10 +51,30 @@ pipeline {
                   sh 'xmake -C build -j 8'
                 }
               }
-            }
+            } // dir("${REPO}")
+          } // steps
+        }  // stage('Build examples')
+
+        stage('Library Checks') {
+          steps {
             runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
-          }
-        }  // Build examples
+          } // steps
+        } // stage('Library Checks')
+
+        stage('Build Documentation') {
+          steps {
+            dir("${REPO}") {
+              buildDocs()
+              dir("examples/AN00156_i2c_master_example") {
+                buildDocs()
+              }
+              dir("examples/AN00157_i2c_slave_example") {
+                buildDocs()
+              }
+            } // dir("${REPO}")
+          } // steps
+        } // stage('Build Documentation')
+
         stage('Simulator tests') {
           steps {
             dir("${REPO}") {
