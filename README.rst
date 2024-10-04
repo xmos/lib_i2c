@@ -1,17 +1,20 @@
 
+:orphan:
+
 .. |I2C| replace:: I\ :sup:`2`\ C
 
-lib_i2c
-#######
+#########################
+lib_i2c: XMOS I2C Library
+#########################
 
-:Version: 6.2.0
-:Vendor: XMOS
+:vendor: XMOS
+:version: 6.2.0
+:scope: General Use
+:devices: xcore.ai, xcore-200
 
-:Scope: General Use
-
-
-Summary
-*******
+********
+Overview
+********
 
 A software defined, industry-standard, |I2C| library
 that allows you to control an |I2C| bus via xCORE ports.
@@ -27,8 +30,9 @@ the xCORE device (each addressing the same or different slave devices).
 The library can also be used to implement multiple |I2C| physical interfaces
 on a single xCORE device simultaneously.
 
+********
 Features
-========
+********
 
 Key features of the various components in this repository are as follows
 
@@ -37,8 +41,9 @@ Key features of the various components in this repository are as follows
 - Clock stretching support
 - Synchronous and asynchronous APIs for efficient usage of processing cores
 
+*************************
 Related Application Notes
-=========================
+*************************
 
 The following application notes use this library:
 
@@ -47,17 +52,26 @@ The following application notes use this library:
   * AN00181: xCORE-200 explorer accelerometer demo
 
 
-Required Software (dependencies)
-================================
+************
+Known Issues
+************
+  * The reg_ops_nack test fails on the XS1 architecture because it is unable to meet timing.
+    This library is not recommended for use with the XS1 architecture.
+
+**************
+Required Tools
+**************
+
+  * XMOS XTC Tools: 15.3.0
+
+*********************************
+Required Libraries (dependencies)
+*********************************
 
   * lib_xassert (www.github.com/xmos/lib_xassert)
 
-Documentation
-=============
-
-You can find the documentation for this software in the /doc directory of the package.
-
+*******
 Support
-=======
+*******
 
 This package is supported by XMOS Ltd. Issues can be raised against the software at www.xmos.com/support

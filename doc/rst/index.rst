@@ -1,8 +1,24 @@
-.. include:: ../../README.rst
+#########################
+lib_i2c: XMOS I2C Library
+#########################
 
+************
+Introduction
+************
 
+A software defined, industry-standard, |I2C| library that allows you to control an |I2C| bus via xCORE ports.
+|I2C| is a two-wire hardware serial interface, first developed by Philips. The components in the libary
+are controlled via C using the XMOS multicore extensions (xC) and can either act as |I2C| master or slave.
+
+The libary is compatible with multiple slave devices existing on the same bus.
+The |I2C| master component can be used by multiple tasks within the xCORE device
+(each addressing the same or different slave devices).
+
+The library can also be used to implement multiple |I2C| physical interfaces on a single xCORE device simultaneously.
+
+***************************
 External signal description
----------------------------
+***************************
 
 All signals are designed to comply with the timings in the |I2C|
 specification found here:
@@ -98,7 +114,7 @@ the clock line is high (see :ref:`i2c_stop_bit`).
 |newpage|
 
 Connecting to the xCORE device
-..............................
+==============================
 
 When the xCORE is the |I2C| master, the normal configuration is to
 connect the clock and data lines to different 1-bit ports as shown in
@@ -143,11 +159,13 @@ connected to two 1-bit ports (as shown in :ref:`i2c_slave_connection`).
 
   |I2C| slave connection
 
-Usage
------
+
+**************************
+|I2C| master library usage
+**************************
 
 |I2C| master synchronous operation
-..................................
+==================================
 
 There are two types of interface for |I2C| masters: synchronous and asynchronous.
 
@@ -202,7 +220,7 @@ function on the logical core of the application task connected to
 it (provided the application task is on the same tile as the |I2C| ports).
 
 |I2C| master asynchronous operation
-...................................
+===================================
 
 The synchronous API will block your application until the bus
 operation is complete. In cases where the application cannot afford to
@@ -236,7 +254,7 @@ Here the calculation of ``my_application_fill_buffer`` will overlap with
 the sending of data by the other task.
 
 Repeated start bits
-...................
+===================
 
 The library supports repeated start bits. The ``read`` and ``write``
 functions allow the application to specify whether to send a stop bit
@@ -254,8 +272,9 @@ bit is sent.
 
 |newpage|
 
+*************************
 |I2C| slave library usage
-.........................
+*************************
 
 |I2C| slaves are instantiated as parallel tasks that run in a
 ``par`` statement. The application can connect via an interface
@@ -285,9 +304,9 @@ function above needs to respond to the calls e.g.
 
 More information on interfaces and tasks can be be found in the `XMOS Programming Guide <https://www.xmos.com/file/xmos-programming-guide#programming-guide>`_.
 
-
+**********
 Master API
-----------
+**********
 
 All |I2C| master functions can be accessed via the ``i2c.h`` header::
 
@@ -297,7 +316,7 @@ You will also have to add ``lib_i2c`` to the
 ``USED_MODULES`` field of your application Makefile.
 
 Creating an |I2C| master instance
-.................................
+=================================
 
 .. doxygenfunction:: i2c_master
 
@@ -316,7 +335,7 @@ Creating an |I2C| master instance
 |newpage|
 
 |I2C| master supporting typedefs
-................................
+================================
 
 .. doxygenenum:: i2c_res_t
 
@@ -325,19 +344,20 @@ Creating an |I2C| master instance
 |newpage|
 
 |I2C| master synchronous interface
-..................................
+==================================
 
 .. doxygengroup:: i2c_master_if
 
 |newpage|
 
 |I2C| master asynchronous interface
-...................................
+===================================
 
 .. doxygengroup:: i2c_master_async_if
 
+*********
 Slave API
----------
+*********
 
 All |I2C| slave functions can be accessed via the ``i2c.h`` header::
 
@@ -349,25 +369,14 @@ You will also have to add ``lib_i2c`` to the
 |newpage|
 
 Creating an |I2C| slave instance
-................................
+================================
 
 .. doxygenfunction:: i2c_slave
 
 |newpage|
 
 |I2C| slave interface
-.....................
+=====================
 
 .. doxygengroup:: i2c_slave_callback_if
 
-|newpage|
-
-
-Known Issues
-------------
-
- * The reg_ops_nack test fails on the XS1 architecture because it is unable to meet timing.
-   This library is not recommended for use with the XS1 architecture.
-
-
-.. include:: ../../CHANGELOG.rst
