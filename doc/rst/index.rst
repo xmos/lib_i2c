@@ -164,10 +164,11 @@ connected to two 1-bit ports (as shown in :ref:`i2c_slave_connection`).
 |I2C| master library usage
 **************************
 
+There are two types of interface for |I2C| masters: synchronous and asynchronous.
+
+
 |I2C| master synchronous operation
 ==================================
-
-There are two types of interface for |I2C| masters: synchronous and asynchronous.
 
 The synchronous API provides blocking operation. Whenever a client makes a
 read or write call the operation will complete before the client can

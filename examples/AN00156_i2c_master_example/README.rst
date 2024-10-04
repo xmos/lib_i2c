@@ -9,7 +9,11 @@ AN00156: How to use the I2C master library
 :vendor: XMOS
 :version: 1.0.3
 :scope: Example
+:description: Using the I2C master library
+:category: General Purpose
+:keywords: IO, I2C
 :hardware: xCORE-200 eXplorerKIT
+
 
 ********
 Overview
@@ -18,8 +22,9 @@ Overview
 This application note demonstrates using the I2C master library to work with
 the FXOS8700CQ accelerometer device on the xCORE-200 eXplorerKIT board.
 
+*****************
 Required hardware
-=================
+*****************
 
 The example code provided with the application has been implemented
 and tested on the xCORE-200 eXplorerKIT.
