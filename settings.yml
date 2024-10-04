@@ -9,6 +9,7 @@ documentation:
   substitutions_path: doc/substitutions.inc
   root_doc: doc/rst/index.rst
   linkcheck_ignore_regex: ['']
+  cognidox_part_number: XM-004927-UN
   doxygen_projects:
     lib_i2c:
       doxyfile_path: doc/Doxyfile.inc
@@ -20,3 +21,5 @@ documentation:
       pdf_title: '{{title}} (README)'
       pdf_filename: '{{lib_name}}_v{{version}}_readme'
       pdf_short: yes
+software:
+  cognidox_part_number: XM-007006-SM
