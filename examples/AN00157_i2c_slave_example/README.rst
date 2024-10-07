@@ -3,17 +3,17 @@
 
 .. |I2C| replace:: I\ :sup:`2`\ C
 
-#########################################
-AN00157: How to use the I2C slave library
-#########################################
+###########################################
+AN00157: How to use the |I2C| slave library
+###########################################
 
 :vendor: XMOS
 :version: 1.0.3
 :scope: Example
-:description: Using the I2C slave library
+:description: Using the |I2C| slave library
 :category: General Purpose
-:keywords: IO, I2C
-:hardware: xCORE-200 eXplorerKIT
+:keywords: IO, |I2C|
+:hardware: NA
 
 ********
 Overview

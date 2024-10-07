@@ -1,6 +1,6 @@
-####################################
-AN00157: Using the I2C slave library
-####################################
+######################################
+AN00157: Using the |I2C| slave library
+######################################
 
 ********
 Overview
@@ -42,9 +42,9 @@ The application uses three logical cores:
 
 The register file is distributed between the two logical cores using it.
 
-*******************************
-I2C slave library usage example
-*******************************
+*********************************
+|I2C| slave library usage example
+*********************************
 
 The CMakeLists.txt file
 =======================
@@ -356,17 +356,17 @@ The VCD file can be opened in a VCD viewer like GTKWave.
 Further Reading
 ***************
 
-   * XMOS Tools User Guide
+   * XMOS XTC Tools Installation Guide
 
-     https://www.xmos.com/documentation/XM-014363-PC-9/html/
+     https://xmos.com/xtc-install-guide
 
-   * XMOS xCORE Programming Guide
+      * XMOS XTC Tools User Guide
 
-     https://www.xmos.com/published/xmos-programming-guide
+        https://www.xmos.com/view/Tools-15-Documentation
 
-   * XMOS Libraries
+      * XMOS application build and dependency management system; xcommon-cmake
 
-     https://www.xmos.com/libraries/
+        https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest
 
 
 |newpage|

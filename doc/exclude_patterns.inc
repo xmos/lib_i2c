@@ -4,4 +4,3 @@ tests
 .pytest_cache
 CHANGELOG.rst
 LICENSE.rst
-README.md

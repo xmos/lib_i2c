@@ -3,16 +3,16 @@
 
 .. |I2C| replace:: I\ :sup:`2`\ C
 
-#########################
-lib_i2c: XMOS I2C Library
-#########################
+###########################
+lib_i2c: XMOS |I2C| Library
+###########################
 
 :vendor: XMOS
 :version: 6.2.0
 :scope: General Use
-:description: XMOS I2C library
+:description: XMOS |I2C| library
 :category: General Purpose
-:keywords: IO, I2C
+:keywords: IO, |I2C|
 :devices: xcore.ai, xcore-200
 
 
@@ -51,16 +51,16 @@ Related Application Notes
 
 The following application notes use this library:
 
-  * AN00156: How to use the I2C master library
-  * AN00157: How to use the I2C slave library
+  * AN00156: How to use the |I2C| master library
+  * AN00157: How to use the |I2C| slave library
   * AN00181: xCORE-200 explorer accelerometer demo
 
 
 ************
 Known Issues
 ************
-  * The reg_ops_nack test fails on the XS1 architecture because it is unable to meet timing.
-    This library is not recommended for use with the XS1 architecture.
+  * The library has functions that wait on SCL high, through either an event or a polling loop.
+    If these are called on a system where the pull up isn't present then the application can hang forever.
 
 **************
 Required Tools

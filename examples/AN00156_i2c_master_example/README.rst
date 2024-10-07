@@ -2,32 +2,32 @@
 
 .. |I2C| replace:: I\ :sup:`2`\ C
 
-##########################################
-AN00156: How to use the I2C master library
-##########################################
+############################################
+AN00156: How to use the |I2C| master library
+############################################
 
 :vendor: XMOS
 :version: 1.0.3
 :scope: Example
-:description: Using the I2C master library
+:description: Using the |I2C| master library
 :category: General Purpose
-:keywords: IO, I2C
-:hardware: xCORE-200 eXplorerKIT
+:keywords: IO, |I2C|
+:hardware: XK-EVK-XE216
 
 
 ********
 Overview
 ********
 
-This application note demonstrates using the I2C master library to work with
-the FXOS8700CQ accelerometer device on the xCORE-200 eXplorerKIT board.
+This application note demonstrates using the |I2C| master library to work with
+the FXOS8700CQ accelerometer device on the XK-EVK-XE216 board.
 
 *****************
 Required hardware
 *****************
 
 The example code provided with the application has been implemented
-and tested on the xCORE-200 eXplorerKIT.
+and tested on the XK-EVK-XE216.
 
 ************
 Known Issues

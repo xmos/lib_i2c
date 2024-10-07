@@ -1,6 +1,6 @@
-#####################################
-AN00156: Using the I2C master library
-#####################################
+#######################################
+AN00156: Using the |I2C| master library
+#######################################
 
 ********
 Overview
@@ -18,7 +18,7 @@ The XMOS |I2C| library includes support for master and slave devices at speeds o
 up to 400kb/s.
 
 This application note demonstrates using the |I2C| master library to work with
-the FXOS8700CQ accelerometer device on the xCORE-200 eXplorerKIT board.
+the FXOS8700CQ accelerometer device on the XK-EVK-XE216 board.
 
 Block diagram
 =============
@@ -31,9 +31,9 @@ Block diagram
 The application uses a single logical core which runs the application and makes
 calls to the |I2C| master library functions as required.
 
-********************************
-I2C master library usage example
-********************************
+**********************************
+|I2C| master library usage example
+**********************************
 
 The CMakeLists.txt file
 =======================
@@ -192,7 +192,7 @@ Finally, the application binaries can be built using ``xmake``::
 Demo Hardware Setup
 ===================
 
-To run the demo, connect a USB cable to power the xCORE-200 eXplorerKIT
+To run the demo, connect a USB cable to power the XK-EVK-XE216
 and plug the xTAG to the board and connect the xTAG USB cable to your
 development machine.
 
@@ -218,7 +218,7 @@ on the xCORE device::
   xrun --xscope bin/xs2/AN00156_i2c_master_example.xe
 
 Once this command has executed the application will be running on the
-xCORE-200 eXplorerKIT.
+XK-EVK-XE216.
 
 
 Running the application
@@ -234,15 +234,15 @@ move the development board these will change.
 Further Reading
 ***************
 
-   * XMOS Tools User Guide
+   * XMOS XTC Tools Installation Guide
 
-     https://www.xmos.com/documentation/XM-014363-PC-9/html/
+     https://xmos.com/xtc-install-guide
 
-   * XMOS xCORE Programming Guide
+      * XMOS XTC Tools User Guide
 
-     https://www.xmos.com/published/xmos-programming-guide
+        https://www.xmos.com/view/Tools-15-Documentation
 
-   * XMOS Libraries
+      * XMOS application build and dependency management system; xcommon-cmake
 
-     https://www.xmos.com/libraries/
+        https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest
 
