@@ -441,7 +441,7 @@ void i2c_master(SERVER_INTERFACE(i2c_master_if, i[n]),
 /** Implements I2C on a single multi-bit port.
  *
  *  This function implements an I2C master bus using a single port. It is only
- *  supported on xCORE-200 devices.
+ *  supported on xcore-200 and xcore.ai devices.
  *
  *  \param  c                an array of server interface connections for clients
  *                           to connect to

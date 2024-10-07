@@ -64,12 +64,14 @@ pipeline {
         stage('Build Documentation') {
           steps {
             dir("${REPO}") {
-              buildDocs()
-              dir("examples/AN00156_i2c_master_example") {
+              warnError("Docs") {
                 buildDocs()
-              }
-              dir("examples/AN00157_i2c_slave_example") {
-                buildDocs()
+                dir("examples/AN00156_i2c_master_example") {
+                  buildDocs()
+                }
+                dir("examples/AN00157_i2c_slave_example") {
+                  buildDocs()
+                }
               }
             } // dir("${REPO}")
           } // steps
