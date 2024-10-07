@@ -1,12 +1,10 @@
-.. include:: ../../README.rst
+######################################
+AN00157: Using the |I2C| slave library
+######################################
 
-|newpage|
-
+********
 Overview
---------
-
-Introduction
-............
+********
 
 The XMOS |I2C| library provides software defined, industry-standard,
 |I2C| components that allow you to create devices which can be either |I2C|
@@ -27,7 +25,7 @@ looping back the clock and data lines between the master and slave. This is done
 in simulation using a loopback with pull-up enabled.
 
 Block diagram
-.............
+=============
 
 .. figure:: images/block_diagram.*
    :width: 80%
@@ -44,11 +42,12 @@ The application uses three logical cores:
 
 The register file is distributed between the two logical cores using it.
 
-How to use |I2C| slave
-----------------------
+*********************************
+|I2C| slave library usage example
+*********************************
 
-The Makefile
-------------
+The CMakeLists.txt file
+=======================
 
 To start using the |I2C|, you need to add ``lib_i2c`` to the dependent module list
 in the CMakeLists.txt file. This application note also uses ``lib_logging``, so this must be
@@ -67,49 +66,49 @@ be enabled it is necessary to add the following to the compile flags::
   set(APP_COMPILER_FLAGS ... -DDEBUG_PRINT_ENABLE=1 ...)
 
 Includes
---------
+========
 
 This application requires a few system headers. XMOS xCORE specific
 defines for declaring and initialising hardware are defined in ``xs1.h`` and
 the ``_exit()`` function which allows the application to terminate once the
 demo is complete is provided by ``syscall.h``.
 
-.. literalinclude:: main.xc
-   :start-on: include <xs1.h>
-   :end-on: include <syscall.h>
+.. literalinclude:: ../../src/main.xc
+   :start-at: include <xs1.h>
+   :end-at: include <syscall.h>
 
 The |I2C| library functions are defined in ``i2c.h``. This header must
 be included in your code to use the library. The logging functions are
 provided by ``debug_print.h``.
 
-.. literalinclude:: main.xc
-   :start-on: include "i2c.h"
-   :end-on: include "debug_print.h"
+.. literalinclude:: ../../src/main.xc
+   :start-at: include "i2c.h"
+   :end-at: include "debug_print.h"
 
 Allocating hardware resources
-.............................
+=============================
 
 An |I2C| interface requires both a clock and data pin. In this application note
 there is a slave and a master and each require both a clock and data pin.
 On an xCORE the pins are controlled by ``ports``. The application therefore
 declares four 1-bit ports:
 
-.. literalinclude:: main.xc
-   :start-on: port p_slave_scl
-   :end-on: port p_master_sda
+.. literalinclude:: ../../src/main.xc
+   :start-at: port p_slave_scl
+   :end-at: port p_master_sda
 
 |newpage|
 
 The register file interfaces
-............................
+============================
 
 The register file will interact with both the |I2C| slave and the user application.
 The interface to the |I2C| slave is defined ``i2c.h``. The interface
 to the user application is a custom interface which is declared in the application:
 
-.. literalinclude:: main.xc
-   :start-on: typedef interface register_if
-   :end-on: } register_if;
+.. literalinclude:: ../../src/main.xc
+   :start-at: typedef interface register_if
+   :end-at: } register_if;
 
 This interface declares four functions, three of which the user application can use
 to acces the register file and one which allows the register file to notify
@@ -118,7 +117,7 @@ that the user application does not have to waste cycles polling the register fil
 to determine if a register value has changed.
 
 The register file implementation
-................................
+================================
 
 The register file has a fixed number of registers that are assumed to start at
 address 0. The number of registers is controlled by the define::
@@ -127,9 +126,9 @@ address 0. The number of registers is controlled by the define::
 
 The register file implementation fuction is declared as:
 
-.. literalinclude:: main.xc
-   :start-on: [[distributable]]
-   :end-on: server register_if app
+.. literalinclude:: ../../src/main.xc
+   :start-at: [[distributable]]
+   :end-at: server register_if app
 
 The xC keyword ``distributable`` means that this function does not need to consume
 a whole logical core itself, but the functions it defines can be called in-line
@@ -143,8 +142,8 @@ file will respond to the function calls but not initiate any. The only exception
 
 The register file then declares storage for the registers:
 
-.. literalinclude:: main.xc
-   :start-on: uint8_t registers[NUM_REGISTERS]
+.. literalinclude:: ../../src/main.xc
+   :start-at: uint8_t registers[NUM_REGISTERS]
    :end-before: // This variable
 
 The interface to the |I2C| slave needs some local state to track which
@@ -156,9 +155,9 @@ is used to record which register is being read/written.
 The ``changed_regnum`` is used by the interface to the user application to record
 which register was last modified:
 
-.. literalinclude:: main.xc
-   :start-on: int current_regnum
-   :end-on: int changed_regnum
+.. literalinclude:: ../../src/main.xc
+   :start-at: int current_regnum
+   :end-at: int changed_regnum
 
 And the rest of the register file is a ``while(1) { select`` loop. All
 ``distributable`` functions must be of this form, with declarations followed
@@ -167,8 +166,8 @@ by a ``while(1) { select`` loop.
 Within the loop the register file handles the functions provided by both
 interfaces. First the interface to the user application:
 
-.. literalinclude:: main.xc
-   :start-on: case app.set_register
+.. literalinclude:: ../../src/main.xc
+   :start-at: case app.set_register
    :end-before: // Handle I2C slave
 
 The interface to the application is very straight-forward, with each function
@@ -187,21 +186,18 @@ The |I2C| slave callback interface declares nine functions that the register
 file must implement. Of those functions, only five are actually used by the
 register file, but the others would be used by other |I2C| slave devices.
 
-.. literalinclude:: main.xc
-   :start-on: case i2c.ack_read_request
-   :end-before: case i2c.start_write_request
-
-.. literalinclude:: main.xc
-   :start-on: case i2c.ack_write_request
+.. literalinclude:: ../../src/main.xc
+   :start-at: case i2c.ack_read_request
    :end-before: case i2c.master_sent_data
+
 
 The register file implements the ``ack_read_request()`` and ``ack_write_request()``
 functions to control whether an ACK or NACK is signaled on the bus for each start
 of read or write request. All writes are accepted, and reads are only accepted
 if the register number has been selected first.
 
-.. literalinclude:: main.xc
-   :start-on: case i2c.master_sent_data
+.. literalinclude:: ../../src/main.xc
+   :start-at: case i2c.master_sent_data
    :end-before: case i2c.master_requires_data
 
 The ``master_sent_data()`` interface function is called for each byte received
@@ -214,16 +210,16 @@ the user application if by calling the ``app.register_changed()`` notification
 function after having stored which register was modified in the
 ``changed_regnum`` variable.
 
-.. literalinclude:: main.xc
-   :start-on: case i2c.master_requires_data
+.. literalinclude:: ../../src/main.xc
+   :start-at: case i2c.master_requires_data
    :end-before: case i2c.stop_bit
 
 The ``master_requires_data()`` interface function is called whenever the |I2C|
 slave is required to send a byte to the master. If a register number has been
 selected first it will read that register, otherwise it returns 0.
 
-.. literalinclude:: main.xc
-   :start-on: case i2c.stop_bit
+.. literalinclude:: ../../src/main.xc
+   :start-at: case i2c.stop_bit
    :end-before: // select
 
 Finally, the ``stop_bit()`` function is called to indicate that the |I2C|
@@ -231,44 +227,44 @@ transaction is finished. The register file clears the ``current_regnum``
 variable to ensure it has to be set for the next transaction.
 
 Slave application
-.................
+=================
 
 The slave application gives an example of how the register file could be used.
 It is passed a ``client`` interface to the register file so that it can access
 the registers. It then sits in a ``while(1)`` loop inverting the data
 that is written to the register file and printing when it does this:
 
-.. literalinclude:: main.xc
-   :start-on: void slave_application
+.. literalinclude:: ../../src/main.xc
+   :start-at: void slave_application
    :end-before: void master_application
 
 Master application
-..................
+==================
 
 The master application is providing stimulus to test the slave register file
 and application:
 
-.. literalinclude:: main.xc
-   :start-on: void master_application
+.. literalinclude:: ../../src/main.xc
+   :start-at: void master_application
    :end-before: {
 
 It is passed the interface to the |I2C| master and the device address of the
 slave that it is testing. It then performs a single register write and checks
 that it completes successfully:
 
-.. literalinclude:: main.xc
-   :start-on: i2c.write_reg
+.. literalinclude:: ../../src/main.xc
+   :start-at: i2c.write_reg
    :end-before: // Read a single
 
 Then it reads the register value back and ensures the read completed correctly
 and that the data has been inverted:
 
-.. literalinclude:: main.xc
-   :start-on: i2c.read_reg
+.. literalinclude:: ../../src/main.xc
+   :start-at: i2c.read_reg
    :end-before: // Test finished
 
 The application main() function
-...............................
+===============================
 
 The ``main()`` function sets up the tasks in the application.
 
@@ -277,21 +273,21 @@ means of concurrent tasks communicating with each other. In this
 application there is an interface to the |I2C| slave, an interface between the
 application and the register file, and an interface to the |I2C| master.
 
-.. literalinclude:: main.xc
-   :start-on: i2c_slave_callback_if i_i2c;
-   :end-on: i2c_master_if i2c[1];
+.. literalinclude:: ../../src/main.xc
+   :start-at: i2c_slave_callback_if i_i2c;
+   :end-at: i2c_master_if i2c[1];
 
 The address of the |I2C| slave is declared:
 
-.. literalinclude:: main.xc
-   :start-on: uint8_t device_addr = 0x3c
+.. literalinclude:: ../../src/main.xc
+   :start-at: uint8_t device_addr = 0x3c
    :end-before: par
 
 The rest of the ``main()`` function starts all the tasks in parallel
 using the xC ``par`` construct:
 
-.. literalinclude:: main.xc
-   :start-on: par
+.. literalinclude:: ../../src/main.xc
+   :start-at: par
    :end-before: return 0
 
 This code starts the |I2C| slave, register file, slave application, |I2C| master,
@@ -301,109 +297,11 @@ the |I2C| slave and register file. Likewise, the |I2C| master is marked as
 ``distributable`` and will share the logical core with the master application. So
 the entire system only requires three logical cores.
 
-|newpage|
-|appendix|
 
-Demo setup
-----------
-
-Using xTIMEcomposer
-...................
-
-The demo is designed to run on the XMOS simulator using a loopback plugin providing
-pull-ups on the pins. In xTIMEcomposer:
-
- * Import and select the AN00157_i2c_slave_example project
- * Select ``Project -> Build Project``
- * Select ``Run -> Run Configurations...``
- * Select the ``New launch configuration`` button
-
-.. figure:: images/new_project.*
-   :width: 8%
-
-   New launch configuration
-
-Then on the ``Main`` tab select: ``Run on: simulator``
-
-.. figure:: images/run_on_simulator.*
-   :width: 40%
-
-   Run on simulator
-
-On the ``Simulator`` tab enable ``Trace to file:``
-
-.. figure:: images/trace_to_file.*
-   :width: 80%
-
-   Trace to file
-
-|newpage|
-
-On the ``Simulator`` tab, ``Singal Tracing`` section, select
-``Enable signal tracing``. Then under the ``Tile Trace Options`` click ``Add``
-and on ``tile[0]`` enable the ``Ports`` checkbox.
-
-.. figure:: images/signal_tracing.*
-   :width: 80%
-
-   Signal tracing
-
-On the ``Simulator`` tab, ``Loopback`` section, select ``Enable pin connections``.
-Then under the ``Pin Connetions`` click ``Add`` and create a loopback from
-``tile[0]``, ``XS1_PORT_1E`` to ``tile[0]``, ``XS1_PORT_1G`` and enable ``pullup``.
-Again, under the ``Pin Connetions`` click ``Add`` and create a loopback from
-``tile[0]``, ``XS1_PORT_1F`` to ``tile[0]``, ``XS1_PORT_1H`` and enable ``pullup``.
-
-.. figure:: images/loopback.*
-   :width: 80%
-
-   Loopback
-
-Click ``Apply`` and then click ``Run``. The application will run and generate
-the following output::
-
-  REGFILE: select reg[3]
-  REGFILE: reg[3] <- 12
-  SLAVE: Change register 3 value from 12 to ED
-  REGFILE: stop_bit
-  REGFILE: select reg[3]
-  REGFILE: reg[3] -> ED
-  REGFILE: stop_bit
-  MASTER: Read from addr 0x3C, 0x3 SUCCESS (got 0xED, expected 0xED)
-
-|newpage|
-
-When it finishes, it will switch to the VCD trace viewer and open the signal file
-created. Hide the console by clicking on the console button on the right-hand side
-of the window:
-
-.. figure:: images/hide_console.*
-   :width: 8%
-
-   Hide console
-
-An existing waveform setup can be loaded using the ``Read Session File`` button
-from the ``Waves`` window:
-
-.. figure:: images/read_session_file.*
-   :width: 8%
-
-   Read session file
-
-and open the ``xvcd.xml`` file. This configures the waves to show the clock and
-data waves and the direction of the ports.
-
-.. figure:: images/waves.*
-   :width: 100%
-
-   Waves
-
-
-|appendix|
 |newpage|
 
 Building the Application
-------------------------
+========================
 
 The following section assumes you have downloaded and installed the `XMOS XTC tools <https://www.xmos.com/software-tools/>`_
 (see `README` for required version). Installation instructions can be found `here <https://xmos.com/xtc-install-guide>`_.
@@ -427,13 +325,10 @@ Finally, the application binaries can be built using ``xmake``::
 
 
 Launching the demo application
-------------------------------
+==============================
 
 Once built there will be a ``bin/`` directory within the project which contains
 the binary for the xCORE device. The xCORE binary has a XMOS standard .xe extension.
-
-Launching from the command line
-...............................
 
 From the command line, run ``xsim`` with the following arguments::
 
@@ -448,38 +343,32 @@ of the binary::
 
   --vcd-tracing "-o trace.vcd -tile tile[0] -ports"
 
-The VCD file can be opened in xTIMEcomposer or any other VCD viewer.
+The VCD file can be opened in a VCD viewer like GTKWave.
+
+.. figure:: images/waves.*
+   :width: 100%
+
+   Waves
 
 |newpage|
 
-References
-----------
+***************
+Further Reading
+***************
 
-.. nopoints::
+   * XMOS XTC Tools Installation Guide
 
-   * XMOS Tools User Guide
+     https://xmos.com/xtc-install-guide
 
-     https://www.xmos.com/documentation/XM-014363-PC-9/html/
+      * XMOS XTC Tools User Guide
 
-   * XMOS xCORE Programming Guide
+        https://www.xmos.com/view/Tools-15-Documentation
 
-     https://www.xmos.com/published/xmos-programming-guide
+      * XMOS application build and dependency management system; xcommon-cmake
 
-   * XMOS Libraries
+        https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest
 
-     https://www.xmos.com/libraries/
-
-
-|newpage|
-
-Full source code listing
-------------------------
-
-Source code for main.xc
-.......................
-
-.. literalinclude:: main.xc
-  :largelisting:
 
 |newpage|
+
 

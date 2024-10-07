@@ -29,13 +29,13 @@ pipeline {
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v6.0.0',
+      defaultValue: 'v6.1.0',
       description: 'The xmosdoc version')
   }
   stages {
     stage('Build and test') {
       agent {
-        label 'x86_64 && linux'
+        label 'documentation && linux && x86_64'
       }
       stages {
         stage('Build examples') {
@@ -51,32 +51,31 @@ pipeline {
                   sh 'xmake -C build -j 8'
                 }
               }
-            }
-            runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
-          }
-        }  // Build examples
+            } // dir("${REPO}")
+          } // steps
+        }  // stage('Build examples')
 
-        stage('Build documentation') {
+        stage('Library Checks') {
+          steps {
+            runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
+          } // steps
+        } // stage('Library Checks')
+
+        stage('Build Documentation') {
           steps {
             dir("${REPO}") {
-              withXdoc("v2.0.20.2.post0") {
-                withTools(params.TOOLS_VERSION) {
-                  dir("doc") {
-                    sh "xdoc xmospdf"
-                    archiveArtifacts artifacts: "pdf/*.pdf"
-                  }
-                  forAllMatch("examples", "AN*/") { path ->
-                    dir("${path}/doc")
-                    {
-                      sh "xdoc xmospdf"
-                      archiveArtifacts artifacts: "pdf/*.pdf"
-                    }
-                  }
+              warnError("Docs") {
+                buildDocs()
+                dir("examples/AN00156_i2c_master_example") {
+                  buildDocs()
+                }
+                dir("examples/AN00157_i2c_slave_example") {
+                  buildDocs()
                 }
               }
-            }
-          }
-        }  // Build documentation
+            } // dir("${REPO}")
+          } // steps
+        } // stage('Build Documentation')
 
         stage('Simulator tests') {
           steps {

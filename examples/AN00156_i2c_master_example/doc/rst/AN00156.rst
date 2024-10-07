@@ -1,12 +1,10 @@
-.. include:: ../../README.rst
+#######################################
+AN00156: Using the |I2C| master library
+#######################################
 
-|newpage|
-
+********
 Overview
---------
-
-Introduction
-............
+********
 
 The XMOS |I2C| library provides software defined, industry-standard,
 |I2C| components that allow you to create devices which can be either |I2C|
@@ -20,10 +18,10 @@ The XMOS |I2C| library includes support for master and slave devices at speeds o
 up to 400kb/s.
 
 This application note demonstrates using the |I2C| master library to work with
-the FXOS8700CQ accelerometer device on the xCORE-200 eXplorerKIT board.
+the FXOS8700CQ accelerometer device on the XK-EVK-XE216 board.
 
 Block diagram
-.............
+=============
 
 .. figure:: images/block_diagram.*
    :width: 80%
@@ -33,9 +31,12 @@ Block diagram
 The application uses a single logical core which runs the application and makes
 calls to the |I2C| master library functions as required.
 
+**********************************
+|I2C| master library usage example
+**********************************
 
-The Makefile
-------------
+The CMakeLists.txt file
+=======================
 
 To start using the |I2C|, you need to add ``lib_i2c`` to the dependent module list
 in the CMakeLists.txt file. This application note also uses ``lib_logging``, so this must be
@@ -55,56 +56,56 @@ be enabled it is necessary to add the following to the compile flags::
 
 
 Includes
---------
+========
 
 This application requires the system header that defines XMOS xCORE specific
 defines for declaring and initialising hardware:
 
-.. literalinclude:: main.xc
-   :start-on: include <xs1.h>
+.. literalinclude:: ../../src/main.xc
+   :start-at: include <xs1.h>
    :end-before: include "i2c.h"
 
 The |I2C| library functions are defined in ``i2c.h``. This header must
 be included in your code to use the library. The logging functions are
 provided by ``debug_print.h``.
 
-.. literalinclude:: main.xc
-   :start-on: include "i2c.h"
-   :end-on: include "debug_print.h"
+.. literalinclude:: ../../src/main.xc
+   :start-at: include "i2c.h"
+   :end-at: include "debug_print.h"
 
 Allocating hardware resources
-.............................
+=============================
 
 An |I2C| master requires a clock and a data pin. On an xCORE the pins are
 controlled by ``ports``. The application therefore declares two 1-bit ports:
 
-.. literalinclude:: main.xc
-   :start-on: port p_scl
-   :end-on: port p_sda
+.. literalinclude:: ../../src/main.xc
+   :start-at: port p_scl
+   :end-at: port p_sda
 
 Declarations
-------------
+============
 
 Accelerometer defines
-.....................
+---------------------
 
 A number of defines are used for the accelerometer device address and
 register numbers:
 
-.. literalinclude:: main.xc
-   :start-on: define FXOS8700EQ_I2C_ADDR 0x1E
-   :end-on: define FXOS8700EQ_OUT_Z_MSB 0x5
+.. literalinclude:: ../../src/main.xc
+   :start-at: define FXOS8700CQ_I2C_ADDR 0x1E
+   :end-at: define FXOS8700CQ_OUT_Z_MSB 0x5
 
 Reading over |I2C|
-..................
+==================
 
 The ``read_acceleration()`` function is used to get an accelerometer reading
 for a given axis. It uses the |I2C| master to read the MSB and LSB registers
 and then combines their results into the 10-bit value for the specified axis.
 Each register read is checked to ensure that it has completed correctly.
 
-.. literalinclude:: main.xc
-   :start-on: int read_acceleration
+.. literalinclude:: ../../src/main.xc
+   :start-at: int read_acceleration
    :end-before: void accelerometer
 
 The |I2C| ``read_reg()`` function takes the device address, the register number
@@ -115,13 +116,13 @@ all 8-bit. The |I2C| library provides other functions with different data-width
 operands. Refer to the library documentation for details.
 
 Writing over |I2C|
-..................
+==================
 
 The core of the application is the ``accelerometer()`` function which starts
 by writing to the accelerometer device to configure and then enable it:
 
-.. literalinclude:: main.xc
-   :start-on: void accelerometer
+.. literalinclude:: ../../src/main.xc
+   :start-at: void accelerometer
    :end-before: while (1)
 
 |newpage|
@@ -130,14 +131,14 @@ After that it continually loops polling the accelerometer until it is ready
 and then reading the values from the three axes and displaying the current
 status.
 
-.. literalinclude:: main.xc
-   :start-on: while (1)
+.. literalinclude:: ../../src/main.xc
+   :start-at: while (1)
    :end-before: // End accelerometer
 
 The print uses a ``\r`` to ensure that only a single line of the screen is used.
 
 The application main() function
-...............................
+===============================
 
 The ``main()`` function sets up the tasks in the application.
 
@@ -146,15 +147,15 @@ means of concurrent tasks communicating with each other. In this
 application there is a single interface between the application and the |I2C|
 master.
 
-.. literalinclude:: main.xc
-   :start-on: i2c_master_if i2c[1];
+.. literalinclude:: ../../src/main.xc
+   :start-at: i2c_master_if i2c[1];
    :end-before: par
 
 The rest of the ``main()`` function starts all the tasks in parallel
 using the xC ``par`` construct:
 
-.. literalinclude:: main.xc
-   :start-on: par
+.. literalinclude:: ../../src/main.xc
+   :start-at: par
    :end-before: return 0
 
 This code starts the |I2C| master and the application. Because the |I2C| master
@@ -162,11 +163,10 @@ is marked as ``distributable`` it will not actually use a logical core but will
 be run on the logical cores with the application. As a result, the entire system
 only requires on logical core.
 
-|appendix|
 |newpage|
 
 Building the Application
-------------------------
+========================
 
 The following section assumes you have downloaded and installed the `XMOS XTC tools <https://www.xmos.com/software-tools/>`_
 (see `README` for required version). Installation instructions can be found `here <https://xmos.com/xtc-install-guide>`_.
@@ -190,9 +190,9 @@ Finally, the application binaries can be built using ``xmake``::
 
 
 Demo Hardware Setup
--------------------
+===================
 
-To run the demo, connect a USB cable to power the xCORE-200 eXplorerKIT
+To run the demo, connect a USB cable to power the XK-EVK-XE216
 and plug the xTAG to the board and connect the xTAG USB cable to your
 development machine.
 
@@ -204,17 +204,13 @@ development machine.
 |newpage|
 
 Launching the demo application
-------------------------------
+==============================
 
-Once the demo example has been built either from the command line using xmake or
-via the build mechanism of xTIMEcomposer studio it can be executed on the xCORE-200
+Once the demo example has been built, it can be executed on the xCORE-200
 eXplorerKIT.
 
 Once built there will be a ``bin/`` directory within the project which contains
 the binary for the xCORE device. The xCORE binary has a XMOS standard .xe extension.
-
-Launching from the command line
-...............................
 
 From the command line you use the ``xrun`` tool to download and run the code
 on the xCORE device::
@@ -222,22 +218,11 @@ on the xCORE device::
   xrun --xscope bin/xs2/AN00156_i2c_master_example.xe
 
 Once this command has executed the application will be running on the
-xCORE-200 eXplorerKIT.
+XK-EVK-XE216.
 
-Launching from xTIMEcomposer Studio
-...................................
-
-From xTIMEcomposer Studio use the run mechanism to download code to xCORE device.
-Select the xCORE binary from the ``bin/`` directory, right click and go to Run
-Configurations. Double click on xCORE application to create a new run configuration,
-enable the xSCOPE I/O mode in the dialog box and then
-select Run.
-
-Once this command has executed the application will be running on the
-xCORE-200 eXplorerKIT.
 
 Running the application
-.......................
+=======================
 
 Once the application is started using either of the above methods there should
 be output printed to the console showing the x, y and z axis values and as you
@@ -245,32 +230,19 @@ move the development board these will change.
 
 |newpage|
 
-References
-----------
+***************
+Further Reading
+***************
 
-.. nopoints::
+   * XMOS XTC Tools Installation Guide
 
-   * XMOS Tools User Guide
+     https://xmos.com/xtc-install-guide
 
-     https://www.xmos.com/documentation/XM-014363-PC-9/html/
+      * XMOS XTC Tools User Guide
 
-   * XMOS xCORE Programming Guide
+        https://www.xmos.com/view/Tools-15-Documentation
 
-     https://www.xmos.com/published/xmos-programming-guide
+      * XMOS application build and dependency management system; xcommon-cmake
 
-   * XMOS Libraries
+        https://www.xmos.com/file/xcommon-cmake-documentation/?version=latest
 
-     https://www.xmos.com/libraries/
-
-|newpage|
-
-Full source code listing
-------------------------
-
-Source code for main.xc
-.......................
-
-.. literalinclude:: main.xc
-  :largelisting:
-
-|newpage|
