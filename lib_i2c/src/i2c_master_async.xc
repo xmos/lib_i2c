@@ -1,4 +1,4 @@
-// Copyright 2015-2021 XMOS LIMITED.
+// Copyright 2015-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <i2c.h>
 #include <xs1.h>
@@ -137,7 +137,6 @@ void i2c_master_async(
   }
 }
 
-
 /*  Adjust for time slip.
  *
  *  All timings of the state machine in i2c_master_async_comb are made
@@ -275,7 +274,12 @@ void i2c_master_async_comb(
       case WRITE_0:
         p_scl <: 0;
         fall_time = adjust_fall(event_time, now, fall_time);
-        p_sda <: data >> 7;
+        if (data & 0x080) {
+          p_sda :> void;
+        }
+        else {
+          p_sda <: 0;
+        }
         data <<= 1;
         bitnum++;
         state = WRITE_1;

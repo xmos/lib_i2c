@@ -1,4 +1,4 @@
-// Copyright 2014-2021 XMOS LIMITED.
+// Copyright 2014-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <i2c.h>
 #include <xs1.h>
@@ -163,14 +163,24 @@ void i2c_slave(client i2c_slave_callback_if i,
               data = bitrev(data) >> 24;
 
               // Send first bit of data
-              p_sda <: data & 0x1;
+              if (data & 0x1) {
+                p_sda :> void;
+              }
+              else {
+                p_sda <: 0;
+              }
 
               ensure_setup_time();
 
               // Release the clock
               p_scl :> void;
             } else {
-              p_sda <: data & 0x1;
+              if (data & 0x1) {
+                p_sda :> void;
+              }
+              else {
+                p_sda <: 0;
+              }
             }
             data >>= 1;
           } else {
