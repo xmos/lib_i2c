@@ -8,7 +8,7 @@ lib_i2c: XMOS |I2C| Library
 ###########################
 
 :vendor: XMOS
-:version: 6.2.0
+:version: 6.3.0
 :scope: General Use
 :description: XMOS |I2C| library
 :category: General Purpose
