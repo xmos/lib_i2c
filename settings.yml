@@ -2,7 +2,7 @@
 lib_name: lib_i2c
 project: '{{lib_name}}'
 title: '{{lib_name}}: I2C Library'
-version: 6.2.0
+version: 6.3.0
 
 documentation:
   exclude_patterns_path: doc/exclude_patterns.inc
