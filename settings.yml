@@ -1,20 +1,21 @@
+# This file relates to internal XMOS infrastructure and should be ignored by external users
 ---
 lib_name: lib_i2c
 project: '{{lib_name}}'
-title: '{{lib_name}}: I2C Library'
-version: 6.3.0
+title: '{{lib_name}}: I²C library'
+version: 6.3.1
 
 documentation:
   exclude_patterns_path: doc/exclude_patterns.inc
   substitutions_path: doc/substitutions.inc
-  root_doc: doc/rst/index.rst
+  root_doc: doc/rst/lib_i2c.rst
   linkcheck_ignore_regex: ['']
-  cognidox_part_number: XM-004927-UN
+  cognidox_part_number: XM-004927-UG
   doxygen_projects:
     lib_i2c:
       doxyfile_path: doc/Doxyfile.inc
   pdfs:
-    doc/rst/index.rst:
+    doc/rst/lib_i2c.rst:
       pdf_title: '{{title}}'
       pdf_filename: '{{lib_name}}_v{{version}}'
     README.rst:

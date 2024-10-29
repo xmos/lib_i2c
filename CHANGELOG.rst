@@ -1,6 +1,15 @@
 lib_i2c change log
 ==================
 
+6.3.1
+-----
+
+  * CHANGED: Documentation updated
+
+  * Changes to dependencies:
+
+    - lib_xassert: 4.3.0 -> 4.3.1
+
 6.3.0
 -----
 
