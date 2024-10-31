@@ -1,7 +1,7 @@
 # This file provides overrides to the Doxyfile configuration
 
 PROJECT_NAME           = lib_i2c
-PROJECT_BRIEF          = "I2C software library"
+PROJECT_BRIEF          = "I²C library"
 
 INPUT                  = ../lib_i2c/api ../lib_i2c/src
 

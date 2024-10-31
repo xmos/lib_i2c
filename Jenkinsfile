@@ -3,10 +3,26 @@
 @Library('xmos_jenkins_shared_library@v0.34.0') _
 
 def clone_test_deps() {
-  dir("${WORKSPACE}") {
-    sh "git clone git@github.com:xmos/test_support"
-    sh "git -C test_support checkout v2.0.0"
-  }
+    dir("${WORKSPACE}") {
+        sh "git clone git@github.com:xmos/test_support"
+        sh "git -C test_support checkout v2.0.0"
+    }
+}
+
+def checkout_shallow()
+{
+    checkout scm: [
+        $class: 'GitSCM',
+        branches: scm.branches,
+        userRemoteConfigs: scm.userRemoteConfigs,
+        extensions: [[$class: 'CloneOption', depth: 1, shallow: true, noTags: false]]
+    ]
+}
+
+def archiveLib(String repoName) {
+    sh "git -C ${repoName} clean -xdf"
+    sh "zip ${repoName}_sw.zip -r ${repoName}"
+    archiveArtifacts artifacts: "${repoName}_sw.zip", allowEmptyArchive: false
 }
 
 getApproval()
@@ -29,8 +45,14 @@ pipeline {
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v6.1.0',
-      description: 'The xmosdoc version')
+      defaultValue: 'v6.1.2',
+      description: 'The xmosdoc version'
+    )
+    string(
+      name: 'INFR_APPS_VERSION',
+      defaultValue: 'develop',
+      description: 'The infr_apps version'
+    )
   }
   stages {
     stage('Build and test') {
@@ -43,11 +65,11 @@ pipeline {
             println "Stage running on ${env.NODE_NAME}"
 
             dir("${REPO}") {
-              checkout scm
+              checkout_shallow()
 
               dir("examples") {
                 withTools(params.TOOLS_VERSION) {
-                  sh 'cmake -G "Unix Makefiles" -B build'
+                  sh "cmake -G 'Unix Makefiles' -B build -DDEPS_CLONE_SHALLOW=TRUE"
                   sh 'xmake -C build -j 8'
                 }
               }
@@ -55,16 +77,18 @@ pipeline {
           } // steps
         }  // stage('Build examples')
 
-        stage('Library Checks') {
+        stage('Library checks') {
           steps {
-            runLibraryChecks("${WORKSPACE}/${REPO}", "v2.0.1")
+            warnError("Library checks failed") {
+                runLibraryChecks("${WORKSPACE}/${REPO}", "${params.INFR_APPS_VERSION}")
+            }
           } // steps
         } // stage('Library Checks')
 
-        stage('Build Documentation') {
+        stage('Build documentation') {
           steps {
             dir("${REPO}") {
-              warnError("Docs") {
+              warnError("Documentation build failed") {
                 buildDocs()
                 dir("examples/AN00156_i2c_master_example") {
                   buildDocs()
@@ -85,22 +109,27 @@ pipeline {
                 dir("tests") {
                   createVenv(reqFile: "requirements.txt")
                   withVenv {
-                    sh 'cmake -G "Unix Makefiles" -B build'
+                    sh "cmake -G 'Unix Makefiles' -B build -DDEPS_CLONE_SHALLOW=TRUE"
                     sh 'xmake -C build -j 8'
                     sh "pytest -v -n auto --junitxml=pytest_result.xml"
+                    junit "pytest_result.xml"
                   } // withVenv
                 } // dir("tests")
               } //withTools
             } // dir("${REPO}")
           } // steps
         } // Simulator tests
+
+        stage("Archive lib") {
+            steps
+            {
+                archiveLib(REPO)
+            }
+        }
       } // stages
       post {
-        always {
-          junit "${REPO}/tests/pytest_result.xml"
-        }
         cleanup {
-          xcoreCleanSandbox()
+            xcoreCleanSandbox()
         }
       }
     }  // Build and test

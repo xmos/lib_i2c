@@ -440,8 +440,8 @@ void i2c_master(SERVER_INTERFACE(i2c_master_if, i[n]),
 #if (defined(__XS2A__) || defined(__XS3A__) || defined(__DOXYGEN__))
 /** Implements I2C on a single multi-bit port.
  *
- *  This function implements an I2C master bus using a single port. It is only
- *  supported on xcore-200 and xcore.ai devices.
+ *  This function implements an I2C master bus using a single port. Not supported on L or U series
+ *  devices.
  *
  *  \param  c                an array of server interface connections for clients
  *                           to connect to
