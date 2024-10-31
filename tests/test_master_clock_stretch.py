@@ -1,19 +1,26 @@
-# Copyright 2014-2021 XMOS LIMITED.
+# Copyright 2014-2024 XMOS LIMITED.
 # This Software is subject to the terms of the XMOS Public Licence: Version 1.
-import xmostest
+from pathlib import Path
+import Pyxsim
+import pytest
+import json
 from i2c_master_checker import I2CMasterChecker
-import os
 
+test_name = "i2c_master_test"
 
-def do_test(arch, stop):
-    resources = xmostest.request_resource("xsim")
+with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
+    params = json.load(f)
 
-    speed = 400
-    binary = 'i2c_master_test/bin/rx_tx_%(speed)s_%(stop)s_%(arch)s/i2c_master_test_rx_tx_%(speed)s_%(stop)s_%(arch)s.xe' % {
-      'speed' : speed,
-      'stop' : stop,
-      'arch' : arch,
-    }
+@pytest.mark.parametrize("arch", ["xs2", "xs3"])
+@pytest.mark.parametrize("dir", ["rx_tx"]) # only test the rx_tx config
+@pytest.mark.parametrize("speed", [400]) # only test speed = 400
+@pytest.mark.parametrize("stop", params['STOPS'])
+def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop, arch):
+    cwd = Path(request.fspath).parent
+    cfg = f"{dir}_{speed}_{stop}_{arch}"
+    binary = f'{cwd}/{test_name}/bin/{cfg}/{test_name}_{cfg}.xe'
+
+    assert Path(binary).exists(), f"Cannot find {binary}"
 
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
@@ -26,28 +33,18 @@ def do_test(arch, stop):
                                              True, True, True, False,
                                              True, False])
 
-    tester = xmostest.ComparisonTester(open('master_test_%s.expect' % stop),
-                                     'lib_i2c', 'i2c_master_sim_tests',
-                                      'clock_stretch',
-                                      {'speed' : speed, 'stop' : stop, 'arch' : arch},
-                                     regexp=True)
+    tester = Pyxsim.testers.AssertiveComparisonTester(
+        f'{cwd}/expected/master_test_{stop}.expect',
+        regexp = True,
+        ordered = True,
+        suppress_multidrive_messages=True,
+    )
 
-    # vcd_args = '-o test.vcd'
-    # vcd_args += ( ' -tile tile[0] -ports -ports-detailed -instructions'
-    #   ' -functions -cycles -clock-blocks -pads' )
-
-    # sim_args = ['--weak-external-drive', '--trace-to', 'sim.log']
-    # sim_args += [ '--vcd-tracing', vcd_args ]
- 
-    sim_args = ['--weak-external-drive']
-
-    xmostest.run_on_simulator(resources['xsim'], binary,
-                              simthreads = [checker],
-                              simargs=sim_args,
-                              suppress_multidrive_messages = True,
-                              tester = tester)
-
-def runtest():
-  for arch in ['xs1', 'xs2', 'xcoreai']:
-    for stop in ['stop', 'no_stop']:
-      do_test(arch, stop)
+    Pyxsim.run_on_simulator_(
+        binary,
+        tester = tester,
+        do_xe_prebuild = False,
+        simthreads = [checker],
+        simargs=['--weak-external-drive'],
+        capfd=capfd
+        )

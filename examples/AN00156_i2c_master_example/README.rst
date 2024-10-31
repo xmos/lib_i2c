@@ -1,34 +1,64 @@
+:orphan:
+
 .. |I2C| replace:: I\ :sup:`2`\ C
 
-How to use the I2C master library
-=================================
+############################################
+AN00156: How to use the |I2C| master library
+############################################
 
-Summary
--------
+:vendor: XMOS
+:version: 1.0.3
+:scope: Example
+:description: Using the |I2C| master library
+:category: General Purpose
+:keywords: IO, |I2C|
+:hardware: XK-EVK-XE216
 
-Software dependencies
-.....................
 
-For a list of direct dependencies, look for USED_MODULES in the Makefile.
+********
+Overview
+********
 
+This application note demonstrates using the |I2C| master library to work with
+the FXOS8700CQ accelerometer device on the XK-EVK-XE216 board.
 
+*****************
 Required hardware
-.................
+*****************
 
 The example code provided with the application has been implemented
-and tested on the xCORE-200 eXplorerKIT.
+and tested on the XK-EVK-XE216.
 
-Prerequisites
-.............
+************
+Known Issues
+************
 
- * This document assumes familiarity with the XMOS xCORE architecture,
-   the XMOS tool chain and the xC language. Documentation related to these
-   aspects which are not specific to this application note are linked to in
-   the references appendix.
+  * None
 
- * For a description of XMOS related terms found in this document
-   please see the XMOS Glossary [#]_.
+**************
+Required Tools
+**************
 
-.. [#] http://www.xmos.com/published/glossary
+  * XMOS XTC Tools: 15.3.0
+
+*********************************
+Required Libraries (Dependencies)
+*********************************
+
+  * lib_i2c
+  * lib_logging
+
+*************************
+Related Application Notes
+*************************
+
+ * None
+
+*******
+Support
+*******
+
+This package is supported by XMOS Ltd. Issues can be raised against the software at: http://www.xmos.com/support
+
 
 

@@ -1,4 +1,4 @@
-// Copyright 2014-2021 XMOS LIMITED.
+// Copyright 2014-2024 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <stdio.h>
 #include <xs1.h>
@@ -44,12 +44,12 @@ void test(client i2c_master_if i2c)
 
   // Print all the results
   for (size_t i = 0; i < NUM_WRITE_TESTS; ++i) {
-    debug_printf(write_results[i] == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
+    debug_printf(write_results[i] == I2C_REGOP_SUCCESS ? "XCORE: ACK\n" : "XCORE: NACK\n");
   }
 
   for (size_t i = 0; i < NUM_READ_TESTS; ++i) {
-    debug_printf(read_results[i] == I2C_REGOP_SUCCESS ? "ACK\n" : "NACK\n");
-    debug_printf("val=%x\n", vals[i]);
+    debug_printf(read_results[i] == I2C_REGOP_SUCCESS ? "XCORE: ACK\n" : "XCORE: NACK\n");
+    debug_printf("XCORE: val=%x\n", vals[i]);
   }
   exit(0);
 }

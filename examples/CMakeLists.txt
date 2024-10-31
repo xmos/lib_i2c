@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.21)
+include($ENV{XMOS_CMAKE_PATH}/xcommon.cmake)
+project(lib_i2c_examples)
+
+add_subdirectory(AN00156_i2c_master_example)
+add_subdirectory(AN00157_i2c_slave_example)
+add_subdirectory(app_simple_asynchronous_master)
+add_subdirectory(app_simple_repeated_start_master)
+add_subdirectory(app_simple_single_port_master)
+add_subdirectory(app_simple_slave)
+add_subdirectory(app_simple_synchronous_master)
