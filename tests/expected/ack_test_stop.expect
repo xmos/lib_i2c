@@ -9,6 +9,7 @@ Sending ack
 Byte received: 0xfe
 Speed = \d+ Kbps
 Sending ack
+Stop bit received
 Start bit received
 Byte received: 0xf6
 Speed = \d+ Kbps
