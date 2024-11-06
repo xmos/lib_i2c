@@ -155,12 +155,7 @@ class I2CMasterChecker(px.SimThread):
       # This state will be transitioned by the handler
       "SAMPLE_ACK"       : ( 1,    None,  "NOT_POSSIBLE",     "NOT_POSSIBLE" ),
       "ACKED"            : ( None, None,  "DRIVE_BIT",        "ACKED" ),
-      # After a NACK, the master must generate a Stop or Repeated Start
       "NACKED"           : ( None, None,  "DRIVE_BIT",        "NACKED" ),
-      #"NACKED"           : ( None, None,  "NACKED_SELECT",    "ILLEGAL" ),
-      "NACKED_SELECT"    : ( 0,    1,     "STOPPED",          "STOPPING_0" ),
-      "STOPPING_0"       : ( 0,    0,     "STOPPING_1",       "ILLEGAL" ),
-      "STOPPING_1"       : ( 1,    0,     "ILLEGAL",          "STOPPED" ),
       "REPEAT_START"     : ( 1,    0,     "DRIVE_BIT",        "ILLEGAL" ),
       "ILLEGAL"          : ( None, None,  "ILLEGAL",          "ILLEGAL" ),
     }
@@ -259,9 +254,6 @@ class I2CMasterChecker(px.SimThread):
 
         if new_scl_value == 0:
           self.check_data_valid_time(time_now - self._scl_change_time)
-
-        if self._state == "STOPPING_1":
-          self.check_setup_stop_time(time_now - self._scl_change_time)
 
       return scl_changed, sda_changed
 
@@ -461,16 +453,6 @@ class I2CMasterChecker(px.SimThread):
 
     def handle_nacked(self):
       pass
-
-    def handle_nacked_select(self):
-      # Simulate external pullup
-      self.drive_sda(1)
-
-    def handle_stopping_0(self):
-      pass
-
-    def handle_stopping_1(self):
-      print("Stop bit received")
 
     def handle_repeat_start(self):
       print("Repeated start bit received")
