@@ -9,7 +9,7 @@ Sending ack
 Byte received: 0xfe
 Speed = \d+ Kbps
 Sending nack
-Start bit received
+Repeated start bit received
 Byte received: 0xf6
 Speed = \d+ Kbps
 Master write transaction started, device address=0x7b
@@ -23,7 +23,7 @@ Sending ack
 Byte received: 0xaa
 Speed = \d+ Kbps
 Sending nack
-Start bit received
+Repeated start bit received
 Byte received: 0x45
 Speed = \d+ Kbps
 Master read transaction started, device address=0x22
@@ -35,7 +35,7 @@ Byte sent
 Speed = \d+ Kbps
 Master sends NACK.
 Waiting for stop/start bit
-Start bit received
+Repeated start bit received
 Byte received: 0x11
 Speed = \d+ Kbps
 Master read transaction started, device address=0x8
@@ -50,7 +50,7 @@ Byte sent
 Speed = \d+ Kbps
 Master sends NACK.
 Waiting for stop/start bit
-Start bit received
+Repeated start bit received
 Byte received: 0x62
 Speed = \d+ Kbps
 Master write transaction started, device address=0x31

@@ -14,6 +14,7 @@ Sending ack
 Byte received: 0x99
 Speed = \d+ Kbps
 Sending ack
+Stop bit received
 Start bit received
 Byte received: 0x44
 Speed = \d+ Kbps
@@ -22,3 +23,4 @@ Sending ack
 Byte received: 0x88
 Speed = \d+ Kbps
 Sending ack
+Stop bit received
