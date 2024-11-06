@@ -26,7 +26,6 @@ def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop, arch):
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
                                tx_data = [0x99, 0x3A, 0xff],
-                               #expected_speed = speed,
                                expected_speed=170,
                                clock_stretch=5000,
                                ack_sequence=[True, True, False, # Master write
