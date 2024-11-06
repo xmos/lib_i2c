@@ -16,7 +16,7 @@ class I2CMasterChecker(px.SimThread):
         self._sda_port = sda_port
         self._tx_data = tx_data
         self._ack_sequence = ack_sequence
-        self._expected_speed = expected_speed
+        self._expected_speed = expected_speed # Speed the checker is expected to detect. Could be lower than the I2C master's original operating speed if the slave is clock stretching
         self._clock_stretch = clock_stretch*1e6 # ns to fs conversion
 
         self._external_scl_value = 0
@@ -40,7 +40,7 @@ class I2CMasterChecker(px.SimThread):
 
         self._drive_ack = 1
         if original_speed is not None:
-          self._original_speed = original_speed
+          self._original_speed = original_speed # Speed at which the I2C master is operating.
         else:
           self._original_speed = self._expected_speed
 
