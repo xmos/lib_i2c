@@ -11,12 +11,12 @@ class I2CMasterChecker(px.SimThread):
     """
 
     def __init__(self, scl_port, sda_port, expected_speed,
-                 tx_data=[], ack_sequence=[], clock_stretch=0):
+                 tx_data=[], ack_sequence=[], clock_stretch=0, original_speed=None):
         self._scl_port = scl_port
         self._sda_port = sda_port
         self._tx_data = tx_data
         self._ack_sequence = ack_sequence
-        self._expected_speed = expected_speed
+        self._expected_speed = expected_speed # Speed the checker is expected to detect. Could be lower than the I2C master's original operating speed if the slave is clock stretching
         self._clock_stretch = clock_stretch*1e6 # ns to fs conversion
 
         self._external_scl_value = 0
@@ -39,6 +39,10 @@ class I2CMasterChecker(px.SimThread):
         self._write_data = None
 
         self._drive_ack = 1
+        if original_speed is not None:
+          self._original_speed = original_speed # Speed at which the I2C master is operating.
+        else:
+          self._original_speed = self._expected_speed
 
         #print("Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port))
 
@@ -86,46 +90,46 @@ class I2CMasterChecker(px.SimThread):
             # Data change must have been for a previous bit
             return
 
-        if (self._expected_speed == 100 and time > 3450e6) or\
-           (self._expected_speed == 400 and time >  900e6):
+        if (self._original_speed == 100 and time > 3450e6) or\
+           (self._original_speed == 400 and time >  900e6):
             self.error("Data valid time not respected: %gns" % time)
 
     def check_hold_start_time(self, time):
-        if (self._expected_speed == 100 and time < 4000e6) or\
-           (self._expected_speed == 400 and time < 600e6):
-            self.error("Start hold time less than minimum in spec: %gns" % time)
+        if (self._original_speed == 100 and time < 4000e6) or\
+           (self._original_speed == 400 and time < 600e6):
+            self.error(f"Start hold time less than minimum in spec: %gfs" % time)
 
     def check_setup_start_time(self, time):
-        if (self._expected_speed == 100 and time < 4700e6) or\
-           (self._expected_speed == 400 and time < 600e6):
-            self.error("Start bit setup time less than minimum in spec: %gns" % time)
+        if (self._original_speed == 100 and time < 4700e6) or\
+           (self._original_speed == 400 and time < 600e6):
+            self.error(f"Start bit setup time less than minimum in spec: %gfs" % time)
 
     def check_data_setup_time(self, time):
-        if (self._expected_speed == 100 and time < 250e6) or\
-           (self._expected_speed == 400 and time < 100e6):
-            self.error("Data setup time less than minimum in spec: %gns" % time)
+        if (self._original_speed == 100 and time < 250e6) or\
+           (self._original_speed == 400 and time < 100e6):
+            self.error("Data setup time less than minimum in spec: %gfs" % time)
 
     def check_clock_low_time(self, time):
-        if (self._expected_speed == 100 and time < 4700e6) or\
-           (self._expected_speed == 400 and time < 1300e6):
-            self.error("Clock low time less than minimum in spec: %gns" % time)
+        if (self._original_speed == 100 and time < 4700e6) or\
+           (self._original_speed == 400 and time < 1300e6):
+            self.error("Clock low time less than minimum in spec: %gfs" % time)
 
     def check_clock_high_time(self, time):
-        if (self._expected_speed == 100 and time < 4000e6) or\
-           (self._expected_speed == 400 and time < 900e6):
-            self.error("Clock high time less than minimum in spec: %gns" % time)
+        if (self._original_speed == 100 and time < 4000e6) or\
+           (self._original_speed == 400 and time < 900e6):
+            self.error("Clock high time less than minimum in spec: %gfs" % time)
 
     def check_setup_stop_time(self, time):
-        if (self._expected_speed == 100 and time < 4000e6) or\
-           (self._expected_speed == 400 and time < 600e6):
-            self.error("Stop bit setup time less than minimum in spec: %gns" % time)
+        if (self._original_speed == 100 and time < 4000e6) or\
+           (self._original_speed == 400 and time < 600e6):
+            self.error("Stop bit setup time less than minimum in spec: %gfs" % time)
 
     def check_bus_free_time(self, time):
       """ Check the time from the STOP to the START condition
       """
-      if (self._expected_speed == 100 and time < 4700e6) or \
-         (self._expected_speed == 400 and time < 1300e6):
-          self.error("STOP to START time less than minimum in spec: %gns" % time)
+      if (self._original_speed == 100 and time < 4700e6) or \
+         (self._original_speed == 400 and time < 1300e6):
+          self.error("STOP to START time less than minimum in spec: %gfs" % time)
 
     def get_next_data_item(self):
         if self._tx_data_index >= len(self._tx_data):
@@ -151,11 +155,7 @@ class I2CMasterChecker(px.SimThread):
       # This state will be transitioned by the handler
       "SAMPLE_ACK"       : ( 1,    None,  "NOT_POSSIBLE",     "NOT_POSSIBLE" ),
       "ACKED"            : ( None, None,  "DRIVE_BIT",        "ACKED" ),
-      # After a NACK, the master must generate a Stop or Repeated Start
-      "NACKED"           : ( None, None,  "NACKED_SELECT",    "ILLEGAL" ),
-      "NACKED_SELECT"    : ( 0,    1,     "STOPPED",          "STOPPING_0" ),
-      "STOPPING_0"       : ( 0,    0,     "STOPPING_1",       "ILLEGAL" ),
-      "STOPPING_1"       : ( 1,    0,     "ILLEGAL",          "STOPPED" ),
+      "NACKED"           : ( None, None,  "DRIVE_BIT",        "NACKED" ),
       "REPEAT_START"     : ( 1,    0,     "DRIVE_BIT",        "ILLEGAL" ),
       "ILLEGAL"          : ( None, None,  "ILLEGAL",          "ILLEGAL" ),
     }
@@ -255,9 +255,6 @@ class I2CMasterChecker(px.SimThread):
         if new_scl_value == 0:
           self.check_data_valid_time(time_now - self._scl_change_time)
 
-        if self._state == "STOPPING_1":
-          self.check_setup_stop_time(time_now - self._scl_change_time)
-
       return scl_changed, sda_changed
 
     def set_state(self, next_state):
@@ -350,6 +347,8 @@ class I2CMasterChecker(px.SimThread):
     # Handler functions for each state
     #
     def handle_stopped(self):
+      print("Stop bit received")
+      self.check_setup_stop_time(self._sda_change_time - self._scl_change_time)
       pass
 
     def starting_sequence(self):
@@ -373,6 +372,8 @@ class I2CMasterChecker(px.SimThread):
 
     def handle_starting(self):
       print("Start bit received")
+      if self._scl_change_time:
+        self.check_setup_start_time(self._sda_change_time - self._scl_change_time)
       self.starting_sequence()
 
     def handle_sample_bit(self):
@@ -437,6 +438,7 @@ class I2CMasterChecker(px.SimThread):
         print("Master sends %s." % ("NACK" if nack else "ACK"))
         if nack:
           self.set_state("NACKED")
+          self._write_data = None # Stop driving data on SDA if the master has NACKED
           print("Waiting for stop/start bit")
         else:
           self.set_state("ACKED")
@@ -451,16 +453,6 @@ class I2CMasterChecker(px.SimThread):
 
     def handle_nacked(self):
       pass
-
-    def handle_nacked_select(self):
-      # Simulate external pullup
-      self.drive_sda(1)
-
-    def handle_stopping_0(self):
-      pass
-
-    def handle_stopping_1(self):
-      print("Stop bit received")
 
     def handle_repeat_start(self):
       print("Repeated start bit received")

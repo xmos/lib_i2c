@@ -14,3 +14,4 @@ Sending ack
 Byte received: 0x99
 Speed = \d+ Kbps
 Sending ack
+Stop bit received
