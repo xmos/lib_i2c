@@ -62,6 +62,7 @@ Sending ack
 Byte received: 0xee
 Speed = \d+ Kbps
 Sending ack
+Stop bit received
 xCORE got nack, 2
 xCORE got nack, 3
 xCORE got ack
