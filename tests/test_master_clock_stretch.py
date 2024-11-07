@@ -6,6 +6,7 @@ import pytest
 import json
 from i2c_master_checker import I2CMasterChecker
 
+DEBUG = False
 test_name = "i2c_master_test"
 
 with open(Path(__file__).parent / f"{test_name}/test_params.json") as f:
@@ -27,13 +28,13 @@ def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop, arch):
                                tx_data = [0x99, 0x3A, 0xff],
                                expected_speed=160,
                                clock_stretch=5000,
-                               ack_sequence=[True, True, False,
-                                             True,
-                                             True,
-                                             True, True, True, False,
-                                             True, False]
-                                original_speed = speed # Timing checks use the original speed that the I2C master is configured to run at
-                                             )
+                               ack_sequence=[True, True, False, # Master write
+                                             True, # Master read
+                                             True, # Master read
+                                             True, True, True, False, # Master write
+                                             True, False], # Master write
+                               original_speed = speed # Timing checks use the original speed that the I2C master is configured to run at
+                               )
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
         f'{cwd}/expected/master_test_{stop}.expect',
@@ -42,11 +43,27 @@ def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop, arch):
         suppress_multidrive_messages=True,
     )
 
-    Pyxsim.run_on_simulator_(
-        binary,
-        tester = tester,
-        do_xe_prebuild = False,
-        simthreads = [checker],
-        simargs=['--weak-external-drive'],
-        capfd=capfd
-        )
+    if DEBUG:
+        with capfd.disabled():
+            Pyxsim.run_on_simulator_(
+                binary,
+                tester = tester,
+                do_xe_prebuild = False,
+                simthreads=[checker],
+                simargs=[
+                    "--vcd-tracing",
+                    f"-o i2c_trace.vcd -tile tile[0] -cycles -ports -ports-detailed -cores -instructions",
+                    "--trace-to",
+                    f"i2c_trace.txt",
+                    '--weak-external-drive'
+                ],
+            )
+    else:
+        Pyxsim.run_on_simulator_(
+            binary,
+            tester = tester,
+            do_xe_prebuild = False,
+            simthreads = [checker],
+            simargs=['--weak-external-drive'],
+            capfd=capfd
+            )
