@@ -1,8 +1,8 @@
 lib_i2c change log
 ==================
 
-UNRELEASED
-----------
+6.4.0
+-----
 
   * FIXED: In case of clock stretching, ensure that the required delay happens
     between the slave releasing SCL and the master driving data on SDA.
