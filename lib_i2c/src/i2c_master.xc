@@ -53,7 +53,8 @@ static const unsigned inline compute_bus_off_ticks(
 static void release_clock_and_wait(
   port p_scl,
   unsigned &fall_time,
-  unsigned delay)
+  unsigned delay,
+  static const unsigned kbits_per_second)
 {
   p_scl when pinseq(1) :> void;
 
@@ -68,7 +69,8 @@ static void release_clock_and_wait(
   // executing then the clock needs to be adjusted
   const int wake_up_ticks = 10;
   if (time > fall_time + delay + wake_up_ticks) {
-    fall_time = time - delay - wake_up_ticks;
+    fall_time = time - compute_low_period_ticks(kbits_per_second) - wake_up_ticks;
+    tmr when timerafter(fall_time + delay) :> void;
   }
 }
 
@@ -89,7 +91,7 @@ static int inline high_pulse_sample(
   timer tmr;
   p_sda :> int _;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
-  release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4);
+  release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4, kbits_per_second);
   p_sda :> sample_value;
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
@@ -111,13 +113,13 @@ static void inline high_pulse(
 
   timer tmr;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
-  release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4);
+  release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4, kbits_per_second);
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
   p_scl <: 0;
 }
 
-/** Output a start bit. The function returns the 'fall time' i.e. the
+/** Output a start bit. The function updates the 'fall_time', i.e. the
  *  reference clock time when the SCL line transitions to low.
  */
 static void start_bit(
@@ -132,9 +134,8 @@ static void start_bit(
   timer tmr;
 
   if (!stopped) {
-    fall_time += compute_low_period_ticks(kbits_per_second);
-    tmr when timerafter(fall_time) :> fall_time;
-    release_clock_and_wait(p_scl, fall_time, compute_bus_off_ticks(kbits_per_second));
+    tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+    release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
   }
 
   // Drive SDA low
@@ -160,7 +161,7 @@ static void stop_bit(
   timer tmr;
   p_sda <: 0;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
-  release_clock_and_wait(p_scl, fall_time, bit_time);
+  release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
   p_sda :> void;
   delay_ticks(compute_bus_off_ticks(kbits_per_second));
 }

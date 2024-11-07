@@ -3,6 +3,9 @@ lib_i2c change log
 
 UNRELEASED
 ----------
+
+  * FIXED: In case of clock stretching, ensure that the required delay happens
+    between the slave releasing SCL and the master driving data on SDA.
   * FIXED: Drive data on SDA in open drain mode.
 
 6.3.1
