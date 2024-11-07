@@ -47,19 +47,20 @@ static const unsigned inline compute_bus_off_ticks(
 
 /** Releases the SCL line, reads it back and waits until it goes high (in
  *  case the slave is clock stretching).
- *  Since the line going high may be delayed, the last_scl_fall_edge_time value may
+ *  Since the line going high may be delayed, the fall_time value may
  *  need to be adjusted
  */
 static void release_clock_and_wait(
   port p_scl,
-  unsigned &last_scl_fall_edge_time,
-  unsigned delay)
+  unsigned &fall_time,
+  unsigned delay,
+  static const unsigned kbits_per_second)
 {
   p_scl when pinseq(1) :> void;
 
   timer tmr;
   unsigned time;
-  tmr when timerafter(last_scl_fall_edge_time + delay) :> time;
+  tmr when timerafter(fall_time + delay) :> time;
 
   // Adjust timing due to support clock stretching without clock drift in the
   // normal case.
@@ -67,14 +68,14 @@ static void release_clock_and_wait(
   // If the time is beyond the time it takes simply to wake up and start
   // executing then the clock needs to be adjusted
   const int wake_up_ticks = 10;
-  if (time > last_scl_fall_edge_time + delay + wake_up_ticks) {
-    last_scl_fall_edge_time = time - compute_low_period_ticks(kbits_per_second) - wake_up_ticks;
-    tmr when timerafter(last_scl_fall_edge_time + delay) :> void;
+  if (time > fall_time + delay + wake_up_ticks) {
+    fall_time = time - compute_low_period_ticks(kbits_per_second) - wake_up_ticks;
+    tmr when timerafter(fall_time + delay) :> void;
   }
 }
 
 /** 'Pulse' the clock line high and in the middle of the high period
- *  sample the data line (if required). Timing is done via the last_scl_fall_edge_time
+ *  sample the data line (if required). Timing is done via the fall_time
  *  reference and bit_time period supplied.
  */
 [[always_inline]]
@@ -82,50 +83,50 @@ static int inline high_pulse_sample(
   port p_scl,
   port p_sda,
   static const unsigned kbits_per_second,
-  unsigned &last_scl_fall_edge_time)
+  unsigned &fall_time)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
 
   int sample_value = 0;
   timer tmr;
   p_sda :> int _;
-  tmr when timerafter(last_scl_fall_edge_time + compute_low_period_ticks(kbits_per_second)) :> void;
-  release_clock_and_wait(p_scl, last_scl_fall_edge_time, (bit_time * 3) / 4);
+  tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4, kbits_per_second);
   p_sda :> sample_value;
-  last_scl_fall_edge_time = last_scl_fall_edge_time + bit_time;
-  tmr when timerafter(last_scl_fall_edge_time) :> void;
+  fall_time = fall_time + bit_time;
+  tmr when timerafter(fall_time) :> void;
   p_scl <: 0;
   // Mask off all but lowest bit of input - allows use of bit[0] of multibit port
   return sample_value & 1;
 }
 
-/** 'Pulse' the clock line high. Timing is done via the last_scl_fall_edge_time
+/** 'Pulse' the clock line high. Timing is done via the fall_time
  *  reference and bit_time period supplied.
  */
 [[always_inline]]
 static void inline high_pulse(
   port p_scl,
   static const unsigned kbits_per_second,
-  unsigned &last_scl_fall_edge_time)
+  unsigned &fall_time)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
 
   timer tmr;
-  tmr when timerafter(last_scl_fall_edge_time + compute_low_period_ticks(kbits_per_second)) :> void;
-  release_clock_and_wait(p_scl, last_scl_fall_edge_time, (bit_time * 3) / 4);
-  last_scl_fall_edge_time = last_scl_fall_edge_time + bit_time;
-  tmr when timerafter(last_scl_fall_edge_time) :> void;
+  tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4, kbits_per_second);
+  fall_time = fall_time + bit_time;
+  tmr when timerafter(fall_time) :> void;
   p_scl <: 0;
 }
 
-/** Output a start bit. The function returns/updates the 'last SCL falling edge time' i.e. the
+/** Output a start bit. The function updates the 'fall_time', i.e. the
  *  reference clock time when the SCL line transitions to low.
  */
 static void start_bit(
   port p_scl,
   port p_sda,
   static const unsigned kbits_per_second,
-  unsigned &last_scl_fall_edge_time,
+  unsigned &fall_time,
   int stopped)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
@@ -133,8 +134,8 @@ static void start_bit(
   timer tmr;
 
   if (!stopped) {
-    tmr when timerafter(last_scl_fall_edge_time + compute_low_period_ticks(kbits_per_second)) :> void;
-    release_clock_and_wait(p_scl, last_scl_fall_edge_time, bit_time);
+    tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+    release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
   }
 
   // Drive SDA low
@@ -144,7 +145,7 @@ static void start_bit(
   p_scl <: 0;
 
   // Record
-  tmr :> last_scl_fall_edge_time;
+  tmr :> fall_time;
 }
 
 /** Output a stop bit.
@@ -153,14 +154,14 @@ static void stop_bit(
   port p_scl,
   port p_sda,
   static const unsigned kbits_per_second,
-  unsigned &last_scl_fall_edge_time)
+  unsigned &fall_time)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
 
   timer tmr;
   p_sda <: 0;
-  tmr when timerafter(last_scl_fall_edge_time + compute_low_period_ticks(kbits_per_second)) :> void;
-  release_clock_and_wait(p_scl, last_scl_fall_edge_time, bit_time);
+  tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
   p_sda :> void;
   delay_ticks(compute_bus_off_ticks(kbits_per_second));
 }
@@ -173,16 +174,16 @@ static int tx8(
   port p_sda,
   unsigned data,
   static const unsigned kbits_per_second,
-  unsigned &last_scl_fall_edge_time)
+  unsigned &fall_time)
 {
   // Data is transmitted MSB first
   data = bitrev(data) >> 24;
   for (int i = 8; i != 0; i--) {
     p_sda <: data & 0x1;
     data >>= 1;
-    high_pulse(p_scl, kbits_per_second, last_scl_fall_edge_time);
+    high_pulse(p_scl, kbits_per_second, fall_time);
   }
-  return high_pulse_sample(p_scl, p_sda, kbits_per_second, last_scl_fall_edge_time);
+  return high_pulse_sample(p_scl, p_sda, kbits_per_second, fall_time);
 }
 
 [[distributable]]
@@ -208,21 +209,21 @@ void i2c_master(
               int send_stop_bit) -> i2c_res_t result:
 
       const int stopped = locked_client == -1;
-      unsigned last_scl_fall_edge_time = last_fall_time;
-      start_bit(p_scl, p_sda, kbits_per_second, last_scl_fall_edge_time, stopped);
-      int ack = tx8(p_scl, p_sda, (device << 1) | 1, kbits_per_second, last_scl_fall_edge_time);
+      unsigned fall_time = last_fall_time;
+      start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      int ack = tx8(p_scl, p_sda, (device << 1) | 1, kbits_per_second, fall_time);
 
       if (ack == 0) {
         for (int j = 0; j < m; j++){
           unsigned char data = 0;
           timer tmr;
           for (int i = 8; i != 0; i--) {
-            int temp = high_pulse_sample(p_scl, p_sda, kbits_per_second, last_scl_fall_edge_time);
+            int temp = high_pulse_sample(p_scl, p_sda, kbits_per_second, fall_time);
             data = (data << 1) | temp;
           }
           buf[j] = data;
 
-          tmr when timerafter(last_scl_fall_edge_time + bit_time/4) :> void;
+          tmr when timerafter(fall_time + bit_time/4) :> void;
           // ACK after every read byte until the final byte then NACK.
           if (j == m-1)
             p_sda :> void;
@@ -230,13 +231,13 @@ void i2c_master(
             p_sda <: 0;
           }
           // High pulse but make sure SDA is not driving before lowering SCL
-          tmr when timerafter(last_scl_fall_edge_time + compute_low_period_ticks(kbits_per_second)) :> void;
-          high_pulse(p_scl, kbits_per_second, last_scl_fall_edge_time);
+          tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+          high_pulse(p_scl, kbits_per_second, fall_time);
           p_sda :> void;
         }
       }
       if (send_stop_bit) {
-        stop_bit(p_scl, p_sda, kbits_per_second, last_scl_fall_edge_time);
+        stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
         locked_client = -1;
       }
       else {
@@ -246,7 +247,7 @@ void i2c_master(
       result = (ack == 0) ? I2C_ACK : I2C_NACK;
 
       // Remember the last fall time to ensure the next start bit is valid
-      last_fall_time = last_scl_fall_edge_time;
+      last_fall_time = fall_time;
       break;
 
     case (size_t i = 0; i < n; i++)
@@ -254,19 +255,19 @@ void i2c_master(
         c[i].write(uint8_t device, uint8_t buf[n], size_t n,
                 size_t &num_bytes_sent,
                 int send_stop_bit) -> i2c_res_t result:
-      unsigned last_scl_fall_edge_time = last_fall_time;
+      unsigned fall_time = last_fall_time;
       const int stopped = locked_client == -1;
-      start_bit(p_scl, p_sda, kbits_per_second, last_scl_fall_edge_time, stopped);
-      int ack = tx8(p_scl, p_sda, (device << 1), kbits_per_second, last_scl_fall_edge_time);
+      start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      int ack = tx8(p_scl, p_sda, (device << 1), kbits_per_second, fall_time);
       int j = 0;
       for (; j < n; j++) {
         if (ack != 0) {
           break;
         }
-        ack = tx8(p_scl, p_sda, buf[j], kbits_per_second, last_scl_fall_edge_time);
+        ack = tx8(p_scl, p_sda, buf[j], kbits_per_second, fall_time);
       }
       if (send_stop_bit) {
-        stop_bit(p_scl, p_sda, kbits_per_second, last_scl_fall_edge_time);
+        stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
         locked_client = -1;
       } else {
         locked_client = i;
@@ -275,14 +276,14 @@ void i2c_master(
       result = (ack == 0) ? I2C_ACK : I2C_NACK;
 
       // Remember the last fall time to ensure the next start bit is valid
-      last_fall_time = last_scl_fall_edge_time;
+      last_fall_time = fall_time;
       break;
 
     case c[int i].send_stop_bit(void):
       timer tmr;
-      unsigned last_scl_fall_edge_time;
-      tmr :> last_scl_fall_edge_time;
-      stop_bit(p_scl, p_sda, kbits_per_second, last_scl_fall_edge_time);
+      unsigned fall_time;
+      tmr :> fall_time;
+      stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
       locked_client = -1;
       break;
 

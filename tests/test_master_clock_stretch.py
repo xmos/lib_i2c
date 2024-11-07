@@ -25,13 +25,15 @@ def test_master_clock_stretch(capfd, request, nightly, dir, speed, stop, arch):
     checker = I2CMasterChecker("tile[0]:XS1_PORT_1A",
                                "tile[0]:XS1_PORT_1B",
                                tx_data = [0x99, 0x3A, 0xff],
-                               expected_speed=170,
+                               expected_speed=160,
                                clock_stretch=5000,
                                ack_sequence=[True, True, False,
                                              True,
                                              True,
                                              True, True, True, False,
-                                             True, False])
+                                             True, False]
+                                original_speed = speed # Timing checks use the original speed that the I2C master is configured to run at
+                                             )
 
     tester = Pyxsim.testers.AssertiveComparisonTester(
         f'{cwd}/expected/master_test_{stop}.expect',
