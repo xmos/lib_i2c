@@ -6,7 +6,7 @@ lib_i2c: I²C Library
 ####################
 
 :vendor: XMOS
-:version: 6.3.1
+:version: 6.4.0
 :scope: General Use
 :description: I²C controller and peripheral library
 :category: General Purpose
