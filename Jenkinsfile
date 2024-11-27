@@ -1,22 +1,12 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.34.0') _
+@Library('xmos_jenkins_shared_library@build_sandbox_functions') _
 
 def clone_test_deps() {
     dir("${WORKSPACE}") {
         sh "git clone git@github.com:xmos/test_support"
         sh "git -C test_support checkout v2.0.0"
     }
-}
-
-def checkout_shallow()
-{
-    checkout scm: [
-        $class: 'GitSCM',
-        branches: scm.branches,
-        userRemoteConfigs: scm.userRemoteConfigs,
-        extensions: [[$class: 'CloneOption', depth: 1, shallow: true, noTags: false]]
-    ]
 }
 
 def archiveLib(String repoName) {
@@ -65,13 +55,10 @@ pipeline {
             println "Stage running on ${env.NODE_NAME}"
 
             dir("${REPO}") {
-              checkout_shallow()
+              checkoutScmShallow()
 
               dir("examples") {
-                withTools(params.TOOLS_VERSION) {
-                  sh "cmake -G 'Unix Makefiles' -B build -DDEPS_CLONE_SHALLOW=TRUE"
-                  sh 'xmake -C build -j 8'
-                }
+                xcoreBuild()
               }
             } // dir("${REPO}")
           } // steps
@@ -109,8 +96,7 @@ pipeline {
                 dir("tests") {
                   createVenv(reqFile: "requirements.txt")
                   withVenv {
-                    sh "cmake -G 'Unix Makefiles' -B build -DDEPS_CLONE_SHALLOW=TRUE"
-                    sh 'xmake -C build -j 8'
+                    xcoreBuild()
                     sh "pytest -v -n auto --junitxml=pytest_result.xml"
                     junit "pytest_result.xml"
                   } // withVenv
