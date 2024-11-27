@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@build_sandbox_functions') _
+@Library('xmos_jenkins_shared_library@test_xcoreBuild') _
 
 def clone_test_deps() {
     dir("${WORKSPACE}") {
