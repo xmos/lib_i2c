@@ -1,6 +1,6 @@
 // This file relates to internal XMOS infrastructure and should be ignored by external users
 
-@Library('xmos_jenkins_shared_library@v0.34.0') _
+@Library('xmos_jenkins_shared_library@archive_sandbox') _
 
 def clone_test_deps() {
     dir("${WORKSPACE}") {
@@ -17,12 +17,6 @@ def checkout_shallow()
         userRemoteConfigs: scm.userRemoteConfigs,
         extensions: [[$class: 'CloneOption', depth: 1, shallow: true, noTags: false]]
     ]
-}
-
-def archiveLib(String repoName) {
-    sh "git -C ${repoName} clean -xdf"
-    sh "zip ${repoName}_sw.zip -r ${repoName}"
-    archiveArtifacts artifacts: "${repoName}_sw.zip", allowEmptyArchive: false
 }
 
 getApproval()
@@ -123,7 +117,7 @@ pipeline {
         stage("Archive lib") {
             steps
             {
-                archiveLib(REPO)
+                archiveSandbox(REPO)
             }
         }
       } // stages
