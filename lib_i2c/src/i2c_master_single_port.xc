@@ -20,8 +20,7 @@
 /** Return the number of 10ns timer ticks required to meet the timing as defined
  *  in the standards.
  */
-static const unsigned inline compute_low_period_ticks(
-  static const unsigned kbits_per_second)
+static unsigned inline compute_low_period_ticks(static const unsigned kbits_per_second)
 {
   unsigned ticks = 0;
   if (kbits_per_second <= 100) {
@@ -40,8 +39,7 @@ static const unsigned inline compute_low_period_ticks(
   return ticks + jitter_ticks;
 }
 
-static const unsigned inline compute_bus_off_ticks(
-  static const unsigned kbits_per_second)
+static unsigned inline compute_bus_off_ticks(static const unsigned kbits_per_second)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
 
@@ -223,13 +221,13 @@ void i2c_master_single_port(
   const unsigned SDA_HIGH = BIT_MASK(sda_bit_position);
 
   unsigned last_fall_time = 0;
-  unsigned locked_client = -1;
+  int locked_client = -1;
   set_port_drive_low(p_i2c);
   p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
 
   while (1) {
     select {
-    case (size_t i =0; i < n; i++)
+    case (size_t i = 0; i < n; i++)
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
       c[i].read(uint8_t device, uint8_t buf[m], size_t m,
               int send_stop_bit) -> i2c_res_t result:
@@ -239,10 +237,10 @@ void i2c_master_single_port(
       start_bit(p_i2c, kbits_per_second, scl_bit_position, sda_bit_position, other_bits_mask, fall_time, stopped);
       int ack = tx8(p_i2c, (device << 1) | 1, kbits_per_second, scl_bit_position, sda_bit_position, other_bits_mask, fall_time);
       if (ack == 0) {
-        for (int j = 0; j < m; j++){
+        for (size_t j = 0; j < m; j++){
           unsigned char data = 0;
           timer tmr;
-          for (int i = 8; i != 0; i--) {
+          for (int k = 8; k != 0; k--) {
             int temp = high_pulse_sample(p_i2c, kbits_per_second, scl_bit_position, sda_bit_position, other_bits_mask, fall_time);
             data = (data << 1) | temp;
           }
@@ -288,7 +286,7 @@ void i2c_master_single_port(
       unsigned fall_time = last_fall_time;
       start_bit(p_i2c, kbits_per_second, scl_bit_position, sda_bit_position, other_bits_mask, fall_time, stopped);
       int ack = tx8(p_i2c, device<<1, kbits_per_second, scl_bit_position, sda_bit_position, other_bits_mask, fall_time);
-      int j = 0;
+      size_t j = 0;
       for (; j < n; j++) {
         if (ack != 0)
           break;
