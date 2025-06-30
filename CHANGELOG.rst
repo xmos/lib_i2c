@@ -1,6 +1,12 @@
 lib_i2c change log
 ==================
 
+UNRELEASED
+----------
+
+  * CHANGED: Added compiler warning options to library build, fixed resulting 
+    type mixing warnings.
+
 6.4.0
 -----
 
