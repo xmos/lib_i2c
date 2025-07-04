@@ -1,4 +1,4 @@
-// Copyright 2011-2024 XMOS LIMITED.
+// Copyright 2011-2025 XMOS LIMITED.
 // This Software is subject to the terms of the XMOS Public Licence: Version 1.
 #include <i2c.h>
 #include <xs1.h>
@@ -14,8 +14,7 @@
 /** Return the number of 10ns timer ticks required to meet the timing as defined
  *  in the standards.
  */
-static const unsigned inline compute_low_period_ticks(
-  static const unsigned kbits_per_second)
+static unsigned inline compute_low_period_ticks(static const unsigned kbits_per_second)
 {
   unsigned ticks = 0;
   if (kbits_per_second <= 100) {
@@ -34,8 +33,7 @@ static const unsigned inline compute_low_period_ticks(
   return ticks + jitter_ticks;
 }
 
-static const unsigned inline compute_bus_off_ticks(
-  static const unsigned kbits_per_second)
+static unsigned inline compute_bus_off_ticks(static const unsigned kbits_per_second)
 {
   const unsigned bit_time = BIT_TIME(kbits_per_second);
 
@@ -202,27 +200,27 @@ void i2c_master(
   const unsigned bit_time = BIT_TIME(kbits_per_second);
 
   unsigned last_fall_time = 0;
-  unsigned locked_client = -1;
+  int locked_client = -1;
   p_scl :> void;
   p_sda :> void;
   while (1) {
     select {
 
-    case (size_t i =0; i < n; i++)
+    case (size_t i = 0; i < n; i++)
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
       c[i].read(uint8_t device, uint8_t buf[m], size_t m,
               int send_stop_bit) -> i2c_res_t result:
 
-      const int stopped = locked_client == -1;
+      const int stopped = (locked_client == -1);
       unsigned fall_time = last_fall_time;
       start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
       int ack = tx8(p_scl, p_sda, (device << 1) | 1, kbits_per_second, fall_time);
 
       if (ack == 0) {
-        for (int j = 0; j < m; j++){
+        for (size_t j = 0; j < m; j++) {
           unsigned char data = 0;
           timer tmr;
-          for (int i = 8; i != 0; i--) {
+          for (int k = 8; k != 0; k--) {
             int temp = high_pulse_sample(p_scl, p_sda, kbits_per_second, fall_time);
             data = (data << 1) | temp;
           }
@@ -264,7 +262,7 @@ void i2c_master(
       const int stopped = locked_client == -1;
       start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
       int ack = tx8(p_scl, p_sda, (device << 1), kbits_per_second, fall_time);
-      int j = 0;
+      size_t j = 0;
       for (; j < n; j++) {
         if (ack != 0) {
           break;
