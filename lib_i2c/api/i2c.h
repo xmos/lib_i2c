@@ -248,13 +248,29 @@ extends client interface i2c_master_if : {
     uint8_t data[1];
     size_t n;
     i2c_res_t res;
-    i.write(device_addr, a_reg, 2, n, 0);
+    res = i.write(device_addr, a_reg, 2, n, 0);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (n != 2) {
       result = I2C_REGOP_DEVICE_NACK;
       i.send_stop_bit();
       return 0;
     }
     res = i.read(device_addr, data, 1, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (res == I2C_NACK) {
       result = I2C_REGOP_DEVICE_NACK;
     } else {
@@ -281,7 +297,13 @@ extends client interface i2c_master_if : {
                                            uint8_t data) {
     uint8_t a_data[3] = {reg >> 8, reg, data};
     size_t n;
-    i.write(device_addr, a_data, 3, n, 1);
+    i2c_res_t res = i.write(device_addr, a_data, 3, n, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      return I2C_REGOP_SCL_PULLUP_MISSING;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      return I2C_REGOP_SDA_PULLUP_MISSING;
+    }
     if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
     }
@@ -320,13 +342,29 @@ extends client interface i2c_master_if : {
     uint8_t data[2];
     size_t n;
     i2c_res_t res;
-    i.write(device_addr, a_reg, 2, n, 0);
+    res = i.write(device_addr, a_reg, 2, n, 0);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (n != 2) {
       result = I2C_REGOP_DEVICE_NACK;
       i.send_stop_bit();
       return 0;
     }
     res = i.read(device_addr, data, 2, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (res == I2C_NACK) {
       result = I2C_REGOP_DEVICE_NACK;
     } else {
@@ -358,7 +396,13 @@ extends client interface i2c_master_if : {
                                uint16_t data) {
     uint8_t a_data[4] = {reg >> 8, reg, data >> 8, data};
     size_t n;
-    i.write(device_addr, a_data, 4, n, 1);
+    i2c_res_t res = i.write(device_addr, a_data, 4, n, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      return I2C_REGOP_SCL_PULLUP_MISSING;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      return I2C_REGOP_SDA_PULLUP_MISSING;
+    }
     if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
     }
@@ -396,13 +440,29 @@ extends client interface i2c_master_if : {
     uint8_t data[2];
     size_t n;
     i2c_res_t res;
-    i.write(device_addr, a_reg, 1, n, 0);
+    res = i.write(device_addr, a_reg, 1, n, 0);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (n != 1) {
       result = I2C_REGOP_DEVICE_NACK;
       i.send_stop_bit();
       return 0;
     }
     res = i.read(device_addr, data, 2, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (res == I2C_NACK) {
       result = I2C_REGOP_DEVICE_NACK;
     } else {
@@ -432,7 +492,13 @@ extends client interface i2c_master_if : {
                                            uint16_t data) {
     uint8_t a_data[3] = {reg, data >> 8, data};
     size_t n;
-    i.write(device_addr, a_data, 3, n, 1);
+    i2c_res_t res = i.write(device_addr, a_data, 3, n, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      return I2C_REGOP_SCL_PULLUP_MISSING;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      return I2C_REGOP_SDA_PULLUP_MISSING;
+    }
     if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
     }

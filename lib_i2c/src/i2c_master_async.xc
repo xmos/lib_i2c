@@ -199,55 +199,22 @@ void i2c_master_async_comb(
   int cur_client = -1;
   int send_stop_bit = 0;
   int stopped = 1;
-  
-  // Check for pull-up resistors at startup
   i2c_res_t res = I2C_ACK;
+
+  // Check for pull-up resistors at startup (simplified version)
+  // This checks if the lines are naturally high (indicating pull-ups are present)
+  i2c_res_t bus_error = I2C_ACK;
   {
-    timer start_tmr;
-    unsigned start_time, timeout_time;
-    const unsigned PULLUP_TIMEOUT_TICKS = 1000; // 10us timeout for pull-up detection
-    
-    // Test SCL pull-up
-    p_scl <: 0; // Drive SCL low
-    delay_ticks(100); // Brief delay
-    p_scl :> void; // Release SCL
-    
-    start_tmr :> start_time;
-    timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
-    
-    select {
-      case p_scl when pinseq(1) :> void:
-        // SCL pull-up is working
-        break;
-      case start_tmr when timerafter(timeout_time) :> void:
-        res = I2C_SCL_PULLUP_MISSING;
-        break;
-    }
-    
-    if (res == I2C_ACK) {
-      // Test SDA pull-up
-      p_sda <: 0; // Drive SDA low
-      delay_ticks(100); // Brief delay
-      p_sda :> void; // Release SDA
-      
-      start_tmr :> start_time;
-      timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
-      
-      select {
-        case p_sda when pinseq(1) :> void:
-          // SDA pull-up is working
-          break;
-        case start_tmr when timerafter(timeout_time) :> void:
-          res = I2C_SDA_PULLUP_MISSING;
-          break;
-      }
+    // If either line is stuck low at startup, assume missing pull-up
+    unsigned scl_val, sda_val;
+    p_scl :> scl_val;
+    p_sda :> sda_val;
+    if (!scl_val) {
+      bus_error = I2C_SCL_PULLUP_MISSING;
+    } else if (!sda_val) {
+      bus_error = I2C_SDA_PULLUP_MISSING;
     }
   }
-  
-  // Add timeout mechanism for clock stretching/pull-up detection
-  int clock_timeout_enabled = 0;
-  int clock_timeout_time = 0;
-  const int CLOCK_TIMEOUT_TICKS = BIT_TIME(kbits_per_second) * 1000; // 1000x bit time
 
   /* These select cases represent the main state machine for the I2C master
      component. The state machine will change state based on a timer event to
@@ -259,7 +226,6 @@ void i2c_master_async_comb(
     case waiting_for_clock_release => p_scl when pinseq(1) :> void:
       int now;
       tmr :> now;
-      clock_timeout_enabled = 0; // Disable timeout since clock was released successfully
       switch (state) {
       case WRITE_0:
       case WRITE_ACK_0:
@@ -305,9 +271,6 @@ void i2c_master_async_comb(
         p_scl :> void;
         timer_enabled = 0;
         waiting_for_clock_release = 1;
-        // Enable timeout for clock release detection
-        clock_timeout_enabled = 1;
-        clock_timeout_time = now + CLOCK_TIMEOUT_TICKS;
         state = REPEATED_START_HOLD_CLOCK_HIGH;
         break;
       case REPEATED_START_HOLD_CLOCK_HIGH:
@@ -342,9 +305,6 @@ void i2c_master_async_comb(
         p_scl :> void;
         timer_enabled = 0;
         waiting_for_clock_release = 1;
-        // Enable timeout for clock release detection
-        clock_timeout_enabled = 1;
-        clock_timeout_time = now + CLOCK_TIMEOUT_TICKS;
         if (bitnum == 8)  {
           state = WRITE_ACK_0;
         } else {
@@ -363,9 +323,6 @@ void i2c_master_async_comb(
         p_scl :> void;
         timer_enabled = 0;
         waiting_for_clock_release = 1;
-        // Enable timeout for clock release detection
-        clock_timeout_enabled = 1;
-        clock_timeout_time = now + CLOCK_TIMEOUT_TICKS;
         break;
       case WRITE_ACK_2:
         int ack;
@@ -441,9 +398,6 @@ void i2c_master_async_comb(
         p_scl :> void;
         timer_enabled = 0;
         waiting_for_clock_release = 1;
-        // Enable timeout for clock release detection
-        clock_timeout_enabled = 1;
-        clock_timeout_time = now + CLOCK_TIMEOUT_TICKS;
         break;
       case READ_2:
         int bit;
@@ -476,9 +430,6 @@ void i2c_master_async_comb(
         p_scl :> void;
         timer_enabled = 0;
         waiting_for_clock_release = 1;
-        // Enable timeout for clock release detection
-        clock_timeout_enabled = 1;
-        clock_timeout_time = now + CLOCK_TIMEOUT_TICKS;
         if (bytes_sent == num_bytes) {
           if (send_stop_bit) {
             state = STOP_BIT_0;
@@ -508,9 +459,6 @@ void i2c_master_async_comb(
         p_scl :> void;
         timer_enabled = 0;
         waiting_for_clock_release = 1;
-        // Enable timeout for clock release detection
-        clock_timeout_enabled = 1;
-        clock_timeout_time = now + CLOCK_TIMEOUT_TICKS;
         break;
       case STOP_BIT_3:
         p_sda :> void;
@@ -539,6 +487,15 @@ void i2c_master_async_comb(
 
     case i[int j].write(uint8_t device_addr, uint8_t buf0[n], size_t n,
                         int _send_stop_bit):
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        res = bus_error;
+        bytes_sent = 0;
+        cur_client = j;
+        i[cur_client].operation_complete();
+        break;
+      }
+
       data = (device_addr << 1) | 0;
       bitnum = 0;
       optype = WRITE;
@@ -559,6 +516,15 @@ void i2c_master_async_comb(
       break;
 
     case i[int j].read(uint8_t device_addr, size_t n, int _send_stop_bit):
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        res = bus_error;
+        bytes_sent = 0;
+        cur_client = j;
+        i[cur_client].operation_complete();
+        break;
+      }
+
       data = (device_addr << 1) | 1;
       bitnum = 0;
       optype = READ;
@@ -588,21 +554,6 @@ void i2c_master_async_comb(
     case i[int j].get_read_data(uint8_t buf0[n], size_t n) -> i2c_res_t result:
       memcpy(buf0, buf, n);
       result = res;
-      break;
-
-    case clock_timeout_enabled => tmr when timerafter(clock_timeout_time) :> int now:
-      // Clock timeout occurred - likely missing pull-up resistor
-      res = I2C_SCL_PULLUP_MISSING;
-      waiting_for_clock_release = 0;
-      clock_timeout_enabled = 0;
-      timer_enabled = 0;
-      
-      // Complete the current operation with error
-      if (cur_client != -1) {
-        i[cur_client].operation_complete();
-        cur_client = -1;
-      }
-      state = IDLE;
       break;
 
     case i[int j].shutdown():
