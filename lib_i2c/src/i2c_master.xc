@@ -43,20 +43,89 @@ static unsigned inline compute_bus_off_ticks(static const unsigned kbits_per_sec
   return bit_time/2 + bit_time/16;
 }
 
+/** Check if pull-up resistors are present on SCL and SDA lines.
+ *  This function drives the lines low briefly, then releases them
+ *  and checks if they return to high state within a reasonable time.
+ *  
+ *  \returns I2C_ACK if both pull-ups are present,
+ *           I2C_SCL_PULLUP_MISSING if SCL pull-up is missing,
+ *           I2C_SDA_PULLUP_MISSING if SDA pull-up is missing
+ */
+static i2c_res_t check_pullups_two_port(
+  port p_scl,
+  port p_sda)
+{
+  timer tmr;
+  unsigned start_time, timeout_time;
+  const unsigned PULLUP_TIMEOUT_TICKS = 1000; // 10us timeout for pull-up detection
+  
+  // Test SCL pull-up
+  p_scl <: 0; // Drive SCL low
+  delay_ticks(100); // Brief delay to ensure line is driven low
+  p_scl :> void; // Release SCL
+  
+  tmr :> start_time;
+  timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
+  
+  // Use select with timeout to avoid hanging
+  select {
+    case p_scl when pinseq(1) :> void:
+      // SCL pull-up is working
+      break;
+    case tmr when timerafter(timeout_time) :> void:
+      return I2C_SCL_PULLUP_MISSING;
+  }
+  
+  // Test SDA pull-up
+  p_sda <: 0; // Drive SDA low
+  delay_ticks(100); // Brief delay to ensure line is driven low
+  p_sda :> void; // Release SDA
+  
+  tmr :> start_time;
+  timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
+  
+  // Use select with timeout to avoid hanging
+  select {
+    case p_sda when pinseq(1) :> void:
+      // SDA pull-up is working
+      break;
+    case tmr when timerafter(timeout_time) :> void:
+      return I2C_SDA_PULLUP_MISSING;
+  }
+  
+  return I2C_ACK;
+}
+
 /** Releases the SCL line, reads it back and waits until it goes high (in
  *  case the slave is clock stretching).
  *  Since the line going high may be delayed, the fall_time value may
  *  need to be adjusted
+ *  
+ *  \returns I2C_ACK on success, I2C_SCL_PULLUP_MISSING on timeout
  */
-static void release_clock_and_wait(
+static i2c_res_t release_clock_and_wait(
   port p_scl,
   unsigned &fall_time,
   unsigned delay,
   static const unsigned kbits_per_second)
 {
-  p_scl when pinseq(1) :> void;
-
+  const unsigned TIMEOUT_MULTIPLIER = 1000; // Allow 1000x normal bit time for clock stretching
+  const unsigned timeout_ticks = BIT_TIME(kbits_per_second) * TIMEOUT_MULTIPLIER;
+  
   timer tmr;
+  unsigned start_time, timeout_time;
+  tmr :> start_time;
+  timeout_time = start_time + timeout_ticks;
+  
+  // Use select with timeout to avoid hanging
+  select {
+    case p_scl when pinseq(1) :> void:
+      // SCL line went high successfully
+      break;
+    case tmr when timerafter(timeout_time) :> void:
+      return I2C_SCL_PULLUP_MISSING;
+  }
+
   unsigned time;
   tmr when timerafter(fall_time + delay) :> time;
 
@@ -70,6 +139,8 @@ static void release_clock_and_wait(
     fall_time = time - compute_low_period_ticks(kbits_per_second) - wake_up_ticks;
     tmr when timerafter(fall_time + delay) :> void;
   }
+  
+  return I2C_ACK;
 }
 
 /** 'Pulse' the clock line high and in the middle of the high period
@@ -89,6 +160,7 @@ static int inline high_pulse_sample(
   timer tmr;
   p_sda :> int _;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  // TODO: This call may hang if no pull-up present - to be addressed in future update
   release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4, kbits_per_second);
   p_sda :> sample_value;
   fall_time = fall_time + bit_time;
@@ -111,6 +183,7 @@ static void inline high_pulse(
 
   timer tmr;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
+  // TODO: This call may hang if no pull-up present - to be addressed in future update
   release_clock_and_wait(p_scl, fall_time, (bit_time * 3) / 4, kbits_per_second);
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
@@ -120,7 +193,7 @@ static void inline high_pulse(
 /** Output a start bit. The function updates the 'fall_time', i.e. the
  *  reference clock time when the SCL line transitions to low.
  */
-static void start_bit(
+static i2c_res_t start_bit(
   port p_scl,
   port p_sda,
   static const unsigned kbits_per_second,
@@ -133,7 +206,10 @@ static void start_bit(
 
   if (!stopped) {
     tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
-    release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
+    i2c_res_t res = release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
+    if (res != I2C_ACK) {
+      return res;
+    }
   }
 
   // Drive SDA low
@@ -144,11 +220,13 @@ static void start_bit(
 
   // Record
   tmr :> fall_time;
+  
+  return I2C_ACK;
 }
 
 /** Output a stop bit.
  */
-static void stop_bit(
+static i2c_res_t stop_bit(
   port p_scl,
   port p_sda,
   static const unsigned kbits_per_second,
@@ -159,9 +237,14 @@ static void stop_bit(
   timer tmr;
   p_sda <: 0;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
-  release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
+  i2c_res_t res = release_clock_and_wait(p_scl, fall_time, bit_time, kbits_per_second);
+  if (res != I2C_ACK) {
+    return res;
+  }
   p_sda :> void;
   delay_ticks(compute_bus_off_ticks(kbits_per_second));
+  
+  return I2C_ACK;
 }
 
 /** Transmit 8 bits of data, then read the ack back from the slave and return
@@ -203,6 +286,10 @@ void i2c_master(
   int locked_client = -1;
   p_scl :> void;
   p_sda :> void;
+  
+  // Check for pull-up resistors at startup
+  i2c_res_t bus_error = check_pullups_two_port(p_scl, p_sda);
+  
   while (1) {
     select {
 
@@ -211,9 +298,19 @@ void i2c_master(
       c[i].read(uint8_t device, uint8_t buf[m], size_t m,
               int send_stop_bit) -> i2c_res_t result:
 
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        result = bus_error;
+        break;
+      }
+
       const int stopped = (locked_client == -1);
       unsigned fall_time = last_fall_time;
-      start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      i2c_res_t start_res = start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      if (start_res != I2C_ACK) {
+        result = start_res;
+        break;
+      }
       int ack = tx8(p_scl, p_sda, (device << 1) | 1, kbits_per_second, fall_time);
 
       if (ack == 0) {
@@ -240,7 +337,12 @@ void i2c_master(
         }
       }
       if (send_stop_bit) {
-        stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
+        i2c_res_t stop_res = stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
+        if (stop_res != I2C_ACK) {
+          result = stop_res;
+          last_fall_time = fall_time;
+          break;
+        }
         locked_client = -1;
       }
       else {
@@ -258,9 +360,22 @@ void i2c_master(
         c[i].write(uint8_t device, uint8_t buf[n], size_t n,
                 size_t &num_bytes_sent,
                 int send_stop_bit) -> i2c_res_t result:
+      
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        result = bus_error;
+        num_bytes_sent = 0;
+        break;
+      }
+      
       unsigned fall_time = last_fall_time;
       const int stopped = locked_client == -1;
-      start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      i2c_res_t start_res = start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);
+      if (start_res != I2C_ACK) {
+        result = start_res;
+        num_bytes_sent = 0;
+        break;
+      }
       int ack = tx8(p_scl, p_sda, (device << 1), kbits_per_second, fall_time);
       size_t j = 0;
       for (; j < n; j++) {
@@ -270,7 +385,13 @@ void i2c_master(
         ack = tx8(p_scl, p_sda, buf[j], kbits_per_second, fall_time);
       }
       if (send_stop_bit) {
-        stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
+        i2c_res_t stop_res = stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
+        if (stop_res != I2C_ACK) {
+          result = stop_res;
+          num_bytes_sent = j;
+          last_fall_time = fall_time;
+          break;
+        }
         locked_client = -1;
       } else {
         locked_client = i;
@@ -286,6 +407,8 @@ void i2c_master(
       timer tmr;
       unsigned fall_time;
       tmr :> fall_time;
+      // Note: For send_stop_bit, we don't return an error since it's a void function
+      // But we still need to handle potential hang scenario
       stop_bit(p_scl, p_sda, kbits_per_second, fall_time);
       locked_client = -1;
       break;
