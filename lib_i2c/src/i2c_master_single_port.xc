@@ -9,6 +9,7 @@
 #include <timer.h>
 
 #include "xassert.h"
+#include "i2c_pullup_common.h"
 
 #define SDA_LOW     0
 #define SCL_LOW     0
@@ -47,66 +48,6 @@ static unsigned inline compute_bus_off_ticks(static const unsigned kbits_per_sec
   // the case of the Fast-mode I2C so adding bit_time/16 ensures the timing
   // will be enforced
   return bit_time/2 + bit_time/16;
-}
-
-/** Check if pull-up resistors are present on SCL and SDA lines.
- *  This function drives the lines low briefly, then releases them
- *  and checks if they return to high state within a reasonable time.
- *  
- *  \returns I2C_ACK if both pull-ups are present,
- *           I2C_SCL_PULLUP_MISSING if SCL pull-up is missing,
- *           I2C_SDA_PULLUP_MISSING if SDA pull-up is missing
- */
-static i2c_res_t check_pullups(
-  port p_i2c,
-  static const unsigned scl_bit_position,
-  static const unsigned sda_bit_position,
-  static const unsigned other_bits_mask)
-{
-  const unsigned SCL_HIGH = BIT_MASK(scl_bit_position);
-  const unsigned SDA_HIGH = BIT_MASK(sda_bit_position);
-  const unsigned SCL_LOW = 0;
-  const unsigned SDA_LOW = 0;
-  
-  timer tmr;
-  unsigned start_time, timeout_time;
-  const unsigned PULLUP_TIMEOUT_TICKS = 1000; // 10us timeout for pull-up detection
-  
-  // Test SCL pull-up
-  p_i2c <: SCL_LOW | SDA_HIGH | other_bits_mask; // Drive SCL low, SDA high
-  delay_ticks(100); // Brief delay to ensure line is driven low
-  p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask; // Release SCL
-  
-  tmr :> start_time;
-  timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
-  
-  unsigned val = peek(p_i2c);
-  while (!(val & SCL_HIGH)) {
-    tmr :> start_time;
-    if (start_time > timeout_time) {
-      return I2C_SCL_PULLUP_MISSING;
-    }
-    val = peek(p_i2c);
-  }
-  
-  // Test SDA pull-up
-  p_i2c <: SCL_HIGH | SDA_LOW | other_bits_mask; // Drive SDA low, SCL high
-  delay_ticks(100); // Brief delay to ensure line is driven low
-  p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask; // Release SDA
-  
-  tmr :> start_time;
-  timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
-  
-  val = peek(p_i2c);
-  while (!(val & SDA_HIGH)) {
-    tmr :> start_time;
-    if (start_time > timeout_time) {
-      return I2C_SDA_PULLUP_MISSING;
-    }
-    val = peek(p_i2c);
-  }
-  
-  return I2C_ACK;
 }
 
 /** Reads back the SCL line, waiting until it goes high (in
@@ -288,7 +229,7 @@ void i2c_master_single_port(
   p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
 
   // Check for pull-up resistors at startup
-  i2c_res_t bus_error = check_pullups(p_i2c, scl_bit_position, sda_bit_position, other_bits_mask);
+  i2c_res_t bus_error = check_pullups_single_port(p_i2c, scl_bit_position, sda_bit_position, other_bits_mask);
 
   while (1) {
     select {

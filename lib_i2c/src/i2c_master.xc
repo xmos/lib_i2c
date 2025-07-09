@@ -6,6 +6,7 @@
 #include <timer.h>
 
 #include "xassert.h"
+#include "i2c_pullup_common.h"
 
 /* NOTE: the kbits_per_second needs to be passed around due to the fact that the
  *       compiler won't compute a new static const from a static const.
@@ -41,59 +42,6 @@ static unsigned inline compute_bus_off_ticks(static const unsigned kbits_per_sec
   // the case of the Fast-mode I2C so adding bit_time/16 ensures the timing
   // will be enforced
   return bit_time/2 + bit_time/16;
-}
-
-/** Check if pull-up resistors are present on SCL and SDA lines.
- *  This function drives the lines low briefly, then releases them
- *  and checks if they return to high state within a reasonable time.
- *  
- *  \returns I2C_ACK if both pull-ups are present,
- *           I2C_SCL_PULLUP_MISSING if SCL pull-up is missing,
- *           I2C_SDA_PULLUP_MISSING if SDA pull-up is missing
- */
-static i2c_res_t check_pullups_two_port(
-  port p_scl,
-  port p_sda)
-{
-  timer tmr;
-  unsigned start_time, timeout_time;
-  const unsigned PULLUP_TIMEOUT_TICKS = 1000; // 10us timeout for pull-up detection
-  
-  // Test SCL pull-up
-  p_scl <: 0; // Drive SCL low
-  delay_ticks(100); // Brief delay to ensure line is driven low
-  p_scl :> void; // Release SCL
-  
-  tmr :> start_time;
-  timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
-  
-  // Use select with timeout to avoid hanging
-  select {
-    case p_scl when pinseq(1) :> void:
-      // SCL pull-up is working
-      break;
-    case tmr when timerafter(timeout_time) :> void:
-      return I2C_SCL_PULLUP_MISSING;
-  }
-  
-  // Test SDA pull-up
-  p_sda <: 0; // Drive SDA low
-  delay_ticks(100); // Brief delay to ensure line is driven low
-  p_sda :> void; // Release SDA
-  
-  tmr :> start_time;
-  timeout_time = start_time + PULLUP_TIMEOUT_TICKS;
-  
-  // Use select with timeout to avoid hanging
-  select {
-    case p_sda when pinseq(1) :> void:
-      // SDA pull-up is working
-      break;
-    case tmr when timerafter(timeout_time) :> void:
-      return I2C_SDA_PULLUP_MISSING;
-  }
-  
-  return I2C_ACK;
 }
 
 /** Releases the SCL line, reads it back and waits until it goes high (in
