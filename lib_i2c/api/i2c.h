@@ -26,6 +26,8 @@
 typedef enum {
   I2C_NACK,    ///< the slave has NACKed the last byte
   I2C_ACK,     ///< the slave has ACKed the last byte
+  I2C_SCL_PULLUP_MISSING, ///< SCL pull-up resistor not detected
+  I2C_SDA_PULLUP_MISSING, ///< SDA pull-up resistor not detected
 } i2c_res_t;
 
 #if(defined __XC__ || defined __DOXYGEN__)
@@ -114,7 +116,9 @@ typedef interface i2c_master_if {
 typedef enum {
   I2C_REGOP_SUCCESS,     ///< the operation was successful
   I2C_REGOP_DEVICE_NACK, ///< the operation was NACKed when sending the device address, so either the device is missing or busy
-  I2C_REGOP_INCOMPLETE   ///< the operation was NACKed halfway through by the slave
+  I2C_REGOP_INCOMPLETE,   ///< the operation was NACKed halfway through by the slave
+  I2C_REGOP_SCL_PULLUP_MISSING, ///< SCL pull-up resistor not detected
+  I2C_REGOP_SDA_PULLUP_MISSING, ///< SDA pull-up resistor not detected
 } i2c_regop_res_t;
 
 #ifndef __DOXYGEN__
@@ -152,12 +156,28 @@ extends client interface i2c_master_if : {
     size_t n;
     i2c_res_t res;
     res = i.write(device_addr, a_reg, 1, n, 0);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (n != 1) {
       result = I2C_REGOP_DEVICE_NACK;
       i.send_stop_bit();
       return 0;
     }
     res = i.read(device_addr, data, 1, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      result = I2C_REGOP_SCL_PULLUP_MISSING;
+      return 0;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      result = I2C_REGOP_SDA_PULLUP_MISSING;
+      return 0;
+    }
     if (res == I2C_ACK) {
       result = I2C_REGOP_SUCCESS;
     } else {
@@ -183,7 +203,13 @@ extends client interface i2c_master_if : {
   {
     uint8_t a_data[2] = {reg, data};
     size_t n;
-    i.write(device_addr, a_data, 2, n, 1);
+    i2c_res_t res = i.write(device_addr, a_data, 2, n, 1);
+    if (res == I2C_SCL_PULLUP_MISSING) {
+      return I2C_REGOP_SCL_PULLUP_MISSING;
+    }
+    if (res == I2C_SDA_PULLUP_MISSING) {
+      return I2C_REGOP_SDA_PULLUP_MISSING;
+    }
     if (n == 0) {
       return I2C_REGOP_DEVICE_NACK;
     }
