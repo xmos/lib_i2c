@@ -6,7 +6,7 @@ lib_i2c: I²C Library
 ####################
 
 :vendor: XMOS
-:version: 6.4.0
+:version: 6.4.1
 :scope: General Use
 :description: I²C controller and peripheral library
 :category: General Purpose
@@ -48,26 +48,26 @@ Features
 Known issues
 ************
 
-  * The library has functions that wait on SCL high, through either an event or a polling loop.
-    If these are called on a system where the pull up isn't present then the application can hang forever.
+* The library has functions that wait on SCL high, through either an event or a polling loop.
+  If these are called on a system where the pull up isn't present then the application can hang forever.
 
 ****************
 Development repo
 ****************
 
-  * `https://github.com/xmos/lib_i2c <https://github.com/xmos/lib_i2c>`_
+* `https://github.com/xmos/lib_i2c <https://github.com/xmos/lib_i2c>`_
 
 **************
 Required tools
 **************
 
-  * XMOS XTC Tools: 15.3.0
+* XMOS XTC Tools: 15.3.1
 
 *********************************
 Required libraries (dependencies)
 *********************************
 
-  * lib_xassert (www.github.com/xmos/lib_xassert)
+* lib_xassert (www.github.com/xmos/lib_xassert)
 
 *************************
 Related application notes
@@ -75,9 +75,9 @@ Related application notes
 
 The following application notes use this library:
 
-  * AN00156: How to use the I²C master library
-  * AN00157: How to use the I²C slave library
-  * AN00181: xcore-200 explorer accelerometer demo
+* AN00156: How to use the I²C master library
+* AN00157: How to use the I²C slave library
+* AN00181: xcore-200 explorer accelerometer demo
 
 *******
 Support

@@ -1,11 +1,14 @@
 lib_i2c change log
 ==================
 
-UNRELEASED
-----------
+6.4.1
+-----
 
-  * CHANGED: Added compiler warning options to library build, fixed resulting 
-    type mixing warnings.
+  * FIXED: Build warnings (when built with -Wextra)
+
+  * Changes to dependencies:
+
+    - lib_xassert: 4.3.1 -> 4.3.2
 
 6.4.0
 -----
