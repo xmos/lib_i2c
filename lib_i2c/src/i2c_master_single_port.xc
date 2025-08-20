@@ -9,6 +9,7 @@
 #include <timer.h>
 
 #include "xassert.h"
+#include "i2c_pullup_common.h"
 
 #define SDA_LOW     0
 #define SCL_LOW     0
@@ -103,6 +104,7 @@ static void high_pulse_drive(
   p_i2c <: SCL_LOW  | sdaValue | other_bits_mask;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
   p_i2c <: SCL_HIGH | sdaValue | other_bits_mask;
+  // TODO: This call may hang if no pull-up present - to be addressed in future update
   wait_for_clock_high(p_i2c, scl_bit_position, fall_time, (bit_time * 3) / 4, kbits_per_second);
   fall_time = fall_time + bit_time;
   tmr when timerafter(fall_time) :> void;
@@ -126,6 +128,7 @@ static int high_pulse_sample(
   p_i2c <: SCL_LOW | SDA_HIGH | other_bits_mask;
   tmr when timerafter(fall_time + compute_low_period_ticks(kbits_per_second)) :> void;
   p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
+  // TODO: This call may hang if no pull-up present - to be addressed in future update
   wait_for_clock_high(p_i2c, scl_bit_position, fall_time, (bit_time * 3) / 4, kbits_per_second);
 
   int sample_value = peek(p_i2c);
@@ -225,12 +228,21 @@ void i2c_master_single_port(
   set_port_drive_low(p_i2c);
   p_i2c <: SCL_HIGH | SDA_HIGH | other_bits_mask;
 
+  // Check for pull-up resistors at startup
+  i2c_res_t bus_error = check_pullups_single_port(p_i2c, scl_bit_position, sda_bit_position, other_bits_mask);
+
   while (1) {
     select {
     case (size_t i = 0; i < n; i++)
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
       c[i].read(uint8_t device, uint8_t buf[m], size_t m,
               int send_stop_bit) -> i2c_res_t result:
+
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        result = bus_error;
+        break;
+      }
 
       const int stopped = locked_client == -1;
       unsigned fall_time = last_fall_time;
@@ -281,6 +293,13 @@ void i2c_master_single_port(
         c[i].write(uint8_t device, uint8_t buf[n], size_t n,
                 size_t &num_bytes_sent,
                 int send_stop_bit) -> i2c_res_t result:
+
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        result = bus_error;
+        num_bytes_sent = 0;
+        break;
+      }
 
       const int stopped = locked_client == -1;
       unsigned fall_time = last_fall_time;

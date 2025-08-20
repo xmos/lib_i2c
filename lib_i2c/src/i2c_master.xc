@@ -6,6 +6,7 @@
 #include <timer.h>
 
 #include "xassert.h"
+#include "i2c_pullup_common.h"
 
 /* NOTE: the kbits_per_second needs to be passed around due to the fact that the
  *       compiler won't compute a new static const from a static const.
@@ -54,9 +55,9 @@ static void release_clock_and_wait(
   unsigned delay,
   static const unsigned kbits_per_second)
 {
+  timer tmr;
   p_scl when pinseq(1) :> void;
 
-  timer tmr;
   unsigned time;
   tmr when timerafter(fall_time + delay) :> time;
 
@@ -203,6 +204,10 @@ void i2c_master(
   int locked_client = -1;
   p_scl :> void;
   p_sda :> void;
+  
+  // Check for pull-up resistors at startup
+  i2c_res_t bus_error = check_pullups_two_port(p_scl, p_sda);
+  
   while (1) {
     select {
 
@@ -210,6 +215,12 @@ void i2c_master(
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
       c[i].read(uint8_t device, uint8_t buf[m], size_t m,
               int send_stop_bit) -> i2c_res_t result:
+
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        result = bus_error;
+        break;
+      }
 
       const int stopped = (locked_client == -1);
       unsigned fall_time = last_fall_time;
@@ -258,6 +269,14 @@ void i2c_master(
         c[i].write(uint8_t device, uint8_t buf[n], size_t n,
                 size_t &num_bytes_sent,
                 int send_stop_bit) -> i2c_res_t result:
+      
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        result = bus_error;
+        num_bytes_sent = 0;
+        break;
+      }
+      
       unsigned fall_time = last_fall_time;
       const int stopped = locked_client == -1;
       start_bit(p_scl, p_sda, kbits_per_second, fall_time, stopped);

@@ -201,6 +201,21 @@ void i2c_master_async_comb(
   int stopped = 1;
   i2c_res_t res = I2C_ACK;
 
+  // Check for pull-up resistors at startup (simplified version)
+  // This checks if the lines are naturally high (indicating pull-ups are present)
+  i2c_res_t bus_error = I2C_ACK;
+  {
+    // If either line is stuck low at startup, assume missing pull-up
+    unsigned scl_val, sda_val;
+    p_scl :> scl_val;
+    p_sda :> sda_val;
+    if (!scl_val) {
+      bus_error = I2C_SCL_PULLUP_MISSING;
+    } else if (!sda_val) {
+      bus_error = I2C_SDA_PULLUP_MISSING;
+    }
+  }
+
   /* These select cases represent the main state machine for the I2C master
      component. The state machine will change state based on a timer event to
      progress the transaction or on an event from the SCL line when waiting
@@ -472,6 +487,15 @@ void i2c_master_async_comb(
 
     case i[int j].write(uint8_t device_addr, uint8_t buf0[n], size_t n,
                         int _send_stop_bit):
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        res = bus_error;
+        bytes_sent = 0;
+        cur_client = j;
+        i[cur_client].operation_complete();
+        break;
+      }
+
       data = (device_addr << 1) | 0;
       bitnum = 0;
       optype = WRITE;
@@ -492,6 +516,15 @@ void i2c_master_async_comb(
       break;
 
     case i[int j].read(uint8_t device_addr, size_t n, int _send_stop_bit):
+      // Return error immediately if bus has problems
+      if (bus_error != I2C_ACK) {
+        res = bus_error;
+        bytes_sent = 0;
+        cur_client = j;
+        i[cur_client].operation_complete();
+        break;
+      }
+
       data = (device_addr << 1) | 1;
       bitnum = 0;
       optype = READ;
