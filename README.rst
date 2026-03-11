@@ -10,7 +10,7 @@ lib_i2c: I²C Library
 :scope: General Use
 :description: I²C controller and peripheral library
 :category: General Purpose
-:keywords: IO, I²C
+:keywords: IO
 :devices: xcore.ai, xcore-200
 
 *******
