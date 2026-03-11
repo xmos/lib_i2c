@@ -16,12 +16,12 @@ pipeline {
     )
     string(
       name: 'XMOSDOC_VERSION',
-      defaultValue: 'v7.4.0',
+      defaultValue: 'v8.0.1',
       description: 'The xmosdoc version'
     )
     string(
       name: 'INFR_APPS_VERSION',
-      defaultValue: 'v3.1.1',
+      defaultValue: 'v3.3.0',
       description: 'The infr_apps version'
     )
   }
@@ -74,7 +74,7 @@ pipeline {
           steps {
             dir(REPO_NAME) {
               buildDocs()
-              
+
               // Todo: move app-notes
               // warnError("Documentation build failed") {
               //   buildDocs()
@@ -120,7 +120,7 @@ pipeline {
         }
       }
     }  // Build and test
-    
+
     stage('🚀 Release') {
       steps {
         triggerRelease()
