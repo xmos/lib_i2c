@@ -255,7 +255,7 @@ void i2c_master(
 
     case (size_t i = 0; i < n; i++)
       (n == 1 || (locked_client == -1 || i == locked_client)) =>
-        c[i].write(uint8_t device, uint8_t buf[n], size_t n,
+        c[i].write(uint8_t device, const uint8_t buf[n], size_t n,
                 size_t &num_bytes_sent,
                 int send_stop_bit) -> i2c_res_t result:
       unsigned fall_time = last_fall_time;

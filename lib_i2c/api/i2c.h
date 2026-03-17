@@ -66,7 +66,7 @@ typedef interface i2c_master_if {
    *                         device, otherwise ``I2C_NACK``.
    */
   [[guarded]]
-  i2c_res_t write(uint8_t device_addr, uint8_t buf[n], size_t n,
+  i2c_res_t write(uint8_t device_addr, const uint8_t buf[n], size_t n,
                REFERENCE_PARAM(size_t, num_bytes_sent), int send_stop_bit);
 
   /** Read data from an I2C bus.
@@ -495,7 +495,7 @@ typedef interface i2c_master_async_if {
    *                         the component until a stop bit has been sent.
    */
   [[guarded]]
-  void async_master_write(uint8_t device_addr, uint8_t buf[n], size_t n,
+  void async_master_write(uint8_t device_addr, const uint8_t buf[n], size_t n,
              int send_stop_bit);
 
   /** Initialize a read to an I2C bus.

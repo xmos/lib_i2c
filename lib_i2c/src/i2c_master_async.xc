@@ -57,7 +57,7 @@ void i2c_master_async_aux(
 
   while (1) {
     select {
-    case i[int j].write(uint8_t addr, uint8_t buf0[n], size_t n,
+    case i[int j].write(uint8_t addr, const uint8_t buf0[n], size_t n,
                         int ssb):
       device_addr = addr;
       send_stop_bit = ssb;
@@ -470,7 +470,7 @@ void i2c_master_async_comb(
       }
       break;
 
-    case i[int j].write(uint8_t device_addr, uint8_t buf0[n], size_t n,
+    case i[int j].write(uint8_t device_addr, const uint8_t buf0[n], size_t n,
                         int _send_stop_bit):
       data = (device_addr << 1) | 0;
       bitnum = 0;
