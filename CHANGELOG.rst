@@ -4,9 +4,11 @@ lib_i2c change log
 UNRELEASED
 ----------
 
+  * ADDED:  Option to disable I2C target clock stretching for I3C bus
+    coexistence.
+  * ADDED:   I2C target SCL high-spike filtering for I3C bus coexistence.
   * CHANGED: Const-ify I2C bulk write buffer argument to avoid XC concurrency
     errors.
-  * FIXED: Add I2C target SCL high-spike filtering for I3C bus coexistence.
 
 6.4.1
 -----

@@ -1,0 +1,18 @@
+Starting read transaction to device id 0x3c
+Sending data 0x79
+xCORE got start of read transaction
+Master received ACK
+xCORE sending: 0xFF
+Received byte 0xff
+Master sending NACK
+Sending stop bit
+xCORE got stop bit
+Starting write transaction to device id 0x3c
+Sending data 0x78
+xCORE got start of write transaction
+Master received ACK
+Sending data 0x33
+xCORE got data: 0x33
+Master received ACK
+Sending data 0xff
+xCORE got data: 0xFF

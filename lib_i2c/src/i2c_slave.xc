@@ -18,11 +18,13 @@ enum i2c_slave_state {
 // I3C mixed-bus SCL spike filter: 50 ns at the 100 MHz reference clock.
 #define T_DIG_H_MIXED_TICKS 5
 
+#if I2C_SLAVE_CLOCK_STRETCH
 static inline void ensure_setup_time()
 {
   // The I2C spec requires a 100ns setup time
   delay_ticks(10);
 }
+#endif
 
 [[combinable]]
 void i2c_slave(client i2c_slave_callback_if i,
@@ -95,8 +97,10 @@ void i2c_slave(client i2c_slave_callback_if i,
         break;
 
       case ACK_ADDR:
+#if I2C_SLAVE_CLOCK_STRETCH
         // Stretch clock (hold low) while application code is called
         p_scl <: 0;
+#endif
 
         // Callback to the application to determine whether to ACK
         // or NACK the address.
@@ -124,10 +128,12 @@ void i2c_slave(client i2c_slave_callback_if i,
         scl_val = 1;
         state = ACK_WAIT_HIGH;
 
+#if I2C_SLAVE_CLOCK_STRETCH
         ensure_setup_time();
 
         // Release the clock
         p_scl :> void;
+#endif
         break;
 
       case ACK_WAIT_HIGH:
@@ -175,8 +181,10 @@ void i2c_slave(client i2c_slave_callback_if i,
           // Falling edge, drive data
           if (bitnum < 8) {
             if (bitnum == 0) {
+#if I2C_SLAVE_CLOCK_STRETCH
               // Stretch clock (hold low) while application code is called
               p_scl <: 0;
+#endif
               data = i.master_requires_data();
               // Data is transmitted MSB first
               data = bitrev(data) >> 24;
@@ -189,10 +197,12 @@ void i2c_slave(client i2c_slave_callback_if i,
                 p_sda <: 0;
               }
 
+#if I2C_SLAVE_CLOCK_STRETCH
               ensure_setup_time();
 
               // Release the clock
               p_scl :> void;
+#endif
             } else {
               if (data & 0x1) {
                 p_sda :> void;
@@ -234,8 +244,10 @@ void i2c_slave(client i2c_slave_callback_if i,
           stop_bit_check = 0;
 
           if (bitnum == 8) {
+#if I2C_SLAVE_CLOCK_STRETCH
             // Stretch clock (hold low) while application code is called
             p_scl <: 0;
+#endif
             int ack = i.master_sent_data(data);
             if (ack == I2C_SLAVE_NACK) {
               // Release the data bus so it is pulled high to signal NACK
@@ -246,10 +258,12 @@ void i2c_slave(client i2c_slave_callback_if i,
             }
             state = ACK_WAIT_HIGH;
 
+#if I2C_SLAVE_CLOCK_STRETCH
             ensure_setup_time();
 
             // Release the clock
             p_scl :> void;
+#endif
           }
           scl_val = 1;
         }

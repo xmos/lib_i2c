@@ -26,4 +26,18 @@ foreach(arch ${ARCH})
 
     XMOS_REGISTER_APP()
     unset(APP_COMPILER_FLAGS_${arch})
+
+    set(config no_stretch_${arch})
+    project(i2c_slave_test)
+    set(APP_HW_TARGET ${target})
+
+    set(APP_COMPILER_FLAGS_${config}
+                    -O3
+                    -g
+                    -DDEBUG_PRINT_ENABLE=1
+                    -DI2C_SLAVE_CLOCK_STRETCH=0
+                    -report)
+
+    XMOS_REGISTER_APP()
+    unset(APP_COMPILER_FLAGS_${config})
 endforeach()
