@@ -7,9 +7,9 @@ lib_i2c: I²C Library
 
 :vendor: XMOS
 :version: 6.4.1
-:scope: General Use
-:description: I²C controller and peripheral library
-:category: General Purpose
+:scope: General use
+:description: I²C controller and target library
+:category: General purpose
 :keywords: IO
 :devices: xcore.ai, xcore-200
 
@@ -27,21 +27,21 @@ Plus and Ultra-Fast Mode, and allows multiple devices to share the same bus.
 ``lib_i2c`` contains a software defined, industry-standard, I²C library that allows control of an
 I²C bus via `xcore` ports.
 
-``lib_i2c`` provides both controller ("master") and peripheral ("slave") functionality.
+``lib_i2c`` provides both controller ("master") and target ("slave") functionality.
 
-The I²C master component can be used by multiple tasks within the `xcore` device (each addressing
-the same or different peripheral devices).
+The I²C master component can be used by multiple tasks within the `XCORE` device (each addressing
+the same or different target devices).
 
-The library can also be used to implement multiple I²C physical interfaces on a single `xcore`
+The library can also be used to implement multiple I²C physical interfaces on a single `XCORE`
 device simultaneously.
 
 ********
 Features
 ********
 
-* I²C controller (master) and I²C peripheral (slave) modes
+* I²C controller (master) and I²C target (slave) modes
 * Supports speed up to 400 Kb/s (I²C Fast-mode)
-* Clock stretching support
+* Clock stretching support (optional)
 * Synchronous and asynchronous APIs
 
 ************
@@ -55,7 +55,7 @@ Known issues
 Development repo
 ****************
 
-* `https://github.com/xmos/lib_i2c <https://github.com/xmos/lib_i2c>`_
+* `lib_i2c <https://www.github.com/xmos/lib_i2c>`_ (https://www.github.com/xmos/lib_i2c)
 
 **************
 Required tools
@@ -67,7 +67,7 @@ Required tools
 Required libraries (dependencies)
 *********************************
 
-* lib_xassert (www.github.com/xmos/lib_xassert)
+* `lib_xassert <https://www.github.com/xmos/lib_xassert>`_ (https://www.github.com/xmos/xassert)
 
 *************************
 Related application notes
@@ -84,4 +84,5 @@ Support
 *******
 
 This package is supported by XMOS Ltd. Issues can be raised against the software at
-`www.xmos.com/support <https://www.xmos.com/support>`_
+`www.xmos.com/support <https://www.xmos.com/support>`_ or using GitHub `issues <https://github.com/xmos/lib_xassert/issues>`_.
+
