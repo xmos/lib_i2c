@@ -6,7 +6,7 @@ set(LIB_INCLUDES api)
 
 set(LIB_DEPENDENT_MODULES "lib_xassert(4.3.2)")
 
-set(LIB_COMPILER_FLAGS  -O3
+set(LIB_COMPILER_FLAGS  -Os
                         -Wall
                         -Wextra
                         -Wsign-compare
