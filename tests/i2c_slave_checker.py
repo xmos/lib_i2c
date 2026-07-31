@@ -9,11 +9,12 @@ class I2CSlaveChecker(px.SimThread):
     """
 
     def __init__(self, scl_port, sda_port, speed,
-                 tsequence):
+                 tsequence, allow_clock_stretch=True):
         self._scl_port = scl_port
         self._sda_port = sda_port
         self._tsequence = tsequence
         self._speed = speed
+        self._allow_clock_stretch = allow_clock_stretch
         self._bit_time = 1000000e6 / speed
         #print("Checking I2C: SCL=%s, SDA=%s" % (self._scl_port, self._sda_port))
 
@@ -39,6 +40,7 @@ class I2CSlaveChecker(px.SimThread):
         self.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
         xsi.drive_port_pins(self._scl_port, 1)
         if xsi.is_port_driving(self._scl_port):
+            assert self._allow_clock_stretch, "I2C slave attempted to clock stretch"
             self.wait_for_port_pins_change([self._scl_port])
         new_fall_time = self._fall_time + self._bit_time
         if xsi.get_time() > new_fall_time:
@@ -50,6 +52,7 @@ class I2CSlaveChecker(px.SimThread):
     def high_pulse_sample(self, xsi):
         self.wait_until(self._fall_time + self._bit_time / 2 + self._bit_time / 32)
         if xsi.is_port_driving(self._scl_port):
+            assert self._allow_clock_stretch, "I2C slave attempted to clock stretch"
             self.wait_for_port_pins_change([self._scl_port])
         xsi.drive_port_pins(self._scl_port, 1)
         self.wait_until(xsi.get_time() + self._bit_time / 4)
@@ -123,4 +126,3 @@ class I2CSlaveChecker(px.SimThread):
                     self.read(xsi, 0);
                 self.read(xsi, 1)
                 self.stop_bit(xsi)
-

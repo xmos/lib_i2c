@@ -709,10 +709,29 @@ typedef interface i2c_slave_callback_if {
 } i2c_slave_callback_if;
 #endif
 
+/** Enable the I2C slave SCL spike filter.
+ *
+ *  Set to 0 to disable filtering. When enabled, SCL high pulses shorter than
+ *  50 ns are ignored to support coexistence on a mixed I3C/I2C bus.
+ */
+#ifndef I2C_SLAVE_SCL_SPIKE_FILTER
+#define I2C_SLAVE_SCL_SPIKE_FILTER 1
+#endif
+
+/** Enable clock stretching by the I2C slave.
+ *
+ *  Set to 0 to prevent the slave from driving SCL low, as required for
+ *  coexistence on a mixed I3C/I2C bus.
+ */
+#ifndef I2C_SLAVE_CLOCK_STRETCH
+#define I2C_SLAVE_CLOCK_STRETCH 1
+#endif
 
 /** I2C slave task.
  *
  *  This function instantiates an i2c_slave component.
+ *  Define ``I2C_SLAVE_CLOCK_STRETCH`` as 0 when compiling the component to
+ *  prevent it from driving SCL low. Clock stretching is enabled by default.
  *
  *  \param i           the client end of the i2c_slave_callback_if interface. The component
  *                     takes the client end and will make calls on the interface when

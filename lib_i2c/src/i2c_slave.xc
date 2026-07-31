@@ -15,11 +15,32 @@ enum i2c_slave_state {
   MASTER_READ
 };
 
+// I3C mixed-bus SCL spike filter: 50 ns at the 100 MHz reference clock.
+#define T_DIG_H_MIXED_TICKS 5
+
+#if I2C_SLAVE_CLOCK_STRETCH
 static inline void ensure_setup_time()
 {
   // The I2C spec requires a 100ns setup time
   delay_ticks(10);
 }
+#endif
+
+#if I2C_SLAVE_SCL_SPIKE_FILTER
+static inline int scl_high_period_valid(port p_scl, unsigned short start_time)
+{
+  int scl_val;
+  unsigned short sample_time;
+  unsigned short sample_deadline = start_time + T_DIG_H_MIXED_TICKS;
+
+  p_scl :> scl_val @ sample_time;
+  if (porttimeafter(sample_deadline, sample_time)) {
+    p_scl @ sample_deadline :> scl_val;
+  }
+
+  return scl_val;
+}
+#endif
 
 [[combinable]]
 void i2c_slave(client i2c_slave_callback_if i,
@@ -35,12 +56,22 @@ void i2c_slave(client i2c_slave_callback_if i,
   int rw = 0;
   int stop_bit_check = 0;
   int ignore_stop_bit = 1;
+  unsigned short scl_time;
   p_sda when pinseq(1) :> void;
   while (1) {
     select {
     case i.shutdown():
       return;
-    case state != WAITING_FOR_START_OR_STOP => p_scl when pinseq(scl_val) :> void:
+    case state != WAITING_FOR_START_OR_STOP => p_scl when pinseq(scl_val) :> void @ scl_time:
+#if I2C_SLAVE_SCL_SPIKE_FILTER
+      if (scl_val == 1) {
+        if (!scl_high_period_valid(p_scl, scl_time)) {
+          // Short SCL high period; ignore this spike.
+          break;
+        }
+      }
+#endif
+
       switch (state) {
       case READING_ADDR:
         // If clock has gone low, wait for it to go high before doing anything
@@ -76,8 +107,10 @@ void i2c_slave(client i2c_slave_callback_if i,
         break;
 
       case ACK_ADDR:
+#if I2C_SLAVE_CLOCK_STRETCH
         // Stretch clock (hold low) while application code is called
         p_scl <: 0;
+#endif
 
         // Callback to the application to determine whether to ACK
         // or NACK the address.
@@ -105,10 +138,12 @@ void i2c_slave(client i2c_slave_callback_if i,
         scl_val = 1;
         state = ACK_WAIT_HIGH;
 
+#if I2C_SLAVE_CLOCK_STRETCH
         ensure_setup_time();
 
         // Release the clock
         p_scl :> void;
+#endif
         break;
 
       case ACK_WAIT_HIGH:
@@ -156,8 +191,10 @@ void i2c_slave(client i2c_slave_callback_if i,
           // Falling edge, drive data
           if (bitnum < 8) {
             if (bitnum == 0) {
+#if I2C_SLAVE_CLOCK_STRETCH
               // Stretch clock (hold low) while application code is called
               p_scl <: 0;
+#endif
               data = i.master_requires_data();
               // Data is transmitted MSB first
               data = bitrev(data) >> 24;
@@ -170,10 +207,12 @@ void i2c_slave(client i2c_slave_callback_if i,
                 p_sda <: 0;
               }
 
+#if I2C_SLAVE_CLOCK_STRETCH
               ensure_setup_time();
 
               // Release the clock
               p_scl :> void;
+#endif
             } else {
               if (data & 0x1) {
                 p_sda :> void;
@@ -215,8 +254,10 @@ void i2c_slave(client i2c_slave_callback_if i,
           stop_bit_check = 0;
 
           if (bitnum == 8) {
+#if I2C_SLAVE_CLOCK_STRETCH
             // Stretch clock (hold low) while application code is called
             p_scl <: 0;
+#endif
             int ack = i.master_sent_data(data);
             if (ack == I2C_SLAVE_NACK) {
               // Release the data bus so it is pulled high to signal NACK
@@ -227,10 +268,12 @@ void i2c_slave(client i2c_slave_callback_if i,
             }
             state = ACK_WAIT_HIGH;
 
+#if I2C_SLAVE_CLOCK_STRETCH
             ensure_setup_time();
 
             // Release the clock
             p_scl :> void;
+#endif
           }
           scl_val = 1;
         }
@@ -240,11 +283,19 @@ void i2c_slave(client i2c_slave_callback_if i,
 
     case (state == WAITING_FOR_START_OR_STOP) || stop_bit_check =>
             p_sda when pinseq(sda_val) :> void:
+      int val;
+#if I2C_SLAVE_SCL_SPIKE_FILTER
+      p_scl :> val @ scl_time;
+      if (val) {
+        val = scl_high_period_valid(p_scl, scl_time);
+      }
+#else
+      p_scl :> val;
+#endif
+
       if (sda_val == 1) {
         // SDA has transitioned from low to high, if SCL is high
         // then it is a stop bit.
-        int val;
-        p_scl :> val;
         if (val) {
           if (!ignore_stop_bit) {
             i.stop_bit();
@@ -257,9 +308,7 @@ void i2c_slave(client i2c_slave_callback_if i,
       } else {
         // SDA has transitioned from high to low, if SCL is high
         // then it is a start bit.
-        int val;
-        p_scl :> val;
-        if (val == 1) {
+        if (val) {
           state = READING_ADDR;
           bitnum = 0;
           data = 0;
