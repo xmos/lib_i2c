@@ -26,6 +26,22 @@ static inline void ensure_setup_time()
 }
 #endif
 
+#if I2C_SLAVE_SCL_SPIKE_FILTER
+static inline int scl_high_period_valid(port p_scl, unsigned short start_time)
+{
+  int scl_val;
+  unsigned short sample_time;
+  unsigned short sample_deadline = start_time + T_DIG_H_MIXED_TICKS;
+
+  p_scl :> scl_val @ sample_time;
+  if (porttimeafter(sample_deadline, sample_time)) {
+    p_scl @ sample_deadline :> scl_val;
+  }
+
+  return scl_val;
+}
+#endif
+
 [[combinable]]
 void i2c_slave(client i2c_slave_callback_if i,
                port p_scl, port p_sda,
@@ -41,7 +57,6 @@ void i2c_slave(client i2c_slave_callback_if i,
   int stop_bit_check = 0;
   int ignore_stop_bit = 1;
   unsigned short scl_time;
-  unsigned short sample_time;
   p_sda when pinseq(1) :> void;
   while (1) {
     select {
@@ -50,12 +65,7 @@ void i2c_slave(client i2c_slave_callback_if i,
     case state != WAITING_FOR_START_OR_STOP => p_scl when pinseq(scl_val) :> void @ scl_time:
 #if I2C_SLAVE_SCL_SPIKE_FILTER
       if (scl_val == 1) {
-        unsigned short sample_deadline = scl_time + T_DIG_H_MIXED_TICKS;
-        p_scl :> scl_val @ sample_time;
-        if (porttimeafter(sample_deadline, sample_time)) {
-          p_scl @ sample_deadline :> scl_val;
-        }
-        if (!scl_val) {
+        if (!scl_high_period_valid(p_scl, scl_time)) {
           // Short SCL high period; ignore this spike.
           break;
         }
@@ -277,11 +287,7 @@ void i2c_slave(client i2c_slave_callback_if i,
 #if I2C_SLAVE_SCL_SPIKE_FILTER
       p_scl :> val @ scl_time;
       if (val) {
-        unsigned short sample_deadline = scl_time + T_DIG_H_MIXED_TICKS;
-        p_scl :> val @ sample_time;
-        if (porttimeafter(sample_deadline, sample_time)) {
-          p_scl @ sample_deadline :> val;
-        }
+        val = scl_high_period_valid(p_scl, scl_time);
       }
 #else
       p_scl :> val;
