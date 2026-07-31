@@ -19,7 +19,7 @@ foreach(arch ${ARCH})
     set(APP_HW_TARGET   ${target})
 
     set(APP_COMPILER_FLAGS_${arch}
-                    -O2
+                    -O3
                     -g
                     -DDEBUG_PRINT_ENABLE=1
                     -report)

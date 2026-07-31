@@ -1,6 +1,13 @@
 lib_i2c change log
 ==================
 
+UNRELEASED
+----------
+
+  * CHANGED: Const-ify I2C bulk write buffer argument to avoid XC concurrency
+    errors.
+  * FIXED: Add I2C target SCL high-spike filtering for I3C bus coexistence.
+
 6.4.1
 -----
 
