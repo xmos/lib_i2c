@@ -18,7 +18,7 @@
 # pip-install this one as editable using this repository's setup.py file.  The
 # same modules should appear in the setup.py list as given below.
 
-pytest==8.3.3
+pytest==9.0.3
 pytest-xdist==3.6.1
 
 # Development dependencies
