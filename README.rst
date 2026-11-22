@@ -7,7 +7,7 @@ lib_i2c: I²C Library
 
 :vendor: XMOS
 :version: 6.4.1
-:scope: General Use
+:scope: General use
 :description: I²C controller and peripheral library
 :category: General Purpose
 :keywords: IO
@@ -84,4 +84,4 @@ Support
 *******
 
 This package is supported by XMOS Ltd. Issues can be raised against the software at
-`www.xmos.com/support <https://www.xmos.com/support>`_
+`www.xmos.com/support <https://www.xmos.com/support>`_ or using GitHub `issues <https://github.com/xmos/lib_i2c/issues>`_.
